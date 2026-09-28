@@ -2,24 +2,24 @@
   "meta": {
     "generated_at": "2026-09-28T06:45:00Z",
     "status": "public-data beta",
-    "methodology_version": "0.1"
+    "methodology_version": "0.3"
   },
   "index": {
     "name": "MCI Experimental",
     "full_name": "Middle Corridor Freight Index",
     "unit": "USD/FEU",
-    "base_period": "Jun 2026",
+    "base_period": "Jan 2026",
     "base_value": 100,
     "current_period": "Jun 2026",
     "current_usd_feu": 7005,
-    "current_index": 100.0,
+    "current_index": 116.8,
     "change_mom_pct": null,
-    "change_since_base_pct": 0.0,
-    "coverage": "Westbound \u00b7 3 reference lanes",
+    "change_since_base_pct": 16.8,
+    "coverage": "Westbound · 3 reference lanes",
     "components": [
       {
         "code": "MC1",
-        "lane": "Xi\u2019an \u2192 Alat",
+        "lane": "Xi’an → Alat",
         "weight": 0.4,
         "low": 6450,
         "high": 6900,
@@ -30,7 +30,7 @@
       },
       {
         "code": "MC2",
-        "lane": "Xi\u2019an \u2192 Tbilisi",
+        "lane": "Xi’an → Tbilisi",
         "weight": 0.3,
         "low": 6800,
         "high": 7100,
@@ -41,7 +41,7 @@
       },
       {
         "code": "MC3",
-        "lane": "Xi\u2019an \u2192 T\u00fcrkiye (Ambarli/Mersin)",
+        "lane": "Xi’an → Türkiye (Ambarli/Mersin)",
         "weight": 0.3,
         "low": 7100,
         "high": 7900,
@@ -53,17 +53,26 @@
     ],
     "history": [
       {
+        "period": "Jan 2026",
+        "usd_feu": 6000,
+        "index": 100.0,
+        "coverage": "Provisional corridor-wide base assessment"
+      },
+      {
         "period": "Jun 2026",
         "usd_feu": 7005,
-        "index": 100.0,
+        "index": 116.8,
         "coverage": "3-lane basket"
       }
     ],
-    "base_usd_feu": 7005
+    "base_usd_feu": 6000,
+    "base_method": "Provisional January 2026 corridor-wide reference assessment based on public early-2026 Middle Corridor quotes of USD 5,000–7,000 per 40-foot container; midpoint USD 6,000/FEU.",
+    "base_source": "Akacia Logistics — early 2026 Middle Corridor quotes",
+    "base_source_url": "https://akacia.nl/en/blog/middle-corridor-rail-from-asia-to-europe-2026"
   },
   "corridor": {
     "teu_ytd": 53574,
-    "period": "Jan\u2013Aug 2026",
+    "period": "Jan–Aug 2026",
     "teu_previous": 48326,
     "yoy_pct": 11,
     "westbound_teu": 42642,
@@ -76,7 +85,7 @@
   },
   "transit": {
     "reference_days": 12.8,
-    "route": "Hefei \u2192 Tbilisi",
+    "route": "Hefei → Tbilisi",
     "distance_km": 8564,
     "containers": 55,
     "period": "Jul 2026",
@@ -89,71 +98,318 @@
     "previous_year_teu": 3359,
     "yoy_pct": 122,
     "source": "Kazmortransflot via The Astana Times",
-    "source_url": "https://astanatimes.com/2026/06/container-traffic-on-middle-corridor-more-than-doubles-in-may/"
+    "source_url": "https://astanatimes.com/2026/06/container-traffic-on-middle-corridor-more-than-doubles-in-may/",
+    "ferry_load_pct": 80,
+    "load_constraint_source": "ASCO via Times of Central Asia",
+    "load_constraint_url": "https://timesca.com/shrinking-caspian-sea-cost-middle-corridor/"
   },
   "log": [
     {
+      "date": "25.09.2026",
+      "type": "Capacity",
+      "lane": "TITR · Jan–Aug 2026",
+      "value": ">3.0m tonnes · +22% YoY",
+      "source": "Kazakhstan Vice Minister / Report.az"
+    },
+    {
+      "date": "25.09.2026",
+      "type": "Capacity",
+      "lane": "TITR designed capacity",
+      "value": "6.0m tonnes/year",
+      "source": "Kazakhstan Vice Minister / Report.az"
+    },
+    {
       "date": "09.09.2026",
       "type": "Volume",
-      "lane": "TITR \u00b7 Jan\u2013Aug 2026",
+      "lane": "TITR · Jan–Aug 2026",
       "value": "53,574 TEU",
       "source": "ADY Express / Report.az"
     },
     {
       "date": "09.09.2026",
       "type": "Volume",
-      "lane": "East \u2192 West \u00b7 Jan\u2013Aug 2026",
+      "lane": "East → West · Jan–Aug 2026",
       "value": "42,642 TEU",
       "source": "ADY Express / Report.az"
     },
     {
       "date": "09.09.2026",
       "type": "Volume",
-      "lane": "West \u2192 East \u00b7 Jan\u2013Aug 2026",
+      "lane": "West → East · Jan–Aug 2026",
       "value": "10,932 TEU",
       "source": "ADY Express / Report.az"
     },
     {
       "date": "09.09.2026",
       "type": "Operations",
-      "lane": "TITR block trains \u00b7 Jan\u2013Aug 2026",
+      "lane": "TITR block trains · Jan–Aug 2026",
       "value": "265 trains",
       "source": "ADY Express / Report.az"
     },
     {
       "date": "10.07.2026",
       "type": "Freight",
-      "lane": "Xi\u2019an \u2192 Alat",
-      "value": "$6,450\u20136,900 / FEU",
+      "lane": "Xi’an → Alat",
+      "value": "$6,450–6,900 / FEU",
       "source": "TCRC / Georgia Today"
     },
     {
       "date": "10.07.2026",
       "type": "Freight",
-      "lane": "Xi\u2019an \u2192 Tbilisi",
-      "value": "$6,800\u20137,100 / FEU",
+      "lane": "Xi’an → Tbilisi",
+      "value": "$6,800–7,100 / FEU",
       "source": "TCRC / Georgia Today"
     },
     {
       "date": "10.07.2026",
       "type": "Freight",
-      "lane": "Xi\u2019an \u2192 T\u00fcrkiye",
-      "value": "$7,100\u20137,900 / FEU",
+      "lane": "Xi’an → Türkiye",
+      "value": "$7,100–7,900 / FEU",
       "source": "TCRC / Georgia Today"
     },
     {
       "date": "02.07.2026",
       "type": "Transit",
-      "lane": "Hefei \u2192 Tbilisi",
+      "lane": "Hefei → Tbilisi",
       "value": "12.8 days",
       "source": "Middle Corridor Multimodal"
     },
     {
       "date": "04.06.2026",
       "type": "Caspian",
-      "lane": "Aktau \u2192 Alat \u00b7 May 2026",
+      "lane": "Aktau → Alat · May 2026",
       "value": "7,451 TEU",
       "source": "Kazmortransflot / Astana Times"
+    }
+  ],
+  "capacity": {
+    "designed_mt": 6.0,
+    "ytd_mt": 3.0,
+    "period": "Jan–Aug 2026",
+    "yoy_pct": 22,
+    "source": "Kazakhstan Vice Minister via Report.az",
+    "source_url": "https://report.az/en/infrastructure/cargo-traffic-via-middle-corridor-exceeds-3-million-tons-in-8-months"
+  },
+  "transport_prices": [
+    {
+      "code": "MCI",
+      "mode": "Middle Corridor",
+      "lane": "MCI 3-lane westbound basket",
+      "display": "$7,005",
+      "unit": "USD / FEU",
+      "mid": 7005,
+      "period": "Jun 2026",
+      "transit": "multimodal rail + Caspian",
+      "source": "MCI calculation / TCRC",
+      "source_url": "https://georgiatoday.ge/tcrc-middle-corridor-shipping-costs-rise-as-china-europe-trade-shifts-routes/"
+    },
+    {
+      "code": "OCEAN-EU",
+      "mode": "Ocean",
+      "lane": "Shanghai → Rotterdam",
+      "display": "$3,997",
+      "unit": "USD / 40 ft",
+      "mid": 3997,
+      "period": "10 Sep 2026",
+      "transit": "ocean benchmark",
+      "source": "Drewry WCI",
+      "source_url": "https://www.drewry.co.uk/supply-chain-advisors/world-container-index-assessed-by-drewry"
+    },
+    {
+      "code": "RAIL-EU",
+      "mode": "Rail",
+      "lane": "China → Germany",
+      "display": "$7,470–9,130",
+      "unit": "USD / 40GP",
+      "mid": 8300,
+      "period": "Sep 2026",
+      "transit": "25–33 days",
+      "source": "SINO Shipping",
+      "source_url": "https://www.sino-shipping.com/global-freight-market-update-september-2026/"
+    },
+    {
+      "code": "AIR-TR",
+      "mode": "Air",
+      "lane": "China → Istanbul",
+      "display": "$6.20",
+      "unit": "USD / kg",
+      "mid": 6.2,
+      "period": "Sep 2026",
+      "transit": "2–4 days",
+      "source": "SINO Shipping",
+      "source_url": "https://www.sino-shipping.com/freight-china-turkey/"
+    },
+    {
+      "code": "ROAD-EU",
+      "mode": "Road FTL",
+      "lane": "Istanbul → Germany",
+      "display": "€3,200–3,850",
+      "unit": "EUR / FTL",
+      "mid": 3525,
+      "period": "Sep 2026",
+      "transit": "4–6 days",
+      "source": "Turkey Freight Quote",
+      "source_url": "https://turkeyfreightquote.com/en/tools/freight-rate-index"
+    }
+  ],
+  "route_nodes": [
+    {
+      "id": "xian",
+      "name": "Xi’an",
+      "country": "China",
+      "lat": 34.3416,
+      "lon": 108.9398,
+      "mode": "Rail",
+      "kind": "ORIGIN HUB",
+      "role": "Major China–Europe block-train origin",
+      "description": "Primary reference origin for the MCI lanes and a major consolidation point for westbound container trains."
+    },
+    {
+      "id": "khorgos",
+      "name": "Khorgos",
+      "country": "China",
+      "lat": 44.214,
+      "lon": 80.414,
+      "mode": "Rail",
+      "kind": "BORDER",
+      "role": "China–Kazakhstan rail gateway",
+      "description": "Chinese border gateway opposite Altynkol; trains cross from standard-gauge China into the 1,520 mm network."
+    },
+    {
+      "id": "altynkol",
+      "name": "Altynkol",
+      "country": "Kazakhstan",
+      "lat": 44.183,
+      "lon": 80.367,
+      "mode": "Rail",
+      "kind": "BORDER TERMINAL",
+      "role": "Gauge-change / transshipment node",
+      "description": "Kazakh rail border terminal serving Khorgos and a principal entry point into the Middle Corridor."
+    },
+    {
+      "id": "aktau",
+      "name": "Aktau Port",
+      "country": "Kazakhstan",
+      "lat": 43.65,
+      "lon": 51.15,
+      "mode": "Port",
+      "kind": "CASPIAN PORT",
+      "role": "Westbound Caspian loading point",
+      "description": "Key Kazakh port for container transfer from rail to Caspian ferry and feeder services."
+    },
+    {
+      "id": "alat",
+      "name": "Port of Baku / Alat",
+      "country": "Azerbaijan",
+      "lat": 40.0,
+      "lon": 49.45,
+      "mode": "Port",
+      "kind": "CASPIAN PORT",
+      "role": "Caspian discharge and rail interface",
+      "description": "Main Azerbaijani gateway where Caspian cargo reconnects with the South Caucasus rail network."
+    },
+    {
+      "id": "tbilisi",
+      "name": "Tbilisi",
+      "country": "Georgia",
+      "lat": 41.7151,
+      "lon": 44.8271,
+      "mode": "Rail",
+      "kind": "RAIL HUB",
+      "role": "South Caucasus distribution node",
+      "description": "Key Georgian rail hub for onward movement toward the Black Sea ports or Türkiye via Baku–Tbilisi–Kars."
+    },
+    {
+      "id": "kars",
+      "name": "Kars",
+      "country": "Türkiye",
+      "lat": 40.6013,
+      "lon": 43.0975,
+      "mode": "Rail",
+      "kind": "RAIL GATEWAY",
+      "role": "BTK entry into Türkiye",
+      "description": "Turkish gateway on the Baku–Tbilisi–Kars railway and the principal rail branch toward Anatolia and Europe.",
+      "branch": true
+    },
+    {
+      "id": "istanbul",
+      "name": "Istanbul",
+      "country": "Türkiye",
+      "lat": 41.0082,
+      "lon": 28.9784,
+      "mode": "Rail / Road / Port",
+      "kind": "EUROPEAN GATEWAY",
+      "role": "Intermodal distribution hub",
+      "description": "Major onward hub for European rail, road and short-sea distribution.",
+      "branch": true
+    },
+    {
+      "id": "poti",
+      "name": "Poti Port",
+      "country": "Georgia",
+      "lat": 42.1462,
+      "lon": 41.6719,
+      "mode": "Port",
+      "kind": "BLACK SEA PORT",
+      "role": "Black Sea maritime branch",
+      "description": "Georgian Black Sea outlet for container services toward Romania and other European ports.",
+      "branch": true
+    },
+    {
+      "id": "constanta",
+      "name": "Constanța",
+      "country": "Romania",
+      "lat": 44.1598,
+      "lon": 28.6348,
+      "mode": "Port",
+      "kind": "EU PORT",
+      "role": "Black Sea EU gateway",
+      "description": "European Union Black Sea gateway for the maritime branch from Georgia.",
+      "branch": true
+    }
+  ],
+  "news": [
+    {
+      "date": "25 Sep 2026",
+      "source": "Report.az",
+      "title": "Middle Corridor cargo exceeds 3 million tonnes in eight months",
+      "summary": "Kazakhstan says Jan–Aug tonnage rose 22% year on year; designed capacity is about 6 million tonnes and further port upgrades are under way.",
+      "url": "https://report.az/en/infrastructure/cargo-traffic-via-middle-corridor-exceeds-3-million-tons-in-8-months"
+    },
+    {
+      "date": "10 Sep 2026",
+      "source": "Times of Central Asia",
+      "title": "Container traffic rises, but eastbound cargo still lags",
+      "summary": "Jan–Aug traffic reached 53,574 TEU, with roughly 80% moving westbound and only 20% eastbound.",
+      "url": "https://timesca.com/middle-corridor-freight-eastbound-cargo/"
+    },
+    {
+      "date": "9 Sep 2026",
+      "source": "Times of Central Asia",
+      "title": "Shrinking Caspian Sea is raising corridor costs",
+      "summary": "Falling water levels are constraining ferry loads and forcing investment in dredging and berth reconstruction.",
+      "url": "https://timesca.com/shrinking-caspian-sea-cost-middle-corridor/"
+    },
+    {
+      "date": "4 Sep 2026",
+      "source": "The Diplomat",
+      "title": "Security risks move onto the Trans-Caspian agenda",
+      "summary": "Recent events have pushed maritime security alongside infrastructure and water levels as a corridor reliability issue.",
+      "url": "https://thediplomat.com/2026/09/securing-navigation-for-trans-caspian-trade/"
+    },
+    {
+      "date": "30 Aug 2026",
+      "source": "Times of Central Asia",
+      "title": "TITR chief says the corridor must cut delays",
+      "summary": "Operators are focusing on coordinated modernization across ports, rail infrastructure and digital tools to reduce end-to-end transit time.",
+      "url": "https://timesca.com/middle-corridor-must-get-faster-titr-chief-tells-tca/"
+    },
+    {
+      "date": "Sep 2026",
+      "source": "Gateway Logistics",
+      "title": "Caspian ferry availability remains a practical bottleneck",
+      "summary": "Industry reporting points to limited ferry capacity on Kazakhstan–Azerbaijan services as cargo volumes and project logistics grow.",
+      "url": "https://www.gateway-logistics.kz/en/novosti"
     }
   ]
 }
