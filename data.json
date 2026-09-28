@@ -1,0 +1,159 @@
+{
+  "meta": {
+    "generated_at": "2026-09-28T06:45:00Z",
+    "status": "public-data beta",
+    "methodology_version": "0.1"
+  },
+  "index": {
+    "name": "MCI Experimental",
+    "full_name": "Middle Corridor Freight Index",
+    "unit": "USD/FEU",
+    "base_period": "Jun 2026",
+    "base_value": 100,
+    "current_period": "Jun 2026",
+    "current_usd_feu": 7005,
+    "current_index": 100.0,
+    "change_mom_pct": null,
+    "change_since_base_pct": 0.0,
+    "coverage": "Westbound \u00b7 3 reference lanes",
+    "components": [
+      {
+        "code": "MC1",
+        "lane": "Xi\u2019an \u2192 Alat",
+        "weight": 0.4,
+        "low": 6450,
+        "high": 6900,
+        "mid": 6675,
+        "period": "Jun 2026",
+        "source": "TCRC via Georgia Today",
+        "source_url": "https://georgiatoday.ge/tcrc-middle-corridor-shipping-costs-rise-as-china-europe-trade-shifts-routes/"
+      },
+      {
+        "code": "MC2",
+        "lane": "Xi\u2019an \u2192 Tbilisi",
+        "weight": 0.3,
+        "low": 6800,
+        "high": 7100,
+        "mid": 6950,
+        "period": "Jun 2026",
+        "source": "TCRC via Georgia Today",
+        "source_url": "https://georgiatoday.ge/tcrc-middle-corridor-shipping-costs-rise-as-china-europe-trade-shifts-routes/"
+      },
+      {
+        "code": "MC3",
+        "lane": "Xi\u2019an \u2192 T\u00fcrkiye (Ambarli/Mersin)",
+        "weight": 0.3,
+        "low": 7100,
+        "high": 7900,
+        "mid": 7500,
+        "period": "Jun 2026",
+        "source": "TCRC via Georgia Today",
+        "source_url": "https://georgiatoday.ge/tcrc-middle-corridor-shipping-costs-rise-as-china-europe-trade-shifts-routes/"
+      }
+    ],
+    "history": [
+      {
+        "period": "Jun 2026",
+        "usd_feu": 7005,
+        "index": 100.0,
+        "coverage": "3-lane basket"
+      }
+    ],
+    "base_usd_feu": 7005
+  },
+  "corridor": {
+    "teu_ytd": 53574,
+    "period": "Jan\u2013Aug 2026",
+    "teu_previous": 48326,
+    "yoy_pct": 11,
+    "westbound_teu": 42642,
+    "eastbound_teu": 10932,
+    "westbound_share_pct": 79.6,
+    "block_trains": 265,
+    "block_trains_yoy_pct": 29,
+    "source": "ADY Express via Report.az",
+    "source_url": "https://report.az/en/amp/infrastructure/middle-corridor-freight-traffic-rises-11-in-january-august"
+  },
+  "transit": {
+    "reference_days": 12.8,
+    "route": "Hefei \u2192 Tbilisi",
+    "distance_km": 8564,
+    "containers": 55,
+    "period": "Jul 2026",
+    "source": "Middle Corridor Multimodal",
+    "source_url": "https://mcmultimodal.com/en"
+  },
+  "caspian": {
+    "latest_month": "May 2026",
+    "aktau_alat_teu": 7451,
+    "previous_year_teu": 3359,
+    "yoy_pct": 122,
+    "source": "Kazmortransflot via The Astana Times",
+    "source_url": "https://astanatimes.com/2026/06/container-traffic-on-middle-corridor-more-than-doubles-in-may/"
+  },
+  "log": [
+    {
+      "date": "09.09.2026",
+      "type": "Volume",
+      "lane": "TITR \u00b7 Jan\u2013Aug 2026",
+      "value": "53,574 TEU",
+      "source": "ADY Express / Report.az"
+    },
+    {
+      "date": "09.09.2026",
+      "type": "Volume",
+      "lane": "East \u2192 West \u00b7 Jan\u2013Aug 2026",
+      "value": "42,642 TEU",
+      "source": "ADY Express / Report.az"
+    },
+    {
+      "date": "09.09.2026",
+      "type": "Volume",
+      "lane": "West \u2192 East \u00b7 Jan\u2013Aug 2026",
+      "value": "10,932 TEU",
+      "source": "ADY Express / Report.az"
+    },
+    {
+      "date": "09.09.2026",
+      "type": "Operations",
+      "lane": "TITR block trains \u00b7 Jan\u2013Aug 2026",
+      "value": "265 trains",
+      "source": "ADY Express / Report.az"
+    },
+    {
+      "date": "10.07.2026",
+      "type": "Freight",
+      "lane": "Xi\u2019an \u2192 Alat",
+      "value": "$6,450\u20136,900 / FEU",
+      "source": "TCRC / Georgia Today"
+    },
+    {
+      "date": "10.07.2026",
+      "type": "Freight",
+      "lane": "Xi\u2019an \u2192 Tbilisi",
+      "value": "$6,800\u20137,100 / FEU",
+      "source": "TCRC / Georgia Today"
+    },
+    {
+      "date": "10.07.2026",
+      "type": "Freight",
+      "lane": "Xi\u2019an \u2192 T\u00fcrkiye",
+      "value": "$7,100\u20137,900 / FEU",
+      "source": "TCRC / Georgia Today"
+    },
+    {
+      "date": "02.07.2026",
+      "type": "Transit",
+      "lane": "Hefei \u2192 Tbilisi",
+      "value": "12.8 days",
+      "source": "Middle Corridor Multimodal"
+    },
+    {
+      "date": "04.06.2026",
+      "type": "Caspian",
+      "lane": "Aktau \u2192 Alat \u00b7 May 2026",
+      "value": "7,451 TEU",
+      "source": "Kazmortransflot / Astana Times"
+    }
+  ]
+}

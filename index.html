@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="MCI — Middle Corridor Freight Index and public-data dashboard for the Trans-Caspian International Transport Route.">
+  <title>MCI — Middle Corridor Index</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Inter:wght@400;500;600;700&family=Libre+Franklin:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="site-header">
+  <a class="brand" href="#top"><span class="brand-mark">MCI</span><span>MIDDLE CORRIDOR INDEX</span></a>
+  <nav><a href="#market">Market</a><a href="#flows">Flows</a><a href="#route">Route</a><a href="#data">Data</a><a href="#method">Method</a></nav>
+  <div class="live"><span></span> DAILY REFRESH</div>
+</header>
+
+<main id="top">
+<section class="market-hero" id="market">
+  <div class="market-kicker">TRANS-CASPIAN FREIGHT BENCHMARK · WESTBOUND</div>
+  <div class="index-lockup">
+    <div>
+      <div class="index-label">MCI EXPERIMENTAL <button class="info" title="Experimental public-data benchmark">i</button></div>
+      <div class="index-number"><span id="mciIndex">100.0</span></div>
+      <div class="index-base">BASE <span id="basePeriod">JUN 2026</span> = 100</div>
+    </div>
+    <div class="price-panel">
+      <span>REFERENCE BASKET</span>
+      <strong id="mciPrice">$7,005</strong>
+      <small>USD / FEU</small>
+      <div class="delta neutral" id="mciDelta">BASE PERIOD</div>
+    </div>
+  </div>
+
+  <div class="index-chart-card">
+    <div class="chart-head"><div><b>Middle Corridor Freight Index</b><span>Weighted reference-lane basket</span></div><div class="asof">FIXING <b id="fixingPeriod">Jun 2026</b></div></div>
+    <canvas id="indexChart" aria-label="MCI history"></canvas>
+  </div>
+
+  <div class="reference-strip" id="componentStrip"></div>
+  <div class="freshness">Last automated source check: <b id="lastUpdated">—</b> · <span id="updateState">loading data…</span></div>
+</section>
+
+<section class="section ruled">
+  <div class="section-no">01 — MARKET PULSE</div>
+  <div class="section-head"><h2>One corridor, several signals.</h2><p>The index sits above the operating data: traffic, directionality, Caspian throughput and observed transit performance.</p></div>
+  <div class="kpi-grid">
+    <article class="kpi"><span>Container traffic</span><strong id="teuYtd">—</strong><small id="teuPeriod">—</small></article>
+    <article class="kpi"><span>Year-on-year</span><strong id="teuYoy">—</strong><small>comparable period</small></article>
+    <article class="kpi"><span>Block trains</span><strong id="blockTrains">—</strong><small id="trainGrowth">—</small></article>
+    <article class="kpi"><span>Reference transit</span><strong id="transitDays">—</strong><small id="transitRoute">—</small></article>
+  </div>
+</section>
+
+<section id="flows" class="section split dark-section">
+  <div class="section-no">02 — DIRECTIONAL FLOWS</div>
+  <div class="section-head"><h2>The imbalance matters.</h2><p>Westbound and eastbound markets should eventually have separate MCI fixings. For now, the headline benchmark is westbound only.</p></div>
+  <div class="flow-layout">
+    <div class="share"><div class="share-num" id="westShare">—</div><span>WESTBOUND SHARE</span></div>
+    <div class="flow-content">
+      <div class="flow-row"><div><span>East → West</span><b id="westTeu">—</b></div><div class="track"><i id="westBar"></i></div></div>
+      <div class="flow-row"><div><span>West → East</span><b id="eastTeu">—</b></div><div class="track"><i id="eastBar"></i></div></div>
+      <p>Directional imbalance is not itself an empty-container ratio, but it is a useful indicator of backhaul pressure and therefore of potential rate asymmetry.</p>
+    </div>
+  </div>
+</section>
+
+<section id="route" class="section">
+  <div class="section-no">03 — CORRIDOR</div>
+  <div class="section-head"><h2>Rail → Caspian → rail.</h2><p>The MCI is designed around observable terminal-to-terminal freight products rather than a theoretical China–Europe distance.</p></div>
+  <div class="route-map">
+    <svg viewBox="0 0 1200 350" role="img" aria-label="Stylised map of the Middle Corridor">
+      <path class="continent" d="M20 208C155 112 314 153 420 130c144-32 231 30 345 10 154-27 271-76 415-46v225H20z"/>
+      <path class="route-line" d="M86 212c127-31 224-17 317 8 91 24 151 35 234 17 73-16 140-42 217-30 99 16 172-11 268-71"/>
+      <g><circle cx="86" cy="212"/><text x="86" y="187">XI'AN</text></g>
+      <g><circle cx="330" cy="207"/><text x="330" y="182">ALTYNKOL</text></g>
+      <g><circle cx="555" cy="244"/><text x="555" y="278">AKTAU</text></g>
+      <g><circle cx="703" cy="221"/><text x="703" y="196">ALAT</text></g>
+      <g><circle cx="858" cy="207"/><text x="858" y="242">TBILISI</text></g>
+      <g><circle cx="1122" cy="136"/><text x="1122" y="111">EUROPE</text></g>
+      <text class="sea" x="610" y="180">CASPIAN</text>
+    </svg>
+  </div>
+  <div class="fact-strip">
+    <div><span>Caspian monthly traffic</span><strong id="caspianTeu">—</strong><small id="caspianPeriod">—</small></div>
+    <div><span>Caspian YoY</span><strong id="caspianYoy">—</strong><small>Aktau → Alat</small></div>
+    <div><span>Reference train distance</span><strong id="distance">—</strong><small>Hefei → Tbilisi</small></div>
+  </div>
+</section>
+
+<section id="data" class="section ruled">
+  <div class="section-no">04 — REFERENCE LANES</div>
+  <div class="section-head"><h2>What is inside the MCI.</h2><p>Each fixing uses a standard 40-foot container (FEU). The midpoint of an observed quote range is used only where the source provides a range.</p></div>
+  <div class="lane-table-wrap"><table class="lane-table"><thead><tr><th>Code</th><th>Reference lane</th><th>Weight</th><th>Observed range</th><th>Midpoint</th><th>Period</th></tr></thead><tbody id="laneRows"></tbody></table></div>
+
+  <div class="section-head secondary"><h2>Intelligence log</h2><p>Latest verified datapoints currently carried by the dashboard.</p></div>
+  <div class="filters"><input id="searchBox" type="search" placeholder="Search metric, lane or source…"><select id="typeFilter"><option value="all">All metrics</option><option>Freight</option><option>Volume</option><option>Transit</option><option>Operations</option><option>Caspian</option></select></div>
+  <div class="lane-table-wrap"><table><thead><tr><th>Date</th><th>Metric</th><th>Lane / scope</th><th>Value</th><th>Source</th></tr></thead><tbody id="logRows"></tbody></table></div>
+</section>
+
+<section id="method" class="section method">
+  <div class="section-no">05 — METHODOLOGY v0.1</div>
+  <div class="section-head"><h2>Built like a benchmark, not a headline.</h2><p>The design follows the Baltic principle: define a standard transport product, select representative observable routes, assess those routes consistently, then combine them into a transparent basket.</p></div>
+  <div class="method-grid">
+    <article><span>01</span><h3>Reference shipment</h3><p>1 × 40' dry/HC container, general cargo, terminal-to-terminal, westbound, quoted in USD/FEU. Customs duties, VAT, cargo insurance, detention/demurrage and bespoke last-mile services are excluded unless a source makes them inseparable.</p></article>
+    <article><span>02</span><h3>Reference lanes</h3><p>MC1 Xi’an–Alat 40%, MC2 Xi’an–Tbilisi 30%, MC3 Xi’an–Türkiye 30%. These weights are provisional and will be reviewed when a deeper recurring quote set is available.</p></article>
+    <article><span>03</span><h3>Fixing discipline</h3><p>The site checks sources daily. It does not interpolate prices between published observations. No new market observation means no new fixing.</p></article>
+    <article><span>04</span><h3>Fail safe</h3><p>If scraping fails or a source changes layout, the bot keeps the previous verified value instead of replacing it with zero or an inferred number.</p></article>
+  </div>
+  <div class="formula"><span>MCI freight assessment</span><code>Σ (reference-lane midpoint × lane weight)</code><span>MCI index</span><code>100 × current basket / base-period basket</code></div>
+  <div class="sources">
+    <a href="https://georgiatoday.ge/tcrc-middle-corridor-shipping-costs-rise-as-china-europe-trade-shifts-routes/" target="_blank" rel="noreferrer">TCRC freight-rate reporting ↗</a>
+    <a href="https://report.az/en/amp/infrastructure/middle-corridor-freight-traffic-rises-11-in-january-august" target="_blank" rel="noreferrer">ADY Express traffic figures ↗</a>
+    <a href="https://astanatimes.com/2026/06/container-traffic-on-middle-corridor-more-than-doubles-in-may/" target="_blank" rel="noreferrer">Kazmortransflot Caspian traffic ↗</a>
+    <a href="https://mcmultimodal.com/en" target="_blank" rel="noreferrer">Middle Corridor Multimodal ↗</a>
+  </div>
+</section>
+</main>
+<footer><span>MCI — MIDDLE CORRIDOR INDEX</span><span>Experimental benchmark · public sources</span><span id="footerUpdated">—</span></footer>
+<script src="app.js"></script>
+</body>
+</html>
