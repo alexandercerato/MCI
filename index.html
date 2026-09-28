@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Middle Corridor Freight Monitor</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="hero">
+    <div class="wrap">
+      <div class="eyebrow">Middle Corridor Freight Monitor · v0.9</div>
+      <h1>MCFI-40 Core</h1>
+      <p class="lead">A fixed, ex-ante 40' HC freight basket through Xi'an → Altynkol → Aktau → Alat/Baku. The benchmark is the shipment definition, not January, June—or any historical month.</p>
+      <div class="hero-grid">
+        <div class="metric primary"><span>Latest MCFI-40 Core</span><strong id="mcfiValue">—</strong><small id="mcfiMeta">—</small></div>
+        <div class="metric"><span>Latest Baku market midpoint</span><strong id="bakuValue">—</strong><small id="bakuMeta">—</small></div>
+        <div class="metric"><span>Latest Turkey market midpoint</span><strong id="turkeyValue">—</strong><small id="turkeyMeta">—</small></div>
+        <div class="metric"><span>Latest public provider snapshot</span><strong id="providerValue">—</strong><small id="providerMeta">—</small></div>
+      </div>
+      <div class="status" id="refreshStatus">Loading data…</div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="card">
+      <div class="section-head"><div><h2>The abstract standard shipment</h2><p>Every historical month is priced against exactly the same theoretical transport contract. No month is used to define the benchmark.</p></div></div>
+      <div class="spec-grid" id="modelSpecs"></div>
+      <div class="formula"><strong id="formulaTitle">MCFI-40 Core =</strong> <span id="formulaText"></span></div>
+      <div class="route-cards" id="routeCards"></div>
+      <p class="footnote" id="modelNote"></p>
+    </section>
+
+    <section class="card">
+      <div class="section-head"><div><h2>Route through Aktau</h2><p>Both core assessments share the Xi'an–Altynkol–Aktau–Alat/Baku spine; the second continues west to Turkey.</p></div></div>
+      <div class="map-shell">
+        <svg class="route-map" viewBox="0 0 1100 330" role="img" aria-label="Middle Corridor schematic route">
+          <path class="route main" d="M80 165 C180 125 230 125 320 150 S465 200 560 165 S690 125 760 170" />
+          <path class="route branch" d="M760 170 C850 165 915 170 1010 170" />
+          <g class="node"><circle cx="80" cy="165" r="10"/><text x="80" y="140">Xi'an</text></g>
+          <g class="node"><circle cx="320" cy="150" r="10"/><text x="320" y="125">Altynkol</text></g>
+          <g class="node focus"><circle cx="560" cy="165" r="13"/><text x="560" y="135">Aktau</text></g>
+          <g class="node"><circle cx="760" cy="170" r="10"/><text x="760" y="140">Alat / Baku</text></g>
+          <g class="node"><circle cx="1010" cy="170" r="9"/><text x="1010" y="140">Ambarli / Mersin</text></g>
+        </svg>
+      </div>
+      <div class="inline-kpis" id="aktauKpis"></div>
+    </section>
+
+    <section class="card">
+      <div class="section-head"><div><h2>Historical overview</h2><p>Average values below use only months with a complete 2/2 core basket. They are not annual estimates for missing months.</p></div></div>
+      <div class="inline-kpis" id="yearKpis"></div>
+    </section>
+
+    <section class="card">
+      <div class="section-head split"><div><h2>Historical MCFI-40 Core</h2><p>No hidden interpolation. If either core lane is missing, that month is intentionally absent from the index.</p></div><select id="mcfiYearFilter" aria-label="Filter MCFI year"></select></div>
+      <div class="table-wrap"><table><thead><tr><th>Period</th><th>MCFI-40</th><th>Baku midpoint</th><th>Turkey midpoint</th><th>Coverage</th><th>Confidence</th><th>Basis</th></tr></thead><tbody id="mcfiTable"></tbody></table></div>
+    </section>
+
+    <section class="card">
+      <div class="section-head"><div><h2>Coverage gaps</h2><p>These are deliberately visible. A blank month is preferable to a fabricated historical price.</p></div></div>
+      <div class="table-wrap"><table><thead><tr><th>Period</th><th>Status</th><th>Why no MCFI</th></tr></thead><tbody id="gapsTable"></tbody></table></div>
+    </section>
+
+    <section class="card">
+      <div class="section-head split"><div><h2>Raw historical evidence: 2024–2026</h2><p>All recoverable observations are retained, including non-comparable tariffs and auxiliary routes. Only exact core market assessments enter MCFI.</p></div><div class="filters"><select id="yearFilter" aria-label="Filter year"></select><select id="eligibilityFilter" aria-label="Filter eligibility"><option value="all">All evidence</option><option value="primary">Core-market eligible</option><option value="context">Context / comparator only</option></select></div></div>
+      <div class="download-row"><a href="mcfi_history.csv" download>Download MCFI CSV</a><span>·</span><a href="raw_observations.csv" download>Download raw evidence CSV</a></div>
+      <div class="table-wrap"><table><thead><tr><th>Period / date</th><th>Route</th><th>Price</th><th>Scope</th><th>Grade</th><th>Use</th><th>Source</th></tr></thead><tbody id="historyTable"></tbody></table></div>
+    </section>
+
+    <section class="card">
+      <div class="section-head"><div><h2>External benchmark series</h2><p>Context only. Different container size or methodology means these series are never blended into MCFI-40.</p></div></div>
+      <div class="table-wrap compact"><table><thead><tr><th>Period</th><th>Maxmodal MSRI Middle 20'</th></tr></thead><tbody id="maxmodalTable"></tbody></table></div>
+      <p class="footnote" id="externalNote"></p>
+    </section>
+
+    <section class="card methodology">
+      <h2>Methodology rules</h2>
+      <ol>
+        <li><strong>Ex ante definition:</strong> one loaded 40' HC, general dry cargo, westbound from Xi'an through Altynkol–Aktau–Alat/Baku.</li>
+        <li><strong>Fixed basket:</strong> 50% Xi'an→Baku and 50% Xi'an→Mersin/Ambarli. The weights do not change month to month.</li>
+        <li><strong>Route assessment:</strong> midpoint of the comparable monthly market range; median midpoint if more than one same-grade market assessment exists.</li>
+        <li><strong>Publication threshold:</strong> both core routes must be observed. Single-carrier rate cards never fill a missing market lane.</li>
+        <li><strong>No backfilling:</strong> missing months remain missing. Older non-comparable corridor tariffs are preserved in raw evidence rather than normalized into fictional MCFI values.</li>
+      </ol>
+      <p class="footnote"><a id="methodologyLink" target="_blank" rel="noopener">Formal market-series reference</a></p>
+    </section>
+  </main>
+
+  <footer><div class="wrap">Middle Corridor Freight Monitor · the browser reloads data.json every 5 minutes. The included GitHub Action can refresh public provider snapshots without altering the historical MCFI unless a complete market assessment is available.</div></footer>
+  <script src="app.js"></script>
+</body>
+</html>
