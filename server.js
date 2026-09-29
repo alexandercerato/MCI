@@ -76,18 +76,24 @@ function connectAIS() {
     }
   });
 
-  ws.on('unexpected-response', (_req, res) => {
-    wsState = 'offline';
+ ws.on('unexpected-response', (_req, res) => {
+  wsState = 'offline';
 
-    console.error(
-      `[AIS] Handshake rejected: HTTP ${res.statusCode} ${res.statusMessage || ''}`
-    );
+  console.error(
+    `[AIS] Handshake rejected: HTTP ${res.statusCode} ${res.statusMessage || ''}`
+  );
 
-    res.on('data', chunk => {
-      console.error('[AIS] Response:', chunk.toString());
-    });
+  res.on('data', chunk => {
+    console.error('[AIS] Response:', chunk.toString());
   });
 
+  clearTimeout(reconnectTimer);
+
+  reconnectTimer = setTimeout(() => {
+    console.log('[AIS] Retrying connection after rejected handshake...');
+    connectAIS();
+  }, 15000);
+});
   ws.on('error', err => {
     wsState = 'offline';
     console.error('[AIS] WebSocket error:', err.message);
