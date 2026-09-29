@@ -12,6 +12,7 @@ const app = express();
 let wsState = API_KEY ? 'connecting' : 'not_configured';
 let lastMessageAt = null;
 let reconnectTimer = null;
+let activeWs = null;
 
 app.use(cors({
   origin: ALLOWED_ORIGIN === '*' ? true : ALLOWED_ORIGIN
@@ -24,15 +25,34 @@ function connectAIS() {
     return;
   }
 
+  // Evita più connessioni AIS contemporanee nello stesso processo
+  if (
+    activeWs &&
+    (
+      activeWs.readyState === WebSocket.OPEN ||
+      activeWs.readyState === WebSocket.CONNECTING
+    )
+  ) {
+    console.log('[AIS] Connection already active or connecting. Skipping.');
+    return;
+  }
+
+  if (reconnectTimer) {
+    clearTimeout(reconnectTimer);
+    reconnectTimer = null;
+  }
+
   wsState = 'connecting';
   console.log('[AIS] Connecting to AISStream...');
 
-  const ws = new WebSocket('wss://stream.aisstream.io/v0/stream');
+  activeWs = new WebSocket('wss://stream.aisstream.io/v0/stream');
 
-  ws.on('open', () => {
-    console.log('[AIS] WebSocket opened');
+  activeWs.on('open', () => {
+    wsState = 'subscribing';
 
-    const subscription = {
+    console.log('[AIS] WebSocket opened. Sending subscription...');
+
+    activeWs.send(JSON.stringify({
       APIKey: API_KEY,
       BoundingBoxes: [
         [
@@ -47,17 +67,15 @@ function connectAIS() {
         'ShipStaticData',
         'StaticDataReport'
       ]
-    };
-
-    console.log('[AIS] Sending subscription...');
-    ws.send(JSON.stringify(subscription));
+    }));
   });
 
-  ws.on('message', raw => {
+  activeWs.on('message', raw => {
     try {
       const event = JSON.parse(raw.toString());
 
       lastMessageAt = new Date().toISOString();
+      wsState = 'live';
 
       console.log(
         '[AIS] Message received:',
@@ -65,53 +83,66 @@ function connectAIS() {
       );
 
       if (event.MessageType === 'SubscriptionConfirmation') {
-        wsState = 'live';
         console.log('[AIS] Subscription confirmed');
-      } else {
-        wsState = 'live';
+      }
+
+      if (typeof handleEvent === 'function') {
+        handleEvent(event);
       }
 
     } catch (err) {
-      console.error('[AIS] JSON parse error:', err.message);
+      console.error('[AIS] Message parse error:', err.message);
     }
   });
 
- ws.on('unexpected-response', (_req, res) => {
-  wsState = 'offline';
+  activeWs.on('unexpected-response', (_req, res) => {
+    wsState = 'offline';
 
-  console.error(
-    `[AIS] Handshake rejected: HTTP ${res.statusCode} ${res.statusMessage || ''}`
-  );
+    console.error(
+      `[AIS] Handshake rejected: HTTP ${res.statusCode} ${res.statusMessage || ''}`
+    );
 
-  res.on('data', chunk => {
-    console.error('[AIS] Response:', chunk.toString());
+    res.on('data', chunk => {
+      console.error('[AIS] Response:', chunk.toString());
+    });
+
+    activeWs = null;
+
+    // Con errore 429 aspettiamo 5 minuti prima di riprovare
+    const delay =
+      res.statusCode === 429
+        ? 5 * 60 * 1000
+        : 60 * 1000;
+
+    console.log(
+      `[AIS] Next connection attempt in ${Math.round(delay / 60000)} minute(s)`
+    );
+
+    reconnectTimer = setTimeout(() => {
+      reconnectTimer = null;
+      connectAIS();
+    }, delay);
   });
 
-  clearTimeout(reconnectTimer);
-
-  reconnectTimer = setTimeout(() => {
-    console.log('[AIS] Retrying connection after rejected handshake...');
-    connectAIS();
-  }, 15000);
-});
-  ws.on('error', err => {
+  activeWs.on('error', err => {
     wsState = 'offline';
     console.error('[AIS] WebSocket error:', err.message);
   });
 
-  ws.on('close', (code, reason) => {
+  activeWs.on('close', (code, reason) => {
     wsState = 'offline';
+    activeWs = null;
 
-    console.error(
+    console.log(
       `[AIS] Connection closed. code=${code} reason=${reason.toString()}`
     );
 
-    clearTimeout(reconnectTimer);
-
-    reconnectTimer = setTimeout(() => {
-      console.log('[AIS] Attempting reconnection...');
-      connectAIS();
-    }, 5000);
+    if (!reconnectTimer) {
+      reconnectTimer = setTimeout(() => {
+        reconnectTimer = null;
+        connectAIS();
+      }, 60 * 1000);
+    }
   });
 }
 
