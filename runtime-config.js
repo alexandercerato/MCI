@@ -1,3 +1,3 @@
 window.MCFM_CONFIG = {
-  aisApiBase: "https://IL-TUO-DOMINIO-RAILWAY.up.railway.app"
+  aisApiBase: "https://mcfi-caspian-ais-production.up.railway.app"
 };
