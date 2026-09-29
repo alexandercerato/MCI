@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const PORT = Number(process.env.PORT || 8787);
-const API_KEY = process.env.AISSTREAM_API_KEY || '';
+const OPENWATERS_API_KEY = process.env.OPENWATERS_API_KEY || '';
 const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || '*';
 const DATA_DIR = path.resolve(process.env.DATA_DIR || './data');
 
@@ -38,19 +38,16 @@ const PORTS = {
     lon: 51.17,
     radiusNm: 15
   },
-
   Kuryk: {
     lat: 43.18,
     lon: 51.66,
     radiusNm: 15
   },
-
   Alat: {
     lat: 39.95,
     lon: 49.39,
     radiusNm: 15
   },
-
   Baku: {
     lat: 40.30,
     lon: 49.92,
@@ -58,53 +55,34 @@ const PORTS = {
   }
 };
 
-const EAST_ZONES = new Set([
-  'Aktau',
-  'Kuryk'
-]);
+const EAST_ZONES = new Set(['Aktau', 'Kuryk']);
+const WEST_ZONES = new Set(['Alat', 'Baku']);
 
-const WEST_ZONES = new Set([
-  'Alat',
-  'Baku'
-]);
+const STALE_MS = 30 * 60 * 1000;
+const HARD_TTL_MS = 2 * 60 * 60 * 1000;
+const MAX_PUBLIC_VESSELS = 100;
 
-const STALE_MS =
-  30 * 60 * 1000;
+fs.mkdirSync(DATA_DIR, { recursive: true });
 
-const HARD_TTL_MS =
-  2 * 60 * 60 * 1000;
-
-const MAX_PUBLIC_VESSELS = 50;
-
-fs.mkdirSync(
+const crossingFile = path.join(
   DATA_DIR,
-  { recursive: true }
+  'crossings.json'
 );
-
-const crossingFile =
-  path.join(
-    DATA_DIR,
-    'crossings.json'
-  );
 
 function readJson(file, fallback) {
   try {
     return JSON.parse(
-      fs.readFileSync(
-        file,
-        'utf8'
-      )
+      fs.readFileSync(file, 'utf8')
     );
   } catch {
     return fallback;
   }
 }
 
-let crossings =
-  readJson(
-    crossingFile,
-    []
-  );
+let crossings = readJson(
+  crossingFile,
+  []
+);
 
 if (!Array.isArray(crossings)) {
   crossings = [];
@@ -117,12 +95,12 @@ const trackerSince =
   new Date().toISOString();
 
 let wsState =
-  API_KEY
+  OPENWATERS_API_KEY
     ? 'connecting'
     : 'not_configured';
 
 let lastMessageAt = null;
-
+let lastPositionAt = null;
 let reconnectTimer = null;
 let activeWs = null;
 
@@ -181,9 +159,7 @@ function distanceNm(
   return (
     2 *
     R *
-    Math.asin(
-      Math.sqrt(q)
-    )
+    Math.asin(Math.sqrt(q))
   );
 }
 
@@ -213,12 +189,14 @@ function zoneFor(lat, lon) {
 ============================================================ */
 
 function validSog(value) {
-  const n = Number(value);
+  if (
+    value === null ||
+    value === undefined
+  ) {
+    return null;
+  }
 
-  /*
-    AIS:
-    102.3 = speed not available.
-  */
+  const n = Number(value);
 
   if (
     !Number.isFinite(n) ||
@@ -232,12 +210,14 @@ function validSog(value) {
 }
 
 function validCog(value) {
-  const n = Number(value);
+  if (
+    value === null ||
+    value === undefined
+  ) {
+    return null;
+  }
 
-  /*
-    AIS:
-    360 = COG not available.
-  */
+  const n = Number(value);
 
   if (
     !Number.isFinite(n) ||
@@ -251,12 +231,14 @@ function validCog(value) {
 }
 
 function validHeading(value) {
-  const n = Number(value);
+  if (
+    value === null ||
+    value === undefined
+  ) {
+    return null;
+  }
 
-  /*
-    AIS:
-    511 = heading not available.
-  */
+  const n = Number(value);
 
   if (
     !Number.isFinite(n) ||
@@ -269,30 +251,13 @@ function validHeading(value) {
   return n;
 }
 
-function normalizeCourse(cog) {
-  const n =
-    validCog(cog);
-
-  if (n === null) {
-    return null;
-  }
-
-  return (
-    (n % 360) + 360
-  ) % 360;
-}
-
 
 /* ============================================================
    DIRECTION
 ============================================================ */
 
-function courseDirection(
-  cog,
-  sog
-) {
-  const speed =
-    validSog(sog);
+function courseDirection(cog, sog) {
+  const speed = validSog(sog);
 
   if (
     speed === null ||
@@ -301,8 +266,7 @@ function courseDirection(
     return 'Stationary';
   }
 
-  const c =
-    normalizeCourse(cog);
+  const c = validCog(cog);
 
   if (c === null) {
     return 'Underway';
@@ -335,14 +299,14 @@ function corridorCandidate(v) {
     return true;
   }
 
-  const dest =
-    (
+  const destination =
+    String(
       v.destination || ''
     ).toUpperCase();
 
   if (
     /AKTAU|KURYK|ALAT|BAKU|BAKI/
-      .test(dest)
+      .test(destination)
   ) {
     return true;
   }
@@ -382,9 +346,7 @@ function median(nums) {
   const values =
     nums
       .filter(Number.isFinite)
-      .sort(
-        (a, b) => a - b
-      );
+      .sort((a, b) => a - b);
 
   if (!values.length) {
     return null;
@@ -447,11 +409,6 @@ function inferCrossing(
         start.at
       ) / 3600000;
 
-    /*
-      Remove obviously invalid
-      crossing durations.
-    */
-
     if (
       hours >= 4 &&
       hours <= 72
@@ -485,7 +442,7 @@ function inferCrossing(
       persistCrossings();
 
       console.log(
-        `[CROSSING] ${mmsi}: ${start.zone} -> ${newZone} (${hours.toFixed(2)} h)`
+        `[CROSSING] ${mmsi}: ${start.zone} -> ${newZone} (${hours.toFixed(2)}h)`
       );
     }
 
@@ -504,105 +461,63 @@ function inferCrossing(
 
 
 /* ============================================================
-   AIS PARSING
+   OPEN WATERS EVENT PARSER
 ============================================================ */
 
-function parsePosition(event) {
-  const meta =
-    event?.MetaData || {};
-
-  const body =
-    event?.Message?.[
-      event.MessageType
-    ] || {};
-
-  const lat =
-    Number(
-      meta.Latitude ??
-      body.Latitude
-    );
-
-  const lon =
-    Number(
-      meta.Longitude ??
-      body.Longitude
-    );
-
-  if (
-    !Number.isFinite(lat) ||
-    !Number.isFinite(lon)
-  ) {
-    return null;
+function handleOpenWatersEvent(event) {
+  if (!event) {
+    return;
   }
 
-  if (
-    lat < -90 ||
-    lat > 90 ||
-    lon < -180 ||
-    lon > 180
-  ) {
-    return null;
+  /*
+    Initial connection information.
+  */
+
+  if (event.type === 'welcome') {
+    wsState = 'subscribing';
+
+    console.log(
+      '[OPENWATERS] Welcome received'
+    );
+
+    if (event.limits) {
+      console.log(
+        '[OPENWATERS] Limits:',
+        JSON.stringify(event.limits)
+      );
+    }
+
+    return;
   }
+
+  /*
+    Open Waters reports subscription / protocol errors
+    as an error frame.
+  */
+
+  if (event.type === 'error') {
+    wsState = 'error';
+
+    console.error(
+      '[OPENWATERS] Error:',
+      event.error || event
+    );
+
+    return;
+  }
+
+  if (event.type !== 'event') {
+    return;
+  }
+
+  lastMessageAt =
+    new Date().toISOString();
+
+  wsState = 'live';
 
   const mmsi =
     String(
-      meta.MMSI ??
-      body.UserID ??
-      ''
-    );
-
-  if (!mmsi) {
-    return null;
-  }
-
-  return {
-    mmsi,
-
-    name:
-      String(
-        meta.ShipName || ''
-      ).trim() || null,
-
-    lat,
-
-    lon,
-
-    sog:
-      validSog(
-        body.Sog
-      ),
-
-    cog:
-      validCog(
-        body.Cog
-      ),
-
-    heading:
-      validHeading(
-        body.TrueHeading
-      )
-  };
-}
-
-
-/* ============================================================
-   STATIC SHIP DATA
-============================================================ */
-
-function applyStatic(event) {
-  const meta =
-    event?.MetaData || {};
-
-  const body =
-    event?.Message?.[
-      event.MessageType
-    ] || {};
-
-  const mmsi =
-    String(
-      meta.MMSI ??
-      body.UserID ??
-      ''
+      event.mmsi || ''
     );
 
   if (!mmsi) {
@@ -614,140 +529,160 @@ function applyStatic(event) {
       mmsi
     };
 
-  const destination =
-    body.Destination ||
-    body.DestinationName ||
-    old.destination ||
+  const body =
+    event.message || {};
+
+  /*
+    Static information can arrive separately
+    from position information.
+  */
+
+  const possibleName =
+    body.Name ??
+    body.ShipName ??
+    body.VesselName ??
+    old.name ??
     null;
 
-  vessels.set(
-    mmsi,
-    {
-      ...old,
+  const possibleDestination =
+    body.Destination ??
+    body.DestinationName ??
+    old.destination ??
+    null;
 
-      name:
-        String(
-          meta.ShipName ||
-          body.Name ||
-          old.name ||
-          ''
-        ).trim() || null,
-
-      destination:
-        destination
-          ? String(
-              destination
-            ).trim()
-          : null,
-
-      imo:
-        body.ImoNumber ||
-        body.IMO ||
-        old.imo ||
-        null,
-
-      call_sign:
-        body.CallSign ||
-        old.call_sign ||
-        null,
-
-      ship_type:
-        body.Type ??
-        body.ShipType ??
-        old.ship_type ??
-        null
-    }
-  );
-}
-
-
-/* ============================================================
-   EVENT HANDLER
-============================================================ */
-
-function handleEvent(event) {
-  lastMessageAt =
-    new Date().toISOString();
-
-  if (
-    event?.MessageType ===
-    'SubscriptionConfirmation'
-  ) {
-    wsState = 'live';
-
-    console.log(
-      '[AIS] Subscription confirmed'
-    );
-
-    return;
-  }
-
-  if (
-    event?.MessageType ===
-      'ShipStaticData' ||
-    event?.MessageType ===
-      'StaticDataReport'
-  ) {
-    applyStatic(event);
-    return;
-  }
-
-  if (
-    ![
-      'PositionReport',
-      'StandardClassBPositionReport',
-      'ExtendedClassBPositionReport',
-      'LongRangeAisBroadcastMessage'
-    ].includes(
-      event?.MessageType
-    )
-  ) {
-    return;
-  }
-
-  const pos =
-    parsePosition(event);
-
-  if (!pos) {
-    return;
-  }
-
-  const now =
-    Date.now();
-
-  const old =
-    vessels.get(
-      pos.mmsi
-    ) || {};
-
-  const newZone =
-    zoneFor(
-      pos.lat,
-      pos.lon
-    );
-
-  const prevZone =
-    old.zone || null;
-
-  inferCrossing(
-    pos.mmsi,
-    prevZone,
-    newZone,
-    now
-  );
+  const possibleType =
+    body.Type ??
+    body.ShipType ??
+    old.ship_type ??
+    null;
 
   const next = {
     ...old,
-    ...pos,
 
-    zone:
-      newZone,
+    mmsi,
 
-    last_seen:
-      new Date(
-        now
-      ).toISOString()
+    name:
+      possibleName
+        ? String(
+            possibleName
+          ).trim()
+        : null,
+
+    destination:
+      possibleDestination
+        ? String(
+            possibleDestination
+          ).trim()
+        : null,
+
+    ship_type:
+      possibleType,
+
+    source:
+      event.source ||
+      old.source ||
+      null,
+
+    station:
+      event.station ||
+      old.station ||
+      null,
+
+    msg_type:
+      event.msg_type ||
+      old.msg_type ||
+      null
   };
+
+  /*
+    Open Waters includes lat/lon on an event whenever
+    the vessel has a known current position.
+  */
+
+  const lat =
+    Number(event.lat);
+
+  const lon =
+    Number(event.lon);
+
+  if (
+    Number.isFinite(lat) &&
+    Number.isFinite(lon) &&
+    lat >= -90 &&
+    lat <= 90 &&
+    lon >= -180 &&
+    lon <= 180
+  ) {
+    next.lat = lat;
+    next.lon = lon;
+
+    lastPositionAt =
+      new Date().toISOString();
+
+    /*
+      Snapshot events retain their original time.
+      Prefer that over the moment our server received them.
+    */
+
+    next.last_seen =
+      event.time ||
+      new Date().toISOString();
+
+    next.synthesized =
+      Boolean(event.synthesized);
+
+    const oldZone =
+      old.zone || null;
+
+    const newZone =
+      zoneFor(
+        lat,
+        lon
+      );
+
+    next.zone =
+      newZone;
+
+    inferCrossing(
+      mmsi,
+      oldZone,
+      newZone,
+      new Date(
+        next.last_seen
+      ).getTime()
+    );
+  }
+
+  /*
+    go-ais decoded fields.
+  */
+
+  if (
+    body.Sog !== undefined
+  ) {
+    next.sog =
+      validSog(
+        body.Sog
+      );
+  }
+
+  if (
+    body.Cog !== undefined
+  ) {
+    next.cog =
+      validCog(
+        body.Cog
+      );
+  }
+
+  if (
+    body.TrueHeading !== undefined
+  ) {
+    next.heading =
+      validHeading(
+        body.TrueHeading
+      );
+  }
 
   next.direction =
     courseDirection(
@@ -759,7 +694,7 @@ function handleEvent(event) {
     corridorCandidate(next);
 
   vessels.set(
-    pos.mmsi,
+    mmsi,
     next
   );
 }
@@ -791,25 +726,23 @@ function cleanup() {
 
 
 /* ============================================================
-   RECONNECTION
+   RECONNECT
 ============================================================ */
 
-function scheduleReconnect(
-  delay
-) {
+function scheduleReconnect(delay) {
   if (reconnectTimer) {
     return;
   }
 
   console.log(
-    `[AIS] Next connection attempt in ${Math.round(delay / 60000)} minute(s)`
+    `[OPENWATERS] Next connection attempt in ${Math.round(delay / 1000)} seconds`
   );
 
   reconnectTimer =
     setTimeout(
       () => {
         reconnectTimer = null;
-        connectAIS();
+        connectOpenWaters();
       },
       delay
     );
@@ -817,16 +750,16 @@ function scheduleReconnect(
 
 
 /* ============================================================
-   AISSTREAM CONNECTION
+   OPEN WATERS CONNECTION
 ============================================================ */
 
-function connectAIS() {
-  if (!API_KEY) {
+function connectOpenWaters() {
+  if (!OPENWATERS_API_KEY) {
     wsState =
       'not_configured';
 
     console.error(
-      '[AIS] AISSTREAM_API_KEY missing'
+      '[OPENWATERS] OPENWATERS_API_KEY missing'
     );
 
     return;
@@ -841,10 +774,6 @@ function connectAIS() {
         WebSocket.CONNECTING
     )
   ) {
-    console.log(
-      '[AIS] Existing connection active; skipping duplicate connection'
-    );
-
     return;
   }
 
@@ -852,12 +781,19 @@ function connectAIS() {
     'connecting';
 
   console.log(
-    '[AIS] Connecting to AISStream...'
+    '[OPENWATERS] Connecting...'
   );
+
+  const url =
+    'wss://ais.openwaters.io/v1/stream' +
+    '?key=' +
+    encodeURIComponent(
+      OPENWATERS_API_KEY
+    );
 
   const ws =
     new WebSocket(
-      'wss://stream.aisstream.io/v0/stream',
+      url,
       {
         perMessageDeflate: true
       }
@@ -872,34 +808,28 @@ function connectAIS() {
         'subscribing';
 
       console.log(
-        '[AIS] WebSocket opened. Sending subscription...'
+        '[OPENWATERS] WebSocket opened'
       );
 
       const subscription = {
-        APIKey:
-          API_KEY,
+        type:
+          'subscribe',
 
-        BoundingBoxes: [
+        bbox: [
           [
-            [
-              BOUNDS.south,
-              BOUNDS.west
-            ],
-            [
-              BOUNDS.north,
-              BOUNDS.east
-            ]
+            BOUNDS.south,
+            BOUNDS.west,
+            BOUNDS.north,
+            BOUNDS.east
           ]
         ],
 
-        FilterMessageTypes: [
-          'PositionReport',
-          'StandardClassBPositionReport',
-          'ExtendedClassBPositionReport',
-          'LongRangeAisBroadcastMessage',
-          'ShipStaticData',
-          'StaticDataReport'
-        ]
+        /*
+          Immediately replay last-known vessel state
+          from the previous 30 minutes.
+        */
+        snapshot:
+          true
       };
 
       ws.send(
@@ -909,7 +839,7 @@ function connectAIS() {
       );
 
       console.log(
-        `[AIS] Subscription bounds: ${BOUNDS.south},${BOUNDS.west} -> ${BOUNDS.north},${BOUNDS.east}`
+        `[OPENWATERS] Subscription sent: ${BOUNDS.south},${BOUNDS.west},${BOUNDS.north},${BOUNDS.east}`
       );
     }
   );
@@ -925,11 +855,13 @@ function connectAIS() {
             )
           );
 
-        handleEvent(event);
+        handleOpenWatersEvent(
+          event
+        );
 
       } catch (err) {
         console.error(
-          '[AIS] Parse error:',
+          '[OPENWATERS] Parse error:',
           err.message
         );
       }
@@ -943,14 +875,14 @@ function connectAIS() {
         'offline';
 
       console.error(
-        `[AIS] Handshake rejected: HTTP ${res.statusCode}`
+        `[OPENWATERS] HTTP ${res.statusCode} ${res.statusMessage || ''}`
       );
 
       res.on(
         'data',
         chunk => {
           console.error(
-            '[AIS] Response:',
+            '[OPENWATERS] Response:',
             chunk.toString()
           );
         }
@@ -964,8 +896,8 @@ function connectAIS() {
 
       const delay =
         res.statusCode === 429
-          ? 5 * 60 * 1000
-          : 60 * 1000;
+          ? 60 * 1000
+          : 30 * 1000;
 
       scheduleReconnect(
         delay
@@ -980,7 +912,7 @@ function connectAIS() {
         'offline';
 
       console.error(
-        '[AIS] WebSocket error:',
+        '[OPENWATERS] WebSocket error:',
         err.message
       );
     }
@@ -1002,11 +934,11 @@ function connectAIS() {
       }
 
       console.log(
-        `[AIS] Connection closed. code=${code} reason=${reason.toString()}`
+        `[OPENWATERS] Connection closed: ${code} ${reason.toString()}`
       );
 
       scheduleReconnect(
-        60 * 1000
+        30 * 1000
       );
     }
   );
@@ -1073,7 +1005,9 @@ function publicSnapshot() {
       recent.filter(
         v => {
           const speed =
-            validSog(v.sog);
+            validSog(
+              v.sog
+            );
 
           return (
             speed !== null &&
@@ -1085,29 +1019,25 @@ function publicSnapshot() {
     near_aktau:
       recent.filter(
         v =>
-          v.zone ===
-          'Aktau'
+          v.zone === 'Aktau'
       ).length,
 
     near_kuryk:
       recent.filter(
         v =>
-          v.zone ===
-          'Kuryk'
+          v.zone === 'Kuryk'
       ).length,
 
     near_alat:
       recent.filter(
         v =>
-          v.zone ===
-          'Alat'
+          v.zone === 'Alat'
       ).length,
 
     near_baku:
       recent.filter(
         v =>
-          v.zone ===
-          'Baku'
+          v.zone === 'Baku'
       ).length,
 
     westbound:
@@ -1136,8 +1066,7 @@ function publicSnapshot() {
       c =>
         new Date(
           c.arrived_at
-        ).getTime() >=
-        cutoff7
+        ).getTime() >= cutoff7
     );
 
   return {
@@ -1145,10 +1074,13 @@ function publicSnapshot() {
       wsState,
 
     provider:
-      'AISStream',
+      'Open Waters',
 
     updated_at:
       lastMessageAt,
+
+    last_position_at:
+      lastPositionAt,
 
     tracker_since:
       trackerSince,
@@ -1166,9 +1098,7 @@ function publicSnapshot() {
         median(
           crossings7d.map(
             c =>
-              Number(
-                c.hours
-              )
+              Number(c.hours)
           )
         )
     },
@@ -1221,6 +1151,14 @@ function publicSnapshot() {
               v.destination ||
               null,
 
+            ship_type:
+              v.ship_type ??
+              null,
+
+            source:
+              v.source ||
+              null,
+
             last_seen:
               v.last_seen
           })
@@ -1254,7 +1192,7 @@ app.get(
     res
       .type('text')
       .send(
-        'MCFI Caspian AIS backend'
+        'MCFI Caspian AIS backend — Open Waters'
       );
   }
 );
@@ -1269,10 +1207,13 @@ app.get(
         wsState,
 
       provider:
-        'AISStream',
+        'Open Waters',
 
       last_message_at:
         lastMessageAt,
+
+      last_position_at:
+        lastPositionAt,
 
       bounds:
         BOUNDS,
@@ -1306,20 +1247,20 @@ app.listen(
   PORT,
   () => {
     console.log(
-      `MCFI AIS backend listening on :${PORT}`
+      `MCFI Open Waters backend listening on :${PORT}`
     );
 
     console.log(
-      `[AIS] Configured bounds: ${BOUNDS.south},${BOUNDS.west},${BOUNDS.north},${BOUNDS.east}`
+      `[OPENWATERS] Bounds: ${BOUNDS.south},${BOUNDS.west},${BOUNDS.north},${BOUNDS.east}`
     );
 
-    connectAIS();
+    connectOpenWaters();
   }
 );
 
 
 /* ============================================================
-   PERIODIC CLEANUP
+   CLEANUP
 ============================================================ */
 
 setInterval(
