@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: mcfi-caspian-ais
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: AISSTREAM_API_KEY
+        sync: false
+      - key: ALLOWED_ORIGIN
+        sync: false
+      - key: CASPIAN_BOUNDS
+        value: 39.0,48.0,45.2,53.0
+      - key: DATA_DIR
+        value: ./data
