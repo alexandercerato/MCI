@@ -1,3 +1,3 @@
 window.MCFM_CONFIG = {
-  aisApiBase: ""
+  aisApiBase: "https://IL-TUO-DOMINIO-RAILWAY.up.railway.app"
 };
