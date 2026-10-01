@@ -771,3 +771,23 @@ footer{border-top:1px solid var(--line);padding:22px 0 30px;color:var(--muted2);
   .aktau-official-berth-marker strong{display:none}
   .aktau-berth-overlay-legend{font-size:8px;max-width:75%}
 }
+
+/* Aktau statistics-only view */
+.aktau-stats-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:8px;
+  margin-bottom:10px
+}
+.aktau-vessel-board-main{margin-top:0}
+.aktau-vessel-board-main .aktau-vessel-grid{
+  grid-template-columns:repeat(4,minmax(0,1fr))
+}
+@media(max-width:900px){
+  .aktau-stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .aktau-vessel-board-main .aktau-vessel-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:560px){
+  .aktau-stats-grid{grid-template-columns:1fr}
+  .aktau-vessel-board-main .aktau-vessel-grid{grid-template-columns:1fr}
+}
