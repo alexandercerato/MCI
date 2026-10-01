@@ -535,3 +535,108 @@ footer{border-top:1px solid var(--line);padding:22px 0 30px;color:var(--muted2);
   .ops-vessel-label{display:none}
   .ops-vessel-marker{min-width:26px}
 }
+
+
+/* Route map v3 — geography-aware interactive corridor */
+.route-map-toolbar{
+  position:absolute;
+  z-index:520;
+  top:12px;
+  left:12px;
+  display:flex;
+  gap:5px;
+  flex-wrap:wrap;
+  max-width:calc(100% - 90px)
+}
+.route-map-toolbar button{
+  appearance:none;
+  border:1px solid #314252;
+  background:rgba(9,16,24,.92);
+  color:#94a5b5;
+  padding:7px 9px;
+  font:800 9px/1 Inter,ui-sans-serif,system-ui,sans-serif;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  cursor:pointer;
+  border-radius:3px;
+  box-shadow:0 4px 14px rgba(0,0,0,.15)
+}
+.route-map-toolbar button:hover{
+  color:#e9f1f6;
+  border-color:#4d6579
+}
+.route-map-toolbar button.active{
+  color:#eaf7f7;
+  border-color:rgba(99,198,191,.65);
+  background:rgba(23,69,73,.92)
+}
+.route-leaflet{height:540px}
+.route-leaflet .leaflet-overlay-pane svg path.route-path{
+  transition:stroke-width .16s ease,opacity .16s ease,filter .16s ease
+}
+.route-leaflet .route-path-sea,
+.route-leaflet .route-path-blacksea-sea{
+  animation:routeDash 18s linear infinite
+}
+@keyframes routeDash{to{stroke-dashoffset:-120}}
+.route-leaflet .route-node-marker{
+  transition:filter .16s ease
+}
+.route-map-note{
+  max-width:520px;
+  backdrop-filter:blur(6px)
+}
+.route-cards article{
+  transition:transform .16s ease,border-color .16s ease,background .16s ease
+}
+.route-cards article:hover{
+  transform:translateY(-2px);
+  border-color:#34495b;
+  background:#0d1720
+}
+@media(max-width:900px){
+  .route-leaflet{height:480px}
+  .route-map-toolbar{max-width:calc(100% - 24px);right:12px}
+}
+@media(max-width:560px){
+  .route-leaflet{height:430px}
+  .route-map-toolbar{
+    position:relative;
+    top:auto;left:auto;right:auto;
+    padding:8px;
+    max-width:none;
+    background:#091018;
+    border-bottom:1px solid var(--line)
+  }
+  .route-map-toolbar button{flex:1 1 calc(50% - 5px)}
+  .route-map-note{left:8px;right:8px;bottom:8px;max-width:none}
+}
+
+/* Aktau-only VesselFinder panel */
+.aktau-map-badge{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:4px
+}
+.aktau-map-badge span{
+  color:#79caa3;
+  border:1px solid rgba(121,202,163,.38);
+  padding:5px 8px;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.1em
+}
+.aktau-map-badge small{color:var(--muted2);font-size:9px;text-transform:uppercase;letter-spacing:.06em}
+.aktau-vf-card{min-height:552px}
+.aktau-vf-map{height:500px}
+.aktau-vf-map iframe{height:500px!important}
+@media(max-width:900px){
+  .aktau-vf-card{min-height:492px}
+  .aktau-vf-map,.aktau-vf-map iframe{height:440px!important}
+}
+@media(max-width:560px){
+  .aktau-map-badge{align-items:flex-start}
+  .aktau-vf-card{min-height:432px}
+  .aktau-vf-map,.aktau-vf-map iframe{height:380px!important}
+}
