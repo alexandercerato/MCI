@@ -401,40 +401,50 @@ function renderAIS(data){
   if(b && [b.south,b.west,b.north,b.east].every(Number.isFinite) && b.north>b.south && b.east>b.west){
     AIS_BOUNDS={south:b.south,west:b.west,north:b.north,east:b.east};
   }
-  const live=data?.status==='live';
-  setAisStatus(live?'live':(data?.status==='connecting'?'connecting':'offline'), live?'LIVE':(data?.status==='connecting'?'CONNECTING':'OFFLINE'), data?.updated_at?`Updated ${formatAge(data.updated_at)}`:'—');
-  aisProvider.textContent=data?.provider||'AISStream';
+
+  const mode=data?.display_mode || 'empty';
+  const connected=data?.status==='live';
+  const connecting=data?.status==='connecting'||data?.status==='subscribing';
+  const statusKind=mode==='last_known'?'stale':(connected?'live':(connecting?'connecting':'offline'));
+  const statusLabel=mode==='last_known'?'LAST KNOWN':(connected?'LIVE':(connecting?'CONNECTING':'OFFLINE'));
+  setAisStatus(statusKind,statusLabel,data?.updated_at?`Updated ${formatAge(data.updated_at)}`:'—');
+
+  aisProvider.textContent=data?.provider||'Open Waters';
   const s=data?.summary||{};
-  aisVessels.textContent=s.vessels_30m ?? '—';
+  aisVessels.textContent=s.vessels_display ?? s.vessels_30m ?? '—';
   aisUnderway.textContent=s.underway ?? '—';
-  aisEastPorts.textContent=((s.near_aktau||0)+(s.near_kuryk||0)) || (live?0:'—');
-  aisWestPorts.textContent=((s.near_alat||0)+(s.near_baku||0)) || (live?0:'—');
+  aisEastPorts.textContent=((s.near_aktau||0)+(s.near_kuryk||0)) || ((connected||mode==='last_known')?0:'—');
+  aisWestPorts.textContent=((s.near_alat||0)+(s.near_baku||0)) || ((connected||mode==='last_known')?0:'—');
   aisWestbound.textContent=s.westbound ?? '—';
   aisEastbound.textContent=s.eastbound ?? '—';
+
+  if(window.aisWindowLabel) aisWindowLabel.textContent=mode==='last_known'?'last known · ≤24 h':'last 30 min';
+  if(window.aisWindow) aisWindow.textContent=mode==='last_known'?'24 h last-known window':'30 min live window';
 
   const existing=[...aisRadar.querySelectorAll('.vessel-dot')]; existing.forEach(x=>x.remove());
   const vessels=(data?.vessels||[]).filter(v=>Number.isFinite(v.lat)&&Number.isFinite(v.lon));
   aisEmpty.style.display=vessels.length?'none':'flex';
-  aisEmpty.textContent=live?'No recent AIS positions in the selected sector.':'Connect the AIS backend to start receiving live positions.';
+  aisEmpty.textContent=connected?'No AIS positions reported in the selected Caspian sector during the last 24 hours.':'AIS backend unavailable.';
+
   vessels.forEach(v=>{
     const p=radarPosition(v.lat,v.lon), dot=document.createElement('div');
-    dot.className='vessel-dot'+((v.sog||0)<1.5?' stationary':'')+(v.corridor_candidate?' corridor':'');
+    dot.className='vessel-dot'+((v.sog||0)<1.5?' stationary':'')+(v.corridor_candidate?' corridor':'')+(v.stale?' stale':'');
     dot.style.left=`${p.x}%`; dot.style.top=`${p.y}%`;
-    dot.dataset.label=`${v.name||v.mmsi} · ${(v.sog||0).toFixed(1)} kn`;
+    dot.dataset.label=`${v.name||v.mmsi} · ${Number(v.sog||0).toFixed(1)} kn · ${formatAge(v.last_seen)}`;
+    dot.title=dot.dataset.label;
     aisRadar.appendChild(dot);
   });
 
-  vesselList.innerHTML=vessels.length?vessels.slice(0,18).map(v=>`<div class="vessel-row">
-    <div><div class="vessel-name">${escapeHTML(v.name||`MMSI ${v.mmsi}`)}</div><div class="vessel-meta"><span>${escapeHTML(v.direction||'AIS')}</span>${v.zone?`<span>${escapeHTML(v.zone)}</span>`:''}${v.destination?`<span>${escapeHTML(v.destination)}</span>`:''}</div></div>
+  vesselList.innerHTML=vessels.length?vessels.slice(0,18).map(v=>`<div class="vessel-row${v.stale?' stale':''}">
+    <div><div class="vessel-name">${escapeHTML(v.name||`MMSI ${v.mmsi}`)}</div><div class="vessel-meta"><span>${escapeHTML(v.direction||'AIS')}</span>${v.zone?`<span>${escapeHTML(v.zone)}</span>`:''}${v.destination?`<span>${escapeHTML(v.destination)}</span>`:''}${v.stale?'<span>LAST KNOWN</span>':''}</div></div>
     <div class="vessel-speed">${Number(v.sog||0).toFixed(1)} kn<span class="vessel-time">${formatAge(v.last_seen)}</span></div>
-  </div>`).join(''):'<div class="vessel-empty">No recent vessels in the live window.</div>';
+  </div>`).join(''):'<div class="vessel-empty">No AIS positions reported in the last 24 hours.</div>';
 
   const c=data?.crossings||{};
   aisCrossings.textContent=`Crossings recorded: ${c.count ?? '—'}`;
   aisMedian.textContent=`Median crossing time: ${Number.isFinite(c.median_hours)?`${c.median_hours.toFixed(1)} h`:'—'}`;
   aisTrackerSince.textContent=`Tracker since: ${data?.tracker_since?new Date(data.tracker_since).toLocaleDateString('en-GB'):'—'}`;
 }
-
 function escapeHTML(v){return String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
 
 async function loadAIS(){
