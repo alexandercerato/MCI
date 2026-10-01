@@ -14,16 +14,16 @@ function render(){
   const h=DATA.headline;
   asOfDate.textContent=new Date(DATA.meta.as_of+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
 
-  if(DATA.model.index_status==='calibrating' || !Number.isFinite(Number(DATA.model.theoretical_reference_usd))){
+  const indexBase=Number(DATA.model.index_base_market_usd);
+  if(DATA.model.index_status!=='live' || !Number.isFinite(indexBase) || indexBase<=0){
     mcfiValue.textContent='—';
-    if(window.mcfiUnit) mcfiUnit.textContent='Structural model calibration';
-    mcfiMeta.textContent=`Normalized index withheld · latest observed basket ${fmtUSD(h.latest_mcfi_core.value_usd)} / 40HC · ${fmtMonth(h.latest_mcfi_core.period)}`;
+    if(window.mcfiUnit) mcfiUnit.textContent='Index unavailable';
+    mcfiMeta.textContent=`Latest observed basket ${fmtUSD(h.latest_mcfi_core.value_usd)} / 40HC · ${fmtMonth(h.latest_mcfi_core.period)}`;
   }else{
-    const ref=Number(DATA.model.theoretical_reference_usd);
-    const currentIndex=Number(h.latest_mcfi_core.value_usd/ref*100);
+    const currentIndex=Number(h.latest_mcfi_core.value_usd/indexBase*100);
     mcfiValue.textContent=currentIndex.toFixed(1);
-    if(window.mcfiUnit) mcfiUnit.textContent='Index points · model = 100';
-    mcfiMeta.textContent=`${fmtMonth(h.latest_mcfi_core.period)} · Market ${fmtUSD(h.latest_mcfi_core.value_usd)} · Model ${fmtUSD(ref)} · ${(currentIndex-100)>=0?'+':''}${(currentIndex-100).toFixed(1)}%`;
+    if(window.mcfiUnit) mcfiUnit.textContent=`Index points · ${fmtMonth(DATA.model.index_base_period)} = 100`;
+    mcfiMeta.textContent=`${fmtMonth(h.latest_mcfi_core.period)} · Market ${fmtUSD(h.latest_mcfi_core.value_usd)} · base ${fmtUSD(indexBase)} · ${(currentIndex-100)>=0?'+':''}${(currentIndex-100).toFixed(1)}%`;
   }
 
   bakuValue.textContent=fmtUSD(h.latest_baku_market.value_usd);
