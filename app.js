@@ -383,66 +383,68 @@ function formatAge(iso){
   return `${Math.floor(sec/86400)}d ago`;
 }
 
-function metricValue(value){
-  return Number.isFinite(Number(value)) ? String(Number(value)) : '—';
+function cleanVesselName(name){
+  return String(name||'').replace(/^т\/х\.?|^п\.?/i,'').trim() || 'Unnamed vessel';
 }
 
 function renderPortActivity(data){
   const status=document.getElementById('portActivityStatus');
   const updated=document.getElementById('portActivityUpdated');
-  const aktau=data?.ports?.aktau||{};
-  const kuryk=data?.ports?.kuryk||{};
+  const summary=data?.summary||{};
+  const berthed=Array.isArray(data?.berthed)?data.berthed:[];
+  const approaching=Array.isArray(data?.approaching)?data.approaching:[];
 
-  document.getElementById('aktauInPort').textContent=metricValue(aktau.vessels_in_port);
-  document.getElementById('aktauArrivals').textContent=metricValue(aktau.arrivals_24h);
-  document.getElementById('aktauDepartures').textContent=metricValue(aktau.departures_24h);
-  document.getElementById('kurykInPort').textContent=metricValue(kuryk.vessels_in_port);
-  document.getElementById('kurykArrivals').textContent=metricValue(kuryk.arrivals_24h);
-  document.getElementById('kurykExpected').textContent=metricValue(kuryk.expected_arrivals);
+  document.getElementById('kurykBerthed').textContent=Number.isFinite(Number(summary.berthed_vessels))?String(Number(summary.berthed_vessels)):'—';
+  document.getElementById('kurykApproaching').textContent=Number.isFinite(Number(summary.approaching_vessels))?String(Number(summary.approaching_vessels)):'—';
+  document.getElementById('kurykBerths').textContent=Number.isFinite(Number(summary.active_berth_entries))?String(Number(summary.active_berth_entries)):'—';
+  document.getElementById('kurykNextEta').textContent=summary.next_eta||'—';
+  document.getElementById('kurykTrafficDate').textContent=data?.traffic_date?`as of ${data.traffic_date}`:'official port data';
 
-  const kind=data?.status==='live'?'live':(data?.status==='partial'?'stale':'offline');
+  const kind=data?.status==='live'?'live':(data?.status==='stale'?'stale':'offline');
   status.className=`ais-status ${kind}`;
-  status.textContent=data?.status==='live'?'PORT DATA LIVE':(data?.status==='partial'?'PORT DATA PARTIAL':'PORT DATA OFFLINE');
+  status.textContent=data?.status==='live'?'KURYK LIVE':(data?.status==='stale'?'KURYK STALE':'KURYK OFFLINE');
   updated.textContent=data?.updated_at?`Updated ${formatAge(data.updated_at)}`:'—';
 
-  const rows=[
-    {name:'Aktau',code:'KZAAU',p:aktau},
-    {name:'Kuryk',code:'KZKUR',p:kuryk}
-  ];
-
-  document.getElementById('portActivityList').innerHTML=rows.map(({name,code,p})=>`
-    <div class="vessel-row">
+  const berthedRows=berthed.flatMap(row=>
+    (row.vessel_names||[]).map(name=>`<div class="vessel-row">
       <div>
-        <div class="vessel-name">${name}</div>
-        <div class="vessel-meta">
-          <span>${code}</span>
-          <span>In port ${metricValue(p.vessels_in_port)}</span>
-          <span>Expected ${metricValue(p.expected_arrivals)}</span>
-        </div>
+        <div class="vessel-name">${cleanVesselName(name)}</div>
+        <div class="vessel-meta"><span>${row.berth||'Kuryk berth'}</span><span>${row.operation||'At berth'}</span></div>
       </div>
-      <div class="vessel-speed">${metricValue(p.arrivals_24h)} arrivals<span class="vessel-time">${metricValue(p.departures_24h)} departures · 24h</span></div>
-    </div>
-  `).join('');
+      <div class="vessel-speed">BERTHED<span class="vessel-time">${row.berthing_time||'—'}</span></div>
+    </div>`)
+  );
 
-  document.getElementById('aktauPortSummary').textContent=
-    `Aktau: ${metricValue(aktau.arrivals_24h)} arrivals / ${metricValue(aktau.departures_24h)} departures (24h)`;
-  document.getElementById('kurykPortSummary').textContent=
-    `Kuryk: ${metricValue(kuryk.arrivals_24h)} arrivals / ${metricValue(kuryk.departures_24h)} departures (24h)`;
+  const approachRows=approaching.map(v=>`<div class="vessel-row">
+    <div>
+      <div class="vessel-name">${cleanVesselName(v.vessel_name)}</div>
+      <div class="vessel-meta"><span>Approaching Kuryk</span></div>
+    </div>
+    <div class="vessel-speed">ETA<span class="vessel-time">${v.eta||'—'}</span></div>
+  </div>`);
+
+  document.getElementById('kurykVesselList').innerHTML=
+    [...berthedRows,...approachRows].join('') ||
+    '<div class="vessel-empty">No vessel rows are currently published by Port Kuryk.</div>';
+
+  document.getElementById('kurykBerthedSummary').textContent=
+    `Berthed vessels: ${Number.isFinite(Number(summary.berthed_vessels))?summary.berthed_vessels:'—'}`;
+  document.getElementById('kurykApproachSummary').textContent=
+    `Approaching vessels: ${Number.isFinite(Number(summary.approaching_vessels))?summary.approaching_vessels:'—'}`;
 }
 
 async function loadPortActivity(){
   const base=(AIS_CFG.aisApiBase||'').replace(/\/$/,'');
   if(!base){
-    renderPortActivity({status:'offline',ports:{}});
+    renderPortActivity({status:'offline'});
     return;
   }
-
   try{
     const res=await fetch(`${base}/api/port-activity?t=${Date.now()}`,{cache:'no-store'});
     if(!res.ok) throw new Error(`Port activity HTTP ${res.status}`);
     renderPortActivity(await res.json());
   }catch(err){
-    renderPortActivity({status:'offline',ports:{}});
+    renderPortActivity({status:'offline'});
     console.warn(err);
   }
 }
