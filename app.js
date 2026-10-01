@@ -469,6 +469,44 @@ function formatAge(iso){
   return `${Math.floor(sec/86400)}d ago`;
 }
 
+const AKTAU_BERTH_POSITIONS={
+  1:{left:44,top:63},2:{left:46,top:59},3:{left:47,top:55},4:{left:48,top:51},
+  5:{left:50,top:47},6:{left:53,top:44},7:{left:56,top:44},8:{left:59,top:47},
+  9:{left:61,top:51},10:{left:60,top:56},11:{left:58,top:60},12:{left:55,top:63},
+  18:{left:64,top:39},21:{left:67,top:43},22:{left:69,top:47},23:{left:70,top:52}
+};
+
+function aktauBerthNumber(label){
+  const m=String(label||'').match(/(\d+)/);
+  return m?Number(m[1]):null;
+}
+
+function renderAktauBerthOverlay(berthed){
+  const overlay=document.getElementById('aktauBerthOverlay');
+  if(!overlay) return;
+
+  const legend=overlay.querySelector('.aktau-berth-overlay-legend');
+  overlay.innerHTML='';
+  if(legend) overlay.appendChild(legend);
+
+  const used=new Map();
+
+  (berthed||[]).forEach(v=>{
+    const berthNo=aktauBerthNumber(v.berth);
+    const base=AKTAU_BERTH_POSITIONS[berthNo]||{left:52,top:53};
+    const duplicate=used.get(berthNo)||0;
+    used.set(berthNo,duplicate+1);
+
+    const marker=document.createElement('div');
+    marker.className='aktau-official-berth-marker';
+    marker.style.left=`${base.left + duplicate*1.5}%`;
+    marker.style.top=`${base.top + duplicate*3}%`;
+    marker.title=`${v.vessel_name||'Unnamed vessel'} · Berth ${berthNo||'—'} · ${v.operation||'official disposition'}`;
+    marker.innerHTML=`<span class="aktau-official-berth-dot">B${berthNo||'?'}</span><strong>${escapeHTML(v.vessel_name||'Unnamed vessel')}</strong>`;
+    overlay.appendChild(marker);
+  });
+}
+
 // --- Aktau official port activity supplement ---
 
 async function loadAktauOfficialActivity(){
@@ -491,6 +529,7 @@ async function loadAktauOfficialActivity(){
     berthedEl.textContent=Number.isFinite(Number(s.berthed_vessels))?String(Number(s.berthed_vessels)):'—';
     roadsteadEl.textContent=Number.isFinite(Number(s.roadstead_vessels))?String(Number(s.roadstead_vessels)):'—';
     dateEl.textContent=aktau.traffic_date||'—';
+    renderAktauBerthOverlay(berthed);
 
     const rows=[
       ...berthed.slice(0,8).map(v=>({
@@ -511,6 +550,7 @@ async function loadAktauOfficialActivity(){
       <small>${escapeHTML(v.detail||'')}</small>
     </div>`).join(''):'<div class="vessel-empty">No vessels currently listed in the official Aktau disposition.</div>';
   }catch(err){
+    renderAktauBerthOverlay([]);
     board.innerHTML='<div class="vessel-empty">Aktau official vessel data temporarily unavailable.</div>';
     console.warn(err);
   }
