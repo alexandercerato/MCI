@@ -1734,9 +1734,16 @@ async function fetchAktauActivity() {
   const roadstead_dry = [];
   const roadstead_tankers = [];
   let inRoadstead = false;
+  let inAMST = false;
 
   for (const row of rows) {
     const joined = row.join(' ');
+
+    if (!inRoadstead && /\bАМСТ\b/i.test(joined)) {
+      inAMST = true;
+      continue;
+    }
+
     if (/Суда стоящие на рейде/i.test(joined)) {
       inRoadstead = true;
       continue;
@@ -1751,7 +1758,8 @@ async function fetchAktauActivity() {
           vessel_name: vessel,
           agent: String(row[2]||'').trim() || null,
           reported_time: String(row[3]||'').trim() || null,
-          operation: String(row[4]||'').trim() || null
+          operation: String(row[4]||'').trim() || null,
+          facility: inAMST ? 'AMST' : 'Aktau Port'
         });
       }
       continue;
@@ -1782,11 +1790,31 @@ async function fetchAktauActivity() {
     throw new Error('Aktau disposition loaded but vessel rows were not parsed');
   }
 
+  const mainPortBerthed = berthed.filter(v => v.facility === 'Aktau Port');
+  const occupiedMainBerths = new Set(
+    mainPortBerthed
+      .map(v => {
+        const m = String(v.berth || '').match(/(\d+)/);
+        return m ? Number(m[1]) : null;
+      })
+      .filter(Number.isFinite)
+  ).size;
+  const berthCapacity = 11;
+  const berthOccupancyPct = Math.min(
+    100,
+    Math.round((occupiedMainBerths / berthCapacity) * 1000) / 10
+  );
+
   return {
     traffic_date,
     source_url: AKTAU_DISPOSITION_CSV,
     summary: {
       berthed_vessels: berthed.length,
+      main_port_berthed_vessels: mainPortBerthed.length,
+      amst_berthed_vessels: berthed.filter(v => v.facility === 'AMST').length,
+      occupied_main_berths: occupiedMainBerths,
+      berth_capacity: berthCapacity,
+      berth_occupancy_pct: berthOccupancyPct,
       roadstead_vessels: roadstead_dry.length + roadstead_tankers.length,
       roadstead_dry: roadstead_dry.length,
       roadstead_tankers: roadstead_tankers.length
@@ -1832,6 +1860,8 @@ async function refreshPortActivity() {
 
   console.log('[CASPIAN OPS] ' + portActivityCache.status +
     ' · Aktau berthed=' + (aktau?.summary?.berthed_vessels ?? 'n/a') +
+    ' main-berths=' + (aktau?.summary?.occupied_main_berths ?? 'n/a') + '/' + (aktau?.summary?.berth_capacity ?? 'n/a') +
+    ' occupancy=' + (aktau?.summary?.berth_occupancy_pct ?? 'n/a') + '%' +
     ' roadstead=' + (aktau?.summary?.roadstead_vessels ?? 'n/a') +
     ' · Kuryk berthed=' + (kuryk?.summary?.berthed_vessels ?? 'n/a') +
     ' approaching=' + (kuryk?.summary?.approaching_vessels ?? 'n/a') +
