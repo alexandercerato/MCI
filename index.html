@@ -211,12 +211,12 @@
       </div>
 
       <div class="live-kpis">
-        <div class="inline-kpi"><span>Vessels detected</span><strong id="aisVessels">—</strong><small id="aisWindowLabel">last 30 min</small></div>
-        <div class="inline-kpi"><span>Underway</span><strong id="aisUnderway">—</strong><small>speed ≥ 1.5 kn</small></div>
-        <div class="inline-kpi"><span>East Caspian</span><strong id="aisEastPorts">—</strong><small>Aktau / Kuryk area</small></div>
-        <div class="inline-kpi"><span>West Caspian</span><strong id="aisWestPorts">—</strong><small>Alat / Baku area</small></div>
-        <div class="inline-kpi"><span>Westbound</span><strong id="aisWestbound">—</strong><small>corridor candidates</small></div>
-        <div class="inline-kpi"><span>Eastbound</span><strong id="aisEastbound">—</strong><small>corridor candidates</small></div>
+        <div class="inline-kpi"><span>Open-feed vessels</span><strong id="aisVessels">0</strong><small id="aisWindowLabel">last 30 min</small></div>
+        <div class="inline-kpi"><span>Underway</span><strong id="aisUnderway">0</strong><small>speed ≥ 1.5 kn</small></div>
+        <div class="inline-kpi"><span>East Caspian</span><strong id="aisEastPorts">0</strong><small>Aktau / Kuryk area</small></div>
+        <div class="inline-kpi"><span>West Caspian</span><strong id="aisWestPorts">0</strong><small>Alat / Baku area</small></div>
+        <div class="inline-kpi"><span>Westbound</span><strong id="aisWestbound">0</strong><small>corridor candidates</small></div>
+        <div class="inline-kpi"><span>Eastbound</span><strong id="aisEastbound">0</strong><small>corridor candidates</small></div>
       </div>
 
       <div class="live-grid">
@@ -240,22 +240,11 @@
         </div>
 
         <div class="vessel-card">
-          <div class="radar-head"><span>MCFI open-feed vessels</span><small id="aisWindow">30 min live window</small></div>
-          <div class="vessel-list" id="vesselList"><div class="vessel-empty">No open-feed positions yet.</div></div>
+          <div class="radar-head"><span>Open-feed vessel stats</span><small id="aisWindow">30 min live window</small></div>
+          <div class="vessel-list" id="vesselList"><div class="vessel-empty">No open-feed positions currently available.</div></div>
+          <div class="vf-map-note"><span id="aisProvider">Open Waters + AISStream + facha.dev</span> · metrics are independent from the VesselFinder map</div>
         </div>
       </div>
-
-      <details class="ais-diagnostic">
-        <summary>Open-feed tracker diagnostics <span id="aisProvider">Open Waters + AISStream</span></summary>
-        <div class="ais-radar" id="aisRadar" aria-label="MCFI open-feed AIS positions in the Caspian">
-          <div class="radar-grid"></div>
-          <div class="port-pin port-aktau" title="Aktau"><i></i><span>AKTAU</span></div>
-          <div class="port-pin port-kuryk" title="Kuryk"><i></i><span>KURYK</span></div>
-          <div class="port-pin port-alat" title="Alat"><i></i><span>ALAT</span></div>
-          <div class="port-pin port-baku" title="Baku"><i></i><span>BAKU</span></div>
-          <div class="ais-empty" id="aisEmpty">No open-feed AIS positions available.</div>
-        </div>
-      </details>
 
       <div class="live-foot">
         <span id="aisCrossings">Crossings recorded: —</span>
