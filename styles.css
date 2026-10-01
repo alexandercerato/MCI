@@ -434,3 +434,24 @@ footer{border-top:1px solid var(--line);padding:22px 0 30px;color:var(--muted2);
 .vessel-dot.corridor.stale{background:var(--gold);box-shadow:0 0 12px rgba(215,168,79,.55)}
 .vessel-row.stale{opacity:.78}
 .vessel-row.stale .vessel-time{color:var(--gold)}
+
+
+/* VesselFinder live map */
+.vessel-map-card{min-height:492px}
+.vf-map-wrap{height:410px;background:#071018;overflow:hidden}
+.vf-map-wrap iframe{display:block;width:100%!important;height:410px!important;border:0!important}
+.vf-map-note{padding:8px 12px;border-top:1px solid var(--line);color:var(--muted2);font-size:9px;text-transform:uppercase;letter-spacing:.05em}
+.ais-diagnostic{margin-top:10px;border:1px solid var(--line);background:#091018}
+.ais-diagnostic summary{cursor:pointer;padding:11px 13px;color:#91a1b2;font-size:10px;text-transform:uppercase;letter-spacing:.07em;display:flex;justify-content:space-between;gap:12px}
+.ais-diagnostic[open] summary{border-bottom:1px solid var(--line)}
+.ais-diagnostic .ais-radar{height:260px}
+@media(max-width:900px){
+  .vessel-map-card{min-height:452px}
+  .vf-map-wrap,.vf-map-wrap iframe{height:370px!important}
+}
+@media(max-width:560px){
+  .vessel-map-card{min-height:412px}
+  .vf-map-wrap,.vf-map-wrap iframe{height:330px!important}
+  .ais-diagnostic summary{display:block}
+  .ais-diagnostic summary span{display:block;margin-top:4px}
+}
