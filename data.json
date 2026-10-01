@@ -1,10 +1,10 @@
 {
   "meta": {
     "title": "Middle Corridor Freight Monitor",
-    "version": "0.13.0",
+    "version": "0.14.0",
     "as_of": "2026-09-29",
     "refresh_minutes": 5,
-    "methodology_note": "Structural calibration mode: no normalized MCFI is published until the full Xi'an-to-destination structural benchmark is independently verified. Published tariffs with different scopes are kept separate and are not added together by assumption.",
+    "methodology_note": "MCFI market index base: January 2026 = 100. Structural tariff benchmarks remain separate from the market index and are shown only where independently verified.",
     "data_warning": "Historical coverage reflects the availability of published market assessments."
   },
   "model": {
@@ -33,31 +33,35 @@
         "purpose": "Western continuation through Azerbaijan/Georgia"
       }
     ],
-    "formula": "MCFI = market price ÷ independently verified full structural benchmark × 100. Publication paused until the missing Xi’an-origin structural leg is independently verified.",
+    "formula": "MCFI = monthly observed market basket ÷ January 2026 market basket × 100. Structural tariff benchmarks remain a separate analytical layer and do not determine the index.",
     "route_quote_rule": "For each route/month, use the midpoint of the comparable market range; if multiple same-grade market assessments exist, use the median of their midpoints.",
     "source_hierarchy": [
       "Exact-route monthly market assessment",
       "Multiple comparable market observations",
       "Published carrier and forwarder tariffs for additional market reference"
     ],
-    "publication_rule": "MCFI is calculated for months with published assessments for both core routes.",
+    "publication_rule": "MCFI is calculated for months with published assessments for both core routes and normalized to January 2026 = 100.",
     "methodological_anchor": "Argus introduced monthly 40HC assessments for Xi’an–Absheron/Baku and Xi’an–Mersin/Ambarli in April 2026; the same two-lane structure is used retrospectively when equivalent historical market ranges are recoverable.",
     "methodology_source": "https://www1.argusmedia.com/ArgusStaticContent/Resources/data/announcements/pdf/20260424atk.pdf",
     "theoretical_reference_usd": null,
     "index_base": 100,
-    "index_formula": "Pending full structural calibration; no synthetic reference is used.",
-    "reference_note": "The former USD 6,500 reference has been removed. The site does not publish a normalized index until a complete independently verified structural benchmark exists.",
-    "index_status": "calibrating"
+    "index_formula": "MCFI = monthly observed market basket ÷ January 2026 market basket × 100.",
+    "reference_note": "MCFI is normalized to January 2026 = 100 using the observed two-route market basket. Structural benchmarks are shown separately and are not used as the index denominator.",
+    "index_status": "live",
+    "index_base_period": "2026-01",
+    "index_base_market_usd": 6450
   },
   "headline": {
     "latest_mcfi_core": {
       "period": "2026-07",
       "value_usd": 7200,
       "coverage": "2/2 core routes",
-      "confidence": "market basket only; structural index pending",
-      "value_index": null,
+      "confidence": "market basket index; January 2026 = 100",
+      "value_index": 111.6,
       "theoretical_reference_usd": null,
-      "premium_vs_model_pct": null
+      "premium_vs_model_pct": null,
+      "index_base_period": "2026-01",
+      "index_base_market_usd": 6450
     },
     "latest_baku_market": {
       "period": "2026-07",
@@ -121,7 +125,8 @@
       "confidence": "high",
       "basis": "Argus Jan-2025 report explicitly states both January ranges were unchanged from December.",
       "source_url": "https://view.argusmedia.com/rs/584-BUW-606/images/Argus_Caspian_Transportation_RU_2025_01_31.pdf",
-      "premium_vs_model_pct": 16.9
+      "premium_vs_model_pct": 16.9,
+      "mcfi_index": 117.8
     },
     {
       "period": "2025-01",
@@ -133,7 +138,8 @@
       "confidence": "high",
       "basis": "Direct Argus market ranges for both core routes.",
       "source_url": "https://view.argusmedia.com/rs/584-BUW-606/images/Argus_Caspian_Transportation_RU_2025_01_31.pdf",
-      "premium_vs_model_pct": 16.9
+      "premium_vs_model_pct": 16.9,
+      "mcfi_index": 117.8
     },
     {
       "period": "2025-03",
@@ -145,7 +151,8 @@
       "confidence": "high",
       "basis": "April Argus assessment states both ranges were unchanged from March.",
       "source_url": "https://view.argusmedia.com/rs/584-BUW-606/images/Trans_Caspian_container_shipments.pdf",
-      "premium_vs_model_pct": 11.2
+      "premium_vs_model_pct": 11.2,
+      "mcfi_index": 112
     },
     {
       "period": "2025-04",
@@ -157,7 +164,8 @@
       "confidence": "high",
       "basis": "Direct Argus market ranges for both core routes.",
       "source_url": "https://view.argusmedia.com/rs/584-BUW-606/images/Trans_Caspian_container_shipments.pdf",
-      "premium_vs_model_pct": 11.2
+      "premium_vs_model_pct": 11.2,
+      "mcfi_index": 112
     },
     {
       "period": "2025-05",
@@ -169,7 +177,8 @@
       "confidence": "high",
       "basis": "Direct Argus market ranges for both core routes.",
       "source_url": "https://view.argusmedia.com/rs/584-BUW-606/images/Argus_Caspian_Transportation_c.pdf",
-      "premium_vs_model_pct": 7.7
+      "premium_vs_model_pct": 7.7,
+      "mcfi_index": 108.5
     },
     {
       "period": "2025-06",
@@ -181,7 +190,8 @@
       "confidence": "high",
       "basis": "Direct Argus market ranges for both core routes.",
       "source_url": "https://view.argusmedia.com/rs/584-BUW-606/images/Argus_Caspian_Transportation_2025_06_27.pdf",
-      "premium_vs_model_pct": 4.6
+      "premium_vs_model_pct": 4.6,
+      "mcfi_index": 105.4
     },
     {
       "period": "2025-08",
@@ -193,7 +203,8 @@
       "confidence": "high",
       "basis": "September Argus update gives August comparator ranges for both core routes.",
       "source_url": "https://www.argusmedia.com/ru/news-and-insights/latest-market-news/2738209-konteynernye-perevozki-cherez-kaspiy-desheveyut",
-      "premium_vs_model_pct": -4.2
+      "premium_vs_model_pct": -4.2,
+      "mcfi_index": 96.5
     },
     {
       "period": "2025-09",
@@ -205,7 +216,8 @@
       "confidence": "high",
       "basis": "Direct Argus market ranges for both core routes.",
       "source_url": "https://www.argusmedia.com/ru/news-and-insights/latest-market-news/2738209-konteynernye-perevozki-cherez-kaspiy-desheveyut",
-      "premium_vs_model_pct": -5.6
+      "premium_vs_model_pct": -5.6,
+      "mcfi_index": 95.2
     },
     {
       "period": "2025-10",
@@ -217,7 +229,8 @@
       "confidence": "high",
       "basis": "Direct Argus market ranges for both core routes.",
       "source_url": "https://view.argusmedia.com/rs/584-BUW-606/images/Argus_Caspian_Transportation_2025_10_31.pdf",
-      "premium_vs_model_pct": -8.5
+      "premium_vs_model_pct": -8.5,
+      "mcfi_index": 92.2
     },
     {
       "period": "2025-11",
@@ -229,7 +242,8 @@
       "confidence": "high",
       "basis": "December/late-November Argus reporting states these ranges were unchanged from October.",
       "source_url": "https://www.argusmedia.com/ru/news-and-insights/latest-market-news/2761773-konteynernye-perevozki-cherez-kaspiy-podorozhayut",
-      "premium_vs_model_pct": -8.5
+      "premium_vs_model_pct": -8.5,
+      "mcfi_index": 92.2
     },
     {
       "period": "2025-12",
@@ -241,7 +255,8 @@
       "confidence": "high",
       "basis": "January-2026 Argus update gives December comparator ranges for both routes.",
       "source_url": "https://www.argusmedia.com/es/news-and-insights/latest-market-news/2788416-konteynernye-perevozki-cherez-kaspiy-dorozhayut",
-      "premium_vs_model_pct": -3.5
+      "premium_vs_model_pct": -3.5,
+      "mcfi_index": 97.3
     },
     {
       "period": "2026-01",
@@ -253,7 +268,8 @@
       "confidence": "high",
       "basis": "Direct Argus market ranges for both core routes.",
       "source_url": "https://www.argusmedia.com/es/news-and-insights/latest-market-news/2788416-konteynernye-perevozki-cherez-kaspiy-dorozhayut",
-      "premium_vs_model_pct": -0.8
+      "premium_vs_model_pct": -0.8,
+      "mcfi_index": 100
     },
     {
       "period": "2026-02",
@@ -265,7 +281,8 @@
       "confidence": "high",
       "basis": "March Argus update gives February Baku range and states Turkey was unchanged.",
       "source_url": "https://www.argusmedia.com/ru/news-and-insights/latest-market-news/2809389-stoimost-konteynernyh-perevozok-cherez-kaspiy-vyrosla",
-      "premium_vs_model_pct": 1.2
+      "premium_vs_model_pct": 1.2,
+      "mcfi_index": 101.9
     },
     {
       "period": "2026-03",
@@ -277,7 +294,8 @@
       "confidence": "high",
       "basis": "Direct Argus market ranges for both core routes.",
       "source_url": "https://www.argusmedia.com/ru/news-and-insights/latest-market-news/2809389-stoimost-konteynernyh-perevozok-cherez-kaspiy-vyrosla",
-      "premium_vs_model_pct": 3.5
+      "premium_vs_model_pct": 3.5,
+      "mcfi_index": 104.3
     },
     {
       "period": "2026-04",
@@ -289,7 +307,8 @@
       "confidence": "high",
       "basis": "Direct Argus market ranges for both core routes.",
       "source_url": "https://www.argusmedia.com/de/news-and-insights/latest-market-news/2822243-konteynernye-perevozki-cherez-kaspiy-dorozhayut",
-      "premium_vs_model_pct": 6.5
+      "premium_vs_model_pct": 6.5,
+      "mcfi_index": 107.4
     },
     {
       "period": "2026-05",
@@ -301,7 +320,8 @@
       "confidence": "high",
       "basis": "June market update gives May comparator ranges for both routes.",
       "source_url": "https://www.tylla-nal.com/en/news/57",
-      "premium_vs_model_pct": 7.7
+      "premium_vs_model_pct": 7.7,
+      "mcfi_index": 108.5
     },
     {
       "period": "2026-06",
@@ -313,7 +333,8 @@
       "confidence": "high",
       "basis": "Direct June market ranges for both core routes.",
       "source_url": "https://www.tylla-nal.com/en/news/57",
-      "premium_vs_model_pct": 9.0
+      "premium_vs_model_pct": 9,
+      "mcfi_index": 109.9
     },
     {
       "period": "2026-07",
@@ -325,7 +346,8 @@
       "confidence": "medium-high",
       "basis": "Official Argus channel reports July ranges for both core routes.",
       "source_url": "https://t.me/s/argus_price_agency?before=1622",
-      "premium_vs_model_pct": 10.8
+      "premium_vs_model_pct": 10.8,
+      "mcfi_index": 111.6
     }
   ],
   "coverage_gaps": [
@@ -367,7 +389,7 @@
       "ownership": "unspecified",
       "low_usd": 3948,
       "high_usd": 3948,
-      "midpoint_usd": 3948.0,
+      "midpoint_usd": 3948,
       "scope": "border-to-border fixed tariff",
       "primary_eligible": false,
       "grade": "A-",
@@ -387,7 +409,7 @@
       "ownership": "unspecified",
       "low_usd": 3100,
       "high_usd": 3100,
-      "midpoint_usd": 3100.0,
+      "midpoint_usd": 3100,
       "scope": "fixed tariff",
       "primary_eligible": false,
       "grade": "B+",
@@ -407,7 +429,7 @@
       "ownership": "unspecified",
       "low_usd": 7980,
       "high_usd": 7980,
-      "midpoint_usd": 7980.0,
+      "midpoint_usd": 7980,
       "scope": "promotional provider rate",
       "primary_eligible": false,
       "grade": "B",
@@ -427,7 +449,7 @@
       "ownership": "unspecified",
       "low_usd": 6400,
       "high_usd": 6500,
-      "midpoint_usd": 6450.0,
+      "midpoint_usd": 6450,
       "scope": "Core market assessment",
       "primary_eligible": true,
       "grade": "A",
@@ -447,7 +469,7 @@
       "ownership": "unspecified",
       "low_usd": 8500,
       "high_usd": 9000,
-      "midpoint_usd": 8750.0,
+      "midpoint_usd": 8750,
       "scope": "Core market assessment",
       "primary_eligible": true,
       "grade": "A",
@@ -467,7 +489,7 @@
       "ownership": "unspecified",
       "low_usd": 6400,
       "high_usd": 6500,
-      "midpoint_usd": 6450.0,
+      "midpoint_usd": 6450,
       "scope": "Core market assessment",
       "primary_eligible": true,
       "grade": "A",
@@ -487,7 +509,7 @@
       "ownership": "unspecified",
       "low_usd": 8500,
       "high_usd": 9000,
-      "midpoint_usd": 8750.0,
+      "midpoint_usd": 8750,
       "scope": "Core market assessment",
       "primary_eligible": true,
       "grade": "A",
@@ -507,7 +529,7 @@
       "ownership": "unspecified",
       "low_usd": 6150,
       "high_usd": 6250,
-      "midpoint_usd": 6200.0,
+      "midpoint_usd": 6200,
       "scope": "Core market assessment",
       "primary_eligible": true,
       "grade": "A",
@@ -527,7 +549,7 @@
       "ownership": "unspecified",
       "low_usd": 8000,
       "high_usd": 8500,
-      "midpoint_usd": 8250.0,
+      "midpoint_usd": 8250,
       "scope": "Core market assessment",
       "primary_eligible": true,
       "grade": "A",
@@ -547,7 +569,7 @@
       "ownership": "unspecified",
       "low_usd": 6150,
       "high_usd": 6250,
-      "midpoint_usd": 6200.0,
+      "midpoint_usd": 6200,
       "scope": "Core market assessment",
       "primary_eligible": true,
       "grade": "A",
@@ -567,7 +589,7 @@
       "ownership": "unspecified",
       "low_usd": 8000,
       "high_usd": 8500,
-      "midpoint_usd": 8250.0,
+      "midpoint_usd": 8250,
       "scope": "Core market assessment",
       "primary_eligible": true,
       "grade": "A",
@@ -587,7 +609,7 @@
       "ownership": "unspecified",
       "low_usd": 5700,
       "high_usd": 5700,
-      "midpoint_usd": 5700.0,
+      "midpoint_usd": 5700,
       "scope": "provider tariff",
       "primary_eligible": false,
       "grade": "B+",
@@ -607,7 +629,7 @@
       "ownership": "unspecified",
       "low_usd": 5900,
       "high_usd": 6000,
-      "midpoint_usd": 5950.0,
+      "midpoint_usd": 5950,
       "scope": "Core market assessment",
       "primary_eligible": true,
       "grade": "A",
@@ -627,7 +649,7 @@
       "ownership": "unspecified",
       "low_usd": 7800,
       "high_usd": 8300,
-      "midpoint_usd": 8050.0,
+      "midpoint_usd": 8050,
       "scope": "Core market assessment",
       "primary_eligible": true,
       "grade": "A",
@@ -647,7 +669,7 @@
       "ownership": "unspecified",
       "low_usd": 5600,
       "high_usd": 5700,
-      "midpoint_usd": 5650.0,
+      "midpoint_usd": 5650,
       "scope": "Core market assessment",
       "primary_eligible": true,
       "grade": "A",
@@ -667,7 +689,7 @@
       "ownership": "unspecified",
       "low_usd": 7700,
       "high_usd": 8200,
-      "midpoint_usd": 7950.0,
+      "midpoint_usd": 7950,
       "scope": "Core market assessment",
       "primary_eligible": true,
       "grade": "A",
@@ -687,7 +709,7 @@
       "ownership": "unspecified",
       "low_usd": 5600,
       "high_usd": 5600,
-      "midpoint_usd": 5600.0,
+      "midpoint_usd": 5600,
       "scope": "market/provider context",
       "primary_eligible": false,
       "grade": "A-",
@@ -707,7 +729,7 @@
       "ownership": "unspecified",
       "low_usd": 6100,
       "high_usd": 6100,
-      "midpoint_usd": 6100.0,
+      "midpoint_usd": 6100,
       "scope": "single-carrier tariff",
       "primary_eligible": false,
       "grade": "B+",
@@ -727,7 +749,7 @@
       "ownership": "unspecified",
       "low_usd": 5600,
       "high_usd": 5700,
-      "midpoint_usd": 5650.0,
+      "midpoint_usd": 5650,
       "scope": "Core market assessment — partial month coverage",
       "primary_eligible": true,
       "grade": "A-",
@@ -747,7 +769,7 @@
       "ownership": "unspecified",
       "low_usd": 5600,
       "high_usd": 5700,
-      "midpoint_usd": 5650.0,
+      "midpoint_usd": 5650,
       "scope": "Core market assessment",
       "primary_eligible": true,
       "grade": "A",
@@ -767,7 +789,7 @@
       "ownership": "unspecified",
       "low_usd": 6050,
       "high_usd": 7550,
-      "midpoint_usd": 6800.0,
+      "midpoint_usd": 6800,
       "scope": "Core market assessment",
       "primary_eligible": true,
       "grade": "A",
@@ -787,7 +809,7 @@
       "ownership": "unspecified",
       "low_usd": 5600,
       "high_usd": 5700,
-      "midpoint_usd": 5650.0,
+      "midpoint_usd": 5650,
       "scope": "Core market assessment",
       "primary_eligible": true,
       "grade": "A",
@@ -807,7 +829,7 @@
       "ownership": "unspecified",
       "low_usd": 5800,
       "high_usd": 7450,
-      "midpoint_usd": 6625.0,
+      "midpoint_usd": 6625,
       "scope": "Core market assessment",
       "primary_eligible": true,
       "grade": "A",
@@ -827,7 +849,7 @@
       "ownership": "unspecified",
       "low_usd": 5350,
       "high_usd": 5400,
-      "midpoint_usd": 5375.0,
+      "midpoint_usd": 5375,
       "scope": "Core market assessment",
       "primary_eligible": true,
       "grade": "A",
@@ -847,7 +869,7 @@
       "ownership": "unspecified",
       "low_usd": 5800,
       "high_usd": 7250,
-      "midpoint_usd": 6525.0,
+      "midpoint_usd": 6525,
       "scope": "Core market assessment",
       "primary_eligible": true,
       "grade": "A",
@@ -867,7 +889,7 @@
       "ownership": "unspecified",
       "low_usd": 5350,
       "high_usd": 5400,
-      "midpoint_usd": 5375.0,
+      "midpoint_usd": 5375,
       "scope": "Core market assessment",
       "primary_eligible": true,
       "grade": "A",
@@ -887,7 +909,7 @@
       "ownership": "unspecified",
       "low_usd": 5800,
       "high_usd": 7250,
-      "midpoint_usd": 6525.0,
+      "midpoint_usd": 6525,
       "scope": "Core market assessment",
       "primary_eligible": true,
       "grade": "A",
@@ -907,7 +929,7 @@
       "ownership": "unspecified",
       "low_usd": 5500,
       "high_usd": 5600,
-      "midpoint_usd": 5550.0,
+      "midpoint_usd": 5550,
       "scope": "Core market assessment",
       "primary_eligible": true,
       "grade": "A",
@@ -927,7 +949,7 @@
       "ownership": "unspecified",
       "low_usd": 6500,
       "high_usd": 7500,
-      "midpoint_usd": 7000.0,
+      "midpoint_usd": 7000,
       "scope": "Core market assessment",
       "primary_eligible": true,
       "grade": "A",
@@ -947,7 +969,7 @@
       "ownership": "unspecified",
       "low_usd": 5500,
       "high_usd": 5900,
-      "midpoint_usd": 5700.0,
+      "midpoint_usd": 5700,
       "scope": "Core market assessment",
       "primary_eligible": true,
       "grade": "A",
@@ -967,7 +989,7 @@
       "ownership": "unspecified",
       "low_usd": 6700,
       "high_usd": 7700,
-      "midpoint_usd": 7200.0,
+      "midpoint_usd": 7200,
       "scope": "Core market assessment",
       "primary_eligible": true,
       "grade": "A",
@@ -987,7 +1009,7 @@
       "ownership": "unspecified",
       "low_usd": 5700,
       "high_usd": 6200,
-      "midpoint_usd": 5950.0,
+      "midpoint_usd": 5950,
       "scope": "Core market assessment",
       "primary_eligible": true,
       "grade": "A",
@@ -1007,7 +1029,7 @@
       "ownership": "unspecified",
       "low_usd": 6700,
       "high_usd": 7700,
-      "midpoint_usd": 7200.0,
+      "midpoint_usd": 7200,
       "scope": "Core market assessment",
       "primary_eligible": true,
       "grade": "A",
@@ -1027,7 +1049,7 @@
       "ownership": "unspecified",
       "low_usd": 6000,
       "high_usd": 6500,
-      "midpoint_usd": 6250.0,
+      "midpoint_usd": 6250,
       "scope": "Core market assessment",
       "primary_eligible": true,
       "grade": "A",
@@ -1047,7 +1069,7 @@
       "ownership": "unspecified",
       "low_usd": 6700,
       "high_usd": 7700,
-      "midpoint_usd": 7200.0,
+      "midpoint_usd": 7200,
       "scope": "Core market assessment",
       "primary_eligible": true,
       "grade": "A",
@@ -1067,7 +1089,7 @@
       "ownership": "unspecified",
       "low_usd": 6300,
       "high_usd": 6700,
-      "midpoint_usd": 6500.0,
+      "midpoint_usd": 6500,
       "scope": "Core market assessment",
       "primary_eligible": true,
       "grade": "A",
@@ -1087,7 +1109,7 @@
       "ownership": "unspecified",
       "low_usd": 7000,
       "high_usd": 7700,
-      "midpoint_usd": 7350.0,
+      "midpoint_usd": 7350,
       "scope": "Core market assessment",
       "primary_eligible": true,
       "grade": "A",
@@ -1107,7 +1129,7 @@
       "ownership": "unspecified",
       "low_usd": 6400,
       "high_usd": 6800,
-      "midpoint_usd": 6600.0,
+      "midpoint_usd": 6600,
       "scope": "Core market assessment",
       "primary_eligible": true,
       "grade": "A",
@@ -1127,7 +1149,7 @@
       "ownership": "unspecified",
       "low_usd": 7000,
       "high_usd": 7800,
-      "midpoint_usd": 7400.0,
+      "midpoint_usd": 7400,
       "scope": "Core market assessment",
       "primary_eligible": true,
       "grade": "A",
@@ -1147,7 +1169,7 @@
       "ownership": "unspecified",
       "low_usd": 6450,
       "high_usd": 6900,
-      "midpoint_usd": 6675.0,
+      "midpoint_usd": 6675,
       "scope": "Core market assessment",
       "primary_eligible": true,
       "grade": "A",
@@ -1167,7 +1189,7 @@
       "ownership": "unspecified",
       "low_usd": 7100,
       "high_usd": 7900,
-      "midpoint_usd": 7500.0,
+      "midpoint_usd": 7500,
       "scope": "Core market assessment",
       "primary_eligible": true,
       "grade": "A",
@@ -1187,7 +1209,7 @@
       "ownership": "unspecified",
       "low_usd": 6800,
       "high_usd": 7100,
-      "midpoint_usd": 6950.0,
+      "midpoint_usd": 6950,
       "scope": "market assessment",
       "primary_eligible": false,
       "grade": "A-",
@@ -1207,7 +1229,7 @@
       "ownership": "unspecified",
       "low_usd": 6600,
       "high_usd": 7100,
-      "midpoint_usd": 6850.0,
+      "midpoint_usd": 6850,
       "scope": "Core market assessment",
       "primary_eligible": true,
       "grade": "A-",
@@ -1227,7 +1249,7 @@
       "ownership": "unspecified",
       "low_usd": 7200,
       "high_usd": 7900,
-      "midpoint_usd": 7550.0,
+      "midpoint_usd": 7550,
       "scope": "Core market assessment",
       "primary_eligible": true,
       "grade": "A-",
@@ -1247,7 +1269,7 @@
       "ownership": "unspecified",
       "low_usd": 6900,
       "high_usd": 7200,
-      "midpoint_usd": 7050.0,
+      "midpoint_usd": 7050,
       "scope": "market assessment",
       "primary_eligible": false,
       "grade": "A-",
@@ -1267,7 +1289,7 @@
       "ownership": "SOC",
       "low_usd": 5000,
       "high_usd": 5000,
-      "midpoint_usd": 5000.0,
+      "midpoint_usd": 5000,
       "scope": "single-provider station-to-station rate",
       "primary_eligible": false,
       "grade": "B",
@@ -1287,7 +1309,7 @@
       "ownership": "SOC",
       "low_usd": 4700,
       "high_usd": 4700,
-      "midpoint_usd": 4700.0,
+      "midpoint_usd": 4700,
       "scope": "single-provider indicative rate",
       "primary_eligible": false,
       "grade": "B-",
@@ -1307,7 +1329,7 @@
       "ownership": "SOC",
       "low_usd": 4400,
       "high_usd": 4400,
-      "midpoint_usd": 4400.0,
+      "midpoint_usd": 4400,
       "scope": "single-provider rate",
       "primary_eligible": false,
       "grade": "B",
@@ -1327,7 +1349,7 @@
       "ownership": "SOC",
       "low_usd": 4200,
       "high_usd": 4200,
-      "midpoint_usd": 4200.0,
+      "midpoint_usd": 4200,
       "scope": "single-provider rate",
       "primary_eligible": false,
       "grade": "B",
