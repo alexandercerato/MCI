@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "Middle Corridor Freight Monitor",
-    "version": "0.15.0",
+    "version": "0.16.0",
     "as_of": "2026-10-01",
     "refresh_minutes": 5,
     "methodology_note": "MCFI Fundamental Cost v1.0: market freight is compared with a transparent modelled structural cost for one loaded SOC 40HC from Xi'an to Absheron/Alat. No calendar month is used as the index base.",
@@ -16,7 +16,7 @@
       "cargo": "General dry, non-hazardous cargo",
       "direction": "Westbound",
       "origin": "Xi’an (China)",
-      "core_path": "Xi’an (China) → Altynkol/Dostyk (Kazakhstan) → Aktau/Kuryk (Kazakhstan) → Alat/Baku (Azerbaijan)",
+      "core_path": "Xi’an International Port → Horgos/Khorgos (China) → Altynkol / Khorgos Gateway (Kazakhstan) → Aktau Port → Port of Baku (Alat) → Absheron/Baku area",
       "pricing_basis": "USD per 40HC, terminal-to-terminal market assessment; inclusions recorded source-by-source"
     },
     "routes": [
@@ -43,7 +43,7 @@
     "publication_rule": "Publish MCFI when a comparable Xi'an–Absheron/Alat 40HC market assessment is available and all fundamental-cost blocks have an auditable source or explicitly identified modelling rule.",
     "methodological_anchor": "Argus introduced monthly 40HC assessments for Xi’an–Absheron/Baku and Xi’an–Mersin/Ambarli in April 2026; the same two-lane structure is used retrospectively when equivalent historical market ranges are recoverable.",
     "methodology_source": "https://www1.argusmedia.com/ArgusStaticContent/Resources/data/announcements/pdf/20260424atk.pdf",
-    "theoretical_reference_usd": 4282,
+    "theoretical_reference_usd": 4330,
     "index_base": null,
     "index_formula": "MCFI = P_market / C_fundamental × 100.",
     "reference_note": "100 means observed market freight equals the modelled fundamental cost. Values above 100 indicate a market premium; values below 100 indicate market freight below the modelled structural cost.",
@@ -51,7 +51,7 @@
     "theoretical_reference_as_of": "2026-10-01",
     "theoretical_cost_model": {
       "version": "1.0",
-      "route": "Xi'an International Port → Alashankou/Dostyk → Altynkol → Aktau → Alat/Absheron",
+      "route": "Xi’an International Port → Horgos/Khorgos (China) → Altynkol / Khorgos Gateway (Kazakhstan) → Aktau Port → Port of Baku (Alat) → Absheron/Baku area",
       "unit": "USD per loaded SOC 40HC",
       "exclusions": [
         "first-mile trucking",
@@ -66,24 +66,24 @@
         {
           "id": "china_rail",
           "label": "China rail linehaul",
-          "route": "Xi'an → Alashankou",
-          "native_value": 10955.49,
+          "route": "Xi'an → Horgos/Khorgos Port",
+          "native_value": 11274.4,
           "native_currency": "CNY",
           "fx_cny_usd": 0.149148,
-          "value_usd": 1633.99,
+          "value_usd": 1681.55,
           "status": "modelled_from_public_tariff_formula",
-          "method": "532 CNY/container + 3.357 CNY/container-km × 3,105 km",
-          "source_name": "China Railway container tariff structure / CNR route distance",
+          "method": "532 CNY/container + 3.357 CNY/container-km × 3,200 km",
+          "source_name": "China Railway container tariff structure / documented Xi'an–Horgos rail distance",
           "source_urls": [
             "https://www.chinainlandport.org.cn/index.php?a=show&c=index&catid=34&id=169&m=content",
-            "https://news.cnr.cn/native/city/201311/t20131128_514265073.shtml"
+            "https://documents1.worldbank.org/curated/en/099321105092329241/pdf/IDU0e8dd32030fbfe04255088a203f3ea6691844.pdf"
           ],
-          "note": "The 2018 national tariff formula is used as a structural modelling rule, not as a claim that it is the executable 2026 commercial quote."
+          "note": "Route aligned with the Xi'an–Baku/Poti Middle Corridor service via Horgos/Khorgos. The tariff formula is a structural modelling rule, not an executable 2026 quote."
         },
         {
           "id": "border_transshipment",
           "label": "Border container transshipment",
-          "route": "Alashankou border station",
+          "route": "Horgos (China) / Altynkol–Khorgos Gateway (Kazakhstan)",
           "native_value": 225,
           "native_currency": "CNY",
           "fx_cny_usd": 0.149148,
@@ -96,7 +96,7 @@
         {
           "id": "china_customs_admin",
           "label": "China border customs administration",
-          "route": "Border station",
+          "route": "Horgos border",
           "native_value": 33,
           "native_currency": "CNY",
           "fx_cny_usd": 0.149148,
@@ -127,10 +127,43 @@
           "note": "Latest public official all-in structural anchor located. It is not represented as a current executable October 2026 quotation."
         }
       ],
-      "total_usd": 4282,
+      "total_usd": 4330,
       "fx_note": "CNY/USD reference approximately 0.149148 on 01.10.2026.",
       "confidence": "medium",
-      "confidence_note": "China linehaul and border items are modelled from public tariff rules; the central TITR block is official but its published validity ended 31.03.2026."
+      "confidence_note": "China linehaul/border items are modelled from public tariff rules and a documented 3,200 km Xi'an–Horgos rail distance; the central TITR block uses published official anchors. From April 2026 the last KTZ Express public rate is carried forward until a newer public all-in rate is located."
+    },
+    "historical_cost_methodology": {
+      "china_and_border": "Held in native CNY structural terms and converted using the v1 reference FX in this first historical build; a later version may substitute monthly FX.",
+      "central_titr": [
+        {
+          "from": "2024-01",
+          "to": "2024-12",
+          "usd": 2348,
+          "status": "official",
+          "source": "TITR 2024 complex tariff"
+        },
+        {
+          "from": "2025-01",
+          "to": "2025-09",
+          "usd": 2560,
+          "status": "official",
+          "source": "KTZ Express tariff valid through 30.09.2025"
+        },
+        {
+          "from": "2025-10",
+          "to": "2026-03",
+          "usd": 2610,
+          "status": "official",
+          "source": "KTZ Express tariff valid through 31.03.2026"
+        },
+        {
+          "from": "2026-04",
+          "to": "present",
+          "usd": 2610,
+          "status": "carry_forward",
+          "source": "last published official anchor pending newer public rate"
+        }
+      ]
     }
   },
   "headline": {
@@ -139,9 +172,9 @@
       "value_usd": 6975,
       "coverage": "Xi'an → Alat/Absheron 40HC market assessment",
       "confidence": "market assessment vs fundamental cost v1.0",
-      "value_index": 162.9,
-      "theoretical_reference_usd": 4282,
-      "premium_vs_model_pct": 62.9
+      "value_index": 161.1,
+      "theoretical_reference_usd": 4330,
+      "premium_vs_model_pct": 61.1
     },
     "latest_baku_market": {
       "period": "2026-09",
@@ -208,7 +241,9 @@
       "basis": "Argus Jan-2025 report explicitly states both January ranges were unchanged from December.",
       "source_url": "https://view.argusmedia.com/rs/584-BUW-606/images/Argus_Caspian_Transportation_RU_2025_01_31.pdf",
       "premium_vs_model_pct": 16.9,
-      "mcfi_index": 117.8
+      "mcfi_index": 186.8,
+      "fundamental_cost_usd": 4068,
+      "fundamental_anchor_status": "official"
     },
     {
       "period": "2025-01",
@@ -221,7 +256,9 @@
       "basis": "Direct Argus market ranges for both core routes.",
       "source_url": "https://view.argusmedia.com/rs/584-BUW-606/images/Argus_Caspian_Transportation_RU_2025_01_31.pdf",
       "premium_vs_model_pct": 16.9,
-      "mcfi_index": 117.8
+      "mcfi_index": 177.6,
+      "fundamental_cost_usd": 4280,
+      "fundamental_anchor_status": "official"
     },
     {
       "period": "2025-03",
@@ -234,7 +271,9 @@
       "basis": "April Argus assessment states both ranges were unchanged from March.",
       "source_url": "https://view.argusmedia.com/rs/584-BUW-606/images/Trans_Caspian_container_shipments.pdf",
       "premium_vs_model_pct": 11.2,
-      "mcfi_index": 112
+      "mcfi_index": 168.8,
+      "fundamental_cost_usd": 4280,
+      "fundamental_anchor_status": "official"
     },
     {
       "period": "2025-04",
@@ -247,7 +286,9 @@
       "basis": "Direct Argus market ranges for both core routes.",
       "source_url": "https://view.argusmedia.com/rs/584-BUW-606/images/Trans_Caspian_container_shipments.pdf",
       "premium_vs_model_pct": 11.2,
-      "mcfi_index": 112
+      "mcfi_index": 168.8,
+      "fundamental_cost_usd": 4280,
+      "fundamental_anchor_status": "official"
     },
     {
       "period": "2025-05",
@@ -260,7 +301,9 @@
       "basis": "Direct Argus market ranges for both core routes.",
       "source_url": "https://view.argusmedia.com/rs/584-BUW-606/images/Argus_Caspian_Transportation_c.pdf",
       "premium_vs_model_pct": 7.7,
-      "mcfi_index": 108.5
+      "mcfi_index": 163.6,
+      "fundamental_cost_usd": 4280,
+      "fundamental_anchor_status": "official"
     },
     {
       "period": "2025-06",
@@ -273,7 +316,9 @@
       "basis": "Direct Argus market ranges for both core routes.",
       "source_url": "https://view.argusmedia.com/rs/584-BUW-606/images/Argus_Caspian_Transportation_2025_06_27.pdf",
       "premium_vs_model_pct": 4.6,
-      "mcfi_index": 105.4
+      "mcfi_index": 158.9,
+      "fundamental_cost_usd": 4280,
+      "fundamental_anchor_status": "official"
     },
     {
       "period": "2025-08",
@@ -286,7 +331,9 @@
       "basis": "September Argus update gives August comparator ranges for both core routes.",
       "source_url": "https://www.argusmedia.com/ru/news-and-insights/latest-market-news/2738209-konteynernye-perevozki-cherez-kaspiy-desheveyut",
       "premium_vs_model_pct": -4.2,
-      "mcfi_index": 96.5
+      "mcfi_index": 145.4,
+      "fundamental_cost_usd": 4280,
+      "fundamental_anchor_status": "official"
     },
     {
       "period": "2025-09",
@@ -299,7 +346,9 @@
       "basis": "Direct Argus market ranges for both core routes.",
       "source_url": "https://www.argusmedia.com/ru/news-and-insights/latest-market-news/2738209-konteynernye-perevozki-cherez-kaspiy-desheveyut",
       "premium_vs_model_pct": -5.6,
-      "mcfi_index": 95.2
+      "mcfi_index": 143.4,
+      "fundamental_cost_usd": 4280,
+      "fundamental_anchor_status": "official"
     },
     {
       "period": "2025-10",
@@ -312,7 +361,9 @@
       "basis": "Direct Argus market ranges for both core routes.",
       "source_url": "https://view.argusmedia.com/rs/584-BUW-606/images/Argus_Caspian_Transportation_2025_10_31.pdf",
       "premium_vs_model_pct": -8.5,
-      "mcfi_index": 92.2
+      "mcfi_index": 137.4,
+      "fundamental_cost_usd": 4330,
+      "fundamental_anchor_status": "official"
     },
     {
       "period": "2025-11",
@@ -325,7 +376,9 @@
       "basis": "December/late-November Argus reporting states these ranges were unchanged from October.",
       "source_url": "https://www.argusmedia.com/ru/news-and-insights/latest-market-news/2761773-konteynernye-perevozki-cherez-kaspiy-podorozhayut",
       "premium_vs_model_pct": -8.5,
-      "mcfi_index": 92.2
+      "mcfi_index": 137.4,
+      "fundamental_cost_usd": 4330,
+      "fundamental_anchor_status": "official"
     },
     {
       "period": "2025-12",
@@ -338,7 +391,9 @@
       "basis": "January-2026 Argus update gives December comparator ranges for both routes.",
       "source_url": "https://www.argusmedia.com/es/news-and-insights/latest-market-news/2788416-konteynernye-perevozki-cherez-kaspiy-dorozhayut",
       "premium_vs_model_pct": -3.5,
-      "mcfi_index": 97.3
+      "mcfi_index": 144.9,
+      "fundamental_cost_usd": 4330,
+      "fundamental_anchor_status": "official"
     },
     {
       "period": "2026-01",
@@ -351,7 +406,9 @@
       "basis": "Direct Argus market ranges for both core routes.",
       "source_url": "https://www.argusmedia.com/es/news-and-insights/latest-market-news/2788416-konteynernye-perevozki-cherez-kaspiy-dorozhayut",
       "premium_vs_model_pct": -0.8,
-      "mcfi_index": 100
+      "mcfi_index": 149,
+      "fundamental_cost_usd": 4330,
+      "fundamental_anchor_status": "official"
     },
     {
       "period": "2026-02",
@@ -364,7 +421,9 @@
       "basis": "March Argus update gives February Baku range and states Turkey was unchanged.",
       "source_url": "https://www.argusmedia.com/ru/news-and-insights/latest-market-news/2809389-stoimost-konteynernyh-perevozok-cherez-kaspiy-vyrosla",
       "premium_vs_model_pct": 1.2,
-      "mcfi_index": 101.9
+      "mcfi_index": 151.8,
+      "fundamental_cost_usd": 4330,
+      "fundamental_anchor_status": "official"
     },
     {
       "period": "2026-03",
@@ -377,7 +436,9 @@
       "basis": "Direct Argus market ranges for both core routes.",
       "source_url": "https://www.argusmedia.com/ru/news-and-insights/latest-market-news/2809389-stoimost-konteynernyh-perevozok-cherez-kaspiy-vyrosla",
       "premium_vs_model_pct": 3.5,
-      "mcfi_index": 104.3
+      "mcfi_index": 155.3,
+      "fundamental_cost_usd": 4330,
+      "fundamental_anchor_status": "official"
     },
     {
       "period": "2026-04",
@@ -390,7 +451,9 @@
       "basis": "Direct Argus market ranges for both core routes.",
       "source_url": "https://www.argusmedia.com/de/news-and-insights/latest-market-news/2822243-konteynernye-perevozki-cherez-kaspiy-dorozhayut",
       "premium_vs_model_pct": 6.5,
-      "mcfi_index": 107.4
+      "mcfi_index": 159.9,
+      "fundamental_cost_usd": 4330,
+      "fundamental_anchor_status": "carry_forward"
     },
     {
       "period": "2026-05",
@@ -403,7 +466,9 @@
       "basis": "June market update gives May comparator ranges for both routes.",
       "source_url": "https://www.tylla-nal.com/en/news/57",
       "premium_vs_model_pct": 7.7,
-      "mcfi_index": 108.5
+      "mcfi_index": 161.7,
+      "fundamental_cost_usd": 4330,
+      "fundamental_anchor_status": "carry_forward"
     },
     {
       "period": "2026-06",
@@ -416,7 +481,9 @@
       "basis": "Direct June market ranges for both core routes.",
       "source_url": "https://www.tylla-nal.com/en/news/57",
       "premium_vs_model_pct": 9,
-      "mcfi_index": 109.9
+      "mcfi_index": 163.7,
+      "fundamental_cost_usd": 4330,
+      "fundamental_anchor_status": "carry_forward"
     },
     {
       "period": "2026-07",
@@ -429,7 +496,9 @@
       "basis": "Official Argus channel reports July ranges for both core routes.",
       "source_url": "https://t.me/s/argus_price_agency?before=1622",
       "premium_vs_model_pct": 10.8,
-      "mcfi_index": 111.6
+      "mcfi_index": 166.3,
+      "fundamental_cost_usd": 4330,
+      "fundamental_anchor_status": "carry_forward"
     }
   ],
   "coverage_gaps": [
@@ -1670,5 +1739,187 @@
         }
       ]
     }
-  }
+  },
+  "fundamental_cost_history": [
+    {
+      "period": "2024-12",
+      "china_rail_usd": 1682,
+      "border_admin_usd": 38,
+      "central_titr_usd": 2348,
+      "fundamental_cost_usd": 4068,
+      "anchor_status": "official",
+      "anchor_label": "2024 TITR official integrated rate",
+      "mcfi_index": 186.8
+    },
+    {
+      "period": "2025-01",
+      "china_rail_usd": 1682,
+      "border_admin_usd": 38,
+      "central_titr_usd": 2560,
+      "fundamental_cost_usd": 4280,
+      "anchor_status": "official",
+      "anchor_label": "KTZ Express rate valid through 30.09.2025",
+      "mcfi_index": 177.6
+    },
+    {
+      "period": "2025-03",
+      "china_rail_usd": 1682,
+      "border_admin_usd": 38,
+      "central_titr_usd": 2560,
+      "fundamental_cost_usd": 4280,
+      "anchor_status": "official",
+      "anchor_label": "KTZ Express rate valid through 30.09.2025",
+      "mcfi_index": 168.8
+    },
+    {
+      "period": "2025-04",
+      "china_rail_usd": 1682,
+      "border_admin_usd": 38,
+      "central_titr_usd": 2560,
+      "fundamental_cost_usd": 4280,
+      "anchor_status": "official",
+      "anchor_label": "KTZ Express rate valid through 30.09.2025",
+      "mcfi_index": 168.8
+    },
+    {
+      "period": "2025-05",
+      "china_rail_usd": 1682,
+      "border_admin_usd": 38,
+      "central_titr_usd": 2560,
+      "fundamental_cost_usd": 4280,
+      "anchor_status": "official",
+      "anchor_label": "KTZ Express rate valid through 30.09.2025",
+      "mcfi_index": 163.6
+    },
+    {
+      "period": "2025-06",
+      "china_rail_usd": 1682,
+      "border_admin_usd": 38,
+      "central_titr_usd": 2560,
+      "fundamental_cost_usd": 4280,
+      "anchor_status": "official",
+      "anchor_label": "KTZ Express rate valid through 30.09.2025",
+      "mcfi_index": 158.9
+    },
+    {
+      "period": "2025-08",
+      "china_rail_usd": 1682,
+      "border_admin_usd": 38,
+      "central_titr_usd": 2560,
+      "fundamental_cost_usd": 4280,
+      "anchor_status": "official",
+      "anchor_label": "KTZ Express rate valid through 30.09.2025",
+      "mcfi_index": 145.4
+    },
+    {
+      "period": "2025-09",
+      "china_rail_usd": 1682,
+      "border_admin_usd": 38,
+      "central_titr_usd": 2560,
+      "fundamental_cost_usd": 4280,
+      "anchor_status": "official",
+      "anchor_label": "KTZ Express rate valid through 30.09.2025",
+      "mcfi_index": 143.4
+    },
+    {
+      "period": "2025-10",
+      "china_rail_usd": 1682,
+      "border_admin_usd": 38,
+      "central_titr_usd": 2610,
+      "fundamental_cost_usd": 4330,
+      "anchor_status": "official",
+      "anchor_label": "KTZ Express rate valid through 31.03.2026",
+      "mcfi_index": 137.4
+    },
+    {
+      "period": "2025-11",
+      "china_rail_usd": 1682,
+      "border_admin_usd": 38,
+      "central_titr_usd": 2610,
+      "fundamental_cost_usd": 4330,
+      "anchor_status": "official",
+      "anchor_label": "KTZ Express rate valid through 31.03.2026",
+      "mcfi_index": 137.4
+    },
+    {
+      "period": "2025-12",
+      "china_rail_usd": 1682,
+      "border_admin_usd": 38,
+      "central_titr_usd": 2610,
+      "fundamental_cost_usd": 4330,
+      "anchor_status": "official",
+      "anchor_label": "KTZ Express rate valid through 31.03.2026",
+      "mcfi_index": 144.9
+    },
+    {
+      "period": "2026-01",
+      "china_rail_usd": 1682,
+      "border_admin_usd": 38,
+      "central_titr_usd": 2610,
+      "fundamental_cost_usd": 4330,
+      "anchor_status": "official",
+      "anchor_label": "KTZ Express rate valid through 31.03.2026",
+      "mcfi_index": 149
+    },
+    {
+      "period": "2026-02",
+      "china_rail_usd": 1682,
+      "border_admin_usd": 38,
+      "central_titr_usd": 2610,
+      "fundamental_cost_usd": 4330,
+      "anchor_status": "official",
+      "anchor_label": "KTZ Express rate valid through 31.03.2026",
+      "mcfi_index": 151.8
+    },
+    {
+      "period": "2026-03",
+      "china_rail_usd": 1682,
+      "border_admin_usd": 38,
+      "central_titr_usd": 2610,
+      "fundamental_cost_usd": 4330,
+      "anchor_status": "official",
+      "anchor_label": "KTZ Express rate valid through 31.03.2026",
+      "mcfi_index": 155.3
+    },
+    {
+      "period": "2026-04",
+      "china_rail_usd": 1682,
+      "border_admin_usd": 38,
+      "central_titr_usd": 2610,
+      "fundamental_cost_usd": 4330,
+      "anchor_status": "carry_forward",
+      "anchor_label": "Last published KTZ Express anchor carried forward",
+      "mcfi_index": 159.9
+    },
+    {
+      "period": "2026-05",
+      "china_rail_usd": 1682,
+      "border_admin_usd": 38,
+      "central_titr_usd": 2610,
+      "fundamental_cost_usd": 4330,
+      "anchor_status": "carry_forward",
+      "anchor_label": "Last published KTZ Express anchor carried forward",
+      "mcfi_index": 161.7
+    },
+    {
+      "period": "2026-06",
+      "china_rail_usd": 1682,
+      "border_admin_usd": 38,
+      "central_titr_usd": 2610,
+      "fundamental_cost_usd": 4330,
+      "anchor_status": "carry_forward",
+      "anchor_label": "Last published KTZ Express anchor carried forward",
+      "mcfi_index": 163.7
+    },
+    {
+      "period": "2026-07",
+      "china_rail_usd": 1682,
+      "border_admin_usd": 38,
+      "central_titr_usd": 2610,
+      "fundamental_cost_usd": 4330,
+      "anchor_status": "carry_forward",
+      "anchor_label": "Last published KTZ Express anchor carried forward",
+      "mcfi_index": 166.3
+    }
+  ]
 }
