@@ -469,53 +469,38 @@ function formatAge(iso){
   return `${Math.floor(sec/86400)}d ago`;
 }
 
-const AKTAU_BERTH_POSITIONS={
-  1:{left:44,top:63},2:{left:46,top:59},3:{left:47,top:55},4:{left:48,top:51},
-  5:{left:50,top:47},6:{left:53,top:44},7:{left:56,top:44},8:{left:59,top:47},
-  9:{left:61,top:51},10:{left:60,top:56},11:{left:58,top:60},12:{left:55,top:63},
-  18:{left:64,top:39},21:{left:67,top:43},22:{left:69,top:47},23:{left:70,top:52}
+// --- Aktau official port activity supplement ---
+
+const CYRILLIC_LATIN_MAP={
+  'А':'A','Б':'B','В':'V','Г':'G','Ғ':'Gh','Д':'D','Е':'E','Ё':'Yo','Ж':'Zh','З':'Z','И':'I','Й':'Y','К':'K','Қ':'Q','Л':'L','М':'M','Н':'N','Ң':'Ng','О':'O','Ө':'O','П':'P','Р':'R','С':'S','Т':'T','У':'U','Ұ':'U','Ү':'U','Ф':'F','Х':'Kh','Һ':'H','Ц':'Ts','Ч':'Ch','Ш':'Sh','Щ':'Shch','Ъ':'','Ы':'Y','І':'I','Ь':'','Э':'E','Ю':'Yu','Я':'Ya',
+  'а':'a','б':'b','в':'v','г':'g','ғ':'gh','д':'d','е':'e','ё':'yo','ж':'zh','з':'z','и':'i','й':'y','к':'k','қ':'q','л':'l','м':'m','н':'n','ң':'ng','о':'o','ө':'o','п':'p','р':'r','с':'s','т':'t','у':'u','ұ':'u','ү':'u','ф':'f','х':'kh','һ':'h','ц':'ts','ч':'ch','ш':'sh','щ':'shch','ъ':'','ы':'y','і':'i','ь':'','э':'e','ю':'yu','я':'ya'
 };
 
-function aktauBerthNumber(label){
-  const m=String(label||'').match(/(\d+)/);
-  return m?Number(m[1]):null;
+function latinise(value){
+  return String(value??'').replace(/[А-Яа-яЁёҒғҚқҢңӨөҰұҮүҺһІі]/g,ch=>CYRILLIC_LATIN_MAP[ch]??ch);
 }
 
-function renderAktauBerthOverlay(berthed){
-  const overlay=document.getElementById('aktauBerthOverlay');
-  if(!overlay) return;
-
-  const legend=overlay.querySelector('.aktau-berth-overlay-legend');
-  overlay.innerHTML='';
-  if(legend) overlay.appendChild(legend);
-
-  const used=new Map();
-
-  (berthed||[]).forEach(v=>{
-    const berthNo=aktauBerthNumber(v.berth);
-    const base=AKTAU_BERTH_POSITIONS[berthNo]||{left:52,top:53};
-    const duplicate=used.get(berthNo)||0;
-    used.set(berthNo,duplicate+1);
-
-    const marker=document.createElement('div');
-    marker.className='aktau-official-berth-marker';
-    marker.style.left=`${base.left + duplicate*1.5}%`;
-    marker.style.top=`${base.top + duplicate*3}%`;
-    marker.title=`${v.vessel_name||'Unnamed vessel'} · Berth ${berthNo||'—'} · ${v.operation||'official disposition'}`;
-    marker.innerHTML=`<span class="aktau-official-berth-dot">B${berthNo||'?'}</span><strong>${escapeHTML(v.vessel_name||'Unnamed vessel')}</strong>`;
-    overlay.appendChild(marker);
-  });
+function translateAktauState(value){
+  const raw=String(value||'').toLowerCase();
+  if(raw.includes('погруз')) return 'Loading';
+  if(raw.includes('разгруз')) return 'Discharging';
+  if(raw.includes('налив')) return 'Loading';
+  if(raw.includes('оформ')) return 'Clearance';
+  if(raw.includes('стоян')) return 'Moored';
+  if(raw.includes('ожидан')) return 'Waiting';
+  if(raw.includes('приход')) return 'Arrival formalities';
+  return latinise(value||'');
 }
-
-// --- Aktau official port activity supplement ---
 
 async function loadAktauOfficialActivity(){
   const base=((window.MCFM_CONFIG||{}).aisApiBase||'').replace(/\/$/,'');
   const berthedEl=document.getElementById('aktauOfficialBerthed');
   const roadsteadEl=document.getElementById('aktauOfficialRoadstead');
+  const totalEl=document.getElementById('aktauOfficialTotal');
   const dateEl=document.getElementById('aktauOfficialDate');
+  const updatedEl=document.getElementById('aktauOfficialUpdated');
   const board=document.getElementById('aktauOfficialVessels');
-  if(!berthedEl || !roadsteadEl || !dateEl || !board || !base) return;
+  if(!berthedEl || !roadsteadEl || !totalEl || !dateEl || !board || !base) return;
 
   try{
     const res=await fetch(`${base}/api/port-activity?t=${Date.now()}`,{cache:'no-store'});
@@ -526,21 +511,32 @@ async function loadAktauOfficialActivity(){
     const berthed=Array.isArray(aktau.berthed)?aktau.berthed:[];
     const roadstead=[...(aktau.roadstead_dry||[]),...(aktau.roadstead_tankers||[])];
 
-    berthedEl.textContent=Number.isFinite(Number(s.berthed_vessels))?String(Number(s.berthed_vessels)):'—';
-    roadsteadEl.textContent=Number.isFinite(Number(s.roadstead_vessels))?String(Number(s.roadstead_vessels)):'—';
+    const berthedCount=Number.isFinite(Number(s.berthed_vessels))?Number(s.berthed_vessels):berthed.length;
+    const roadsteadCount=Number.isFinite(Number(s.roadstead_vessels))?Number(s.roadstead_vessels):roadstead.length;
+
+    berthedEl.textContent=String(berthedCount);
+    roadsteadEl.textContent=String(roadsteadCount);
+    totalEl.textContent=String(berthedCount+roadsteadCount);
     dateEl.textContent=aktau.traffic_date||'—';
-    renderAktauBerthOverlay(berthed);
+    if(updatedEl) updatedEl.textContent=data?.updated_at?`Updated ${formatAge(data.updated_at)}`:'refresh every 5 min';
 
     const rows=[
-      ...berthed.slice(0,8).map(v=>({
-        name:v.vessel_name,
-        state:'BERTHED',
-        detail:[v.berth,v.operation,v.reported_time].filter(Boolean).join(' · ')
+      ...berthed.map(v=>({
+        name:latinise(v.vessel_name),
+        state:'Berthed',
+        detail:[
+          latinise(v.berth||''),
+          translateAktauState(v.operation),
+          v.reported_time
+        ].filter(Boolean).join(' · ')
       })),
-      ...roadstead.slice(0,8).map(v=>({
-        name:v.vessel_name,
-        state:'ROADSTEAD',
-        detail:[v.category,v.reported_time].filter(Boolean).join(' · ')
+      ...roadstead.map(v=>({
+        name:latinise(v.vessel_name),
+        state:'Roadstead',
+        detail:[
+          String(v.category||'').includes('tanker')?'Tanker':'Dry cargo / ferry',
+          v.reported_time
+        ].filter(Boolean).join(' · ')
       }))
     ];
 
@@ -550,7 +546,10 @@ async function loadAktauOfficialActivity(){
       <small>${escapeHTML(v.detail||'')}</small>
     </div>`).join(''):'<div class="vessel-empty">No vessels currently listed in the official Aktau disposition.</div>';
   }catch(err){
-    renderAktauBerthOverlay([]);
+    berthedEl.textContent='—';
+    roadsteadEl.textContent='—';
+    totalEl.textContent='—';
+    if(updatedEl) updatedEl.textContent='data temporarily unavailable';
     board.innerHTML='<div class="vessel-empty">Aktau official vessel data temporarily unavailable.</div>';
     console.warn(err);
   }
