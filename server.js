@@ -7,6 +7,7 @@ import path from 'node:path';
 
 const PORT = Number(process.env.PORT || 8787);
 const OPENWATERS_API_KEY = process.env.OPENWATERS_API_KEY || '';
+const AISSTREAM_API_KEY = process.env.AISSTREAM_API_KEY || '';
 const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || '*';
 const DATA_DIR = path.resolve(process.env.DATA_DIR || './data');
 
@@ -103,6 +104,11 @@ let lastPositionAt = null;
 let reconnectTimer = null;
 let activeWs = null;
 let lastSnapshotAt = null;
+
+let aisStreamState = AISSTREAM_API_KEY ? 'connecting' : 'disabled';
+let activeAisStreamWs = null;
+let aisStreamReconnectTimer = null;
+let lastAisStreamMessageAt = null;
 
 
 /* ============================================================
@@ -707,6 +713,162 @@ function handleOpenWatersEvent(event) {
 
 
 /* ============================================================
+   AISSTREAM SECONDARY FEED
+============================================================ */
+
+function parseAisStreamTime(value) {
+  if (!value) return new Date().toISOString();
+  const parsed = new Date(String(value).replace(' +0000 UTC','Z'));
+  return Number.isFinite(parsed.getTime()) ? parsed.toISOString() : new Date().toISOString();
+}
+
+function handleAisStreamEvent(event) {
+  if (!event) return;
+
+  if (event.MessageType === 'SubscriptionConfirmation') {
+    aisStreamState = 'live';
+    console.log('[AISSTREAM] Subscription confirmed');
+    return;
+  }
+
+  const type = event.MessageType;
+  const meta = event.MetaData || {};
+  const body = event.Message?.[type] || {};
+
+  const rawMmsi = meta.MMSI ?? meta.MMSI_String ?? body.UserID ?? body.MMSI;
+  const mmsi = String(rawMmsi || '');
+  if (!mmsi) return;
+
+  const old = vessels.get(mmsi) || { mmsi };
+  const next = { ...old, mmsi };
+
+  const possibleName = meta.ShipName ?? body.Name ?? body.ShipName ?? old.name ?? null;
+  const possibleDestination = body.Destination ?? old.destination ?? null;
+  const possibleType = body.Type ?? body.ShipType ?? old.ship_type ?? null;
+
+  next.name = possibleName ? String(possibleName).trim() : null;
+  next.destination = possibleDestination ? String(possibleDestination).trim() : null;
+  next.ship_type = possibleType;
+  next.source = 'AISStream';
+  next.msg_type = type || old.msg_type || null;
+
+  const lat = Number(meta.Latitude ?? meta.latitude ?? body.Latitude ?? body.latitude);
+  const lon = Number(meta.Longitude ?? meta.longitude ?? body.Longitude ?? body.longitude);
+
+  const seen = parseAisStreamTime(meta.time_utc ?? meta.TimeUTC ?? meta.Timestamp);
+  lastAisStreamMessageAt = new Date().toISOString();
+  lastMessageAt = lastAisStreamMessageAt;
+  aisStreamState = 'live';
+
+  if (
+    Number.isFinite(lat) &&
+    Number.isFinite(lon) &&
+    lat >= BOUNDS.south &&
+    lat <= BOUNDS.north &&
+    lon >= BOUNDS.west &&
+    lon <= BOUNDS.east
+  ) {
+    next.lat = lat;
+    next.lon = lon;
+    next.last_seen = seen;
+
+    const oldZone = old.zone || null;
+    const newZone = zoneFor(lat, lon);
+    next.zone = newZone;
+
+    const seenMs = new Date(seen).getTime();
+    if (Number.isFinite(seenMs)) {
+      lastPositionAt = seen;
+      inferCrossing(mmsi, oldZone, newZone, seenMs);
+    }
+  }
+
+  if (body.Sog !== undefined) next.sog = validSog(body.Sog);
+  if (body.Cog !== undefined) next.cog = validCog(body.Cog);
+  if (body.TrueHeading !== undefined) next.heading = validHeading(body.TrueHeading);
+
+  next.direction = courseDirection(next.cog, next.sog);
+  next.corridor_candidate = corridorCandidate(next);
+
+  if (Number.isFinite(next.lat) && Number.isFinite(next.lon)) {
+    vessels.set(mmsi, next);
+  }
+}
+
+function scheduleAisStreamReconnect(delay=30000) {
+  if (!AISSTREAM_API_KEY || aisStreamReconnectTimer) return;
+  aisStreamReconnectTimer = setTimeout(() => {
+    aisStreamReconnectTimer = null;
+    connectAisStream();
+  }, delay);
+}
+
+function connectAisStream() {
+  if (!AISSTREAM_API_KEY) {
+    aisStreamState = 'disabled';
+    return;
+  }
+
+  if (
+    activeAisStreamWs &&
+    (activeAisStreamWs.readyState === WebSocket.OPEN ||
+     activeAisStreamWs.readyState === WebSocket.CONNECTING)
+  ) return;
+
+  aisStreamState = 'connecting';
+  console.log('[AISSTREAM] Connecting...');
+
+  const ws = new WebSocket('wss://stream.aisstream.io/v0/stream', {
+    perMessageDeflate: true
+  });
+  activeAisStreamWs = ws;
+
+  ws.on('open', () => {
+    const subscription = {
+      APIKey: AISSTREAM_API_KEY,
+      BoundingBoxes: [
+        [
+          [BOUNDS.south, BOUNDS.west],
+          [BOUNDS.north, BOUNDS.east]
+        ]
+      ],
+      FilterMessageTypes: [
+        'PositionReport',
+        'StandardClassBPositionReport',
+        'ExtendedClassBPositionReport',
+        'ShipStaticData',
+        'StaticDataReport'
+      ]
+    };
+
+    ws.send(JSON.stringify(subscription));
+    console.log('[AISSTREAM] Subscription sent: ' +
+      BOUNDS.south + ',' + BOUNDS.west + ',' + BOUNDS.north + ',' + BOUNDS.east);
+  });
+
+  ws.on('message', raw => {
+    try {
+      handleAisStreamEvent(JSON.parse(raw.toString('utf8')));
+    } catch (err) {
+      console.error('[AISSTREAM] Parse error:', err.message);
+    }
+  });
+
+  ws.on('error', err => {
+    aisStreamState = 'offline';
+    console.error('[AISSTREAM] WebSocket error:', err.message);
+  });
+
+  ws.on('close', (code, reason) => {
+    aisStreamState = 'offline';
+    if (activeAisStreamWs === ws) activeAisStreamWs = null;
+    console.log('[AISSTREAM] Connection closed: ' + code + ' ' + reason.toString());
+    scheduleAisStreamReconnect(code === 1008 ? 60000 : 30000);
+  });
+}
+
+
+/* ============================================================
    CLEANUP
 ============================================================ */
 
@@ -1084,8 +1246,9 @@ function publicSnapshot() {
   const crossings7d = crossings.filter(c => new Date(c.arrived_at).getTime() >= cutoff7);
 
   return {
-    status: wsState,
-    provider: 'Open Waters',
+    status: (wsState === 'live' || aisStreamState === 'live') ? 'live' :
+      ((wsState === 'connecting' || wsState === 'subscribing' || aisStreamState === 'connecting') ? 'connecting' : 'offline'),
+    provider: AISSTREAM_API_KEY ? 'Open Waters + AISStream' : 'Open Waters',
     display_mode: displayMode,
     display_window: displayMode === 'live' ? '30m' : (displayMode === 'last_known' ? '24h' : null),
     updated_at: lastMessageAt,
@@ -1243,10 +1406,20 @@ app.get(
       ok: true,
 
       status:
-        wsState,
+        (wsState === 'live' || aisStreamState === 'live') ? 'live' :
+          ((wsState === 'connecting' || wsState === 'subscribing' || aisStreamState === 'connecting') ? 'connecting' : 'offline'),
 
       provider:
-        'Open Waters',
+        AISSTREAM_API_KEY ? 'Open Waters + AISStream' : 'Open Waters',
+
+      open_waters_status:
+        wsState,
+
+      aisstream_status:
+        aisStreamState,
+
+      last_aisstream_message_at:
+        lastAisStreamMessageAt,
 
       last_message_at:
         lastMessageAt,
@@ -1307,6 +1480,7 @@ app.listen(
     refreshOpenWatersSnapshot();
     refreshNews();
     connectOpenWaters();
+    connectAisStream();
   }
 );
 
