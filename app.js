@@ -405,8 +405,8 @@ function renderAIS(data){
   const mode=data?.display_mode || 'empty';
   const connected=data?.status==='live';
   const connecting=data?.status==='connecting'||data?.status==='subscribing';
-  const statusKind=mode==='last_known'?'stale':(connected?'live':(connecting?'connecting':'offline'));
-  const statusLabel=mode==='last_known'?'LAST KNOWN':(connected?'LIVE':(connecting?'CONNECTING':'OFFLINE'));
+  const statusKind=(mode==='last_known'||mode==='archive')?'stale':(connected?'live':(connecting?'connecting':'offline'));
+  const statusLabel=mode==='archive'?'ARCHIVE':(mode==='last_known'?'LAST KNOWN':(connected?'LIVE':(connecting?'CONNECTING':'OFFLINE')));
   setAisStatus(statusKind,statusLabel,data?.updated_at?`Updated ${formatAge(data.updated_at)}`:'—');
 
   aisProvider.textContent=data?.provider||'Open Waters';
@@ -418,13 +418,13 @@ function renderAIS(data){
   aisWestbound.textContent=s.westbound ?? '—';
   aisEastbound.textContent=s.eastbound ?? '—';
 
-  if(window.aisWindowLabel) aisWindowLabel.textContent=mode==='last_known'?'last known · ≤24 h':'last 30 min';
-  if(window.aisWindow) aisWindow.textContent=mode==='last_known'?'24 h last-known window':'30 min live window';
+  if(window.aisWindowLabel) aisWindowLabel.textContent=mode==='archive'?'historical last known':(mode==='last_known'?'last known · ≤24 h':'last 30 min');
+  if(window.aisWindow) aisWindow.textContent=mode==='archive'?'historical last-known positions':(mode==='last_known'?'24 h last-known window':'30 min live window');
 
   const existing=[...aisRadar.querySelectorAll('.vessel-dot')]; existing.forEach(x=>x.remove());
   const vessels=(data?.vessels||[]).filter(v=>Number.isFinite(v.lat)&&Number.isFinite(v.lon));
   aisEmpty.style.display=vessels.length?'none':'flex';
-  aisEmpty.textContent=connected?'No AIS positions reported in the selected Caspian sector during the last 24 hours.':'AIS backend unavailable.';
+  aisEmpty.textContent=connected?'No AIS positions are available from the connected providers for this Caspian sector.':'AIS backend unavailable.';
 
   vessels.forEach(v=>{
     const p=radarPosition(v.lat,v.lon), dot=document.createElement('div');
@@ -436,9 +436,9 @@ function renderAIS(data){
   });
 
   vesselList.innerHTML=vessels.length?vessels.slice(0,18).map(v=>`<div class="vessel-row${v.stale?' stale':''}">
-    <div><div class="vessel-name">${escapeHTML(v.name||`MMSI ${v.mmsi}`)}</div><div class="vessel-meta"><span>${escapeHTML(v.direction||'AIS')}</span>${v.zone?`<span>${escapeHTML(v.zone)}</span>`:''}${v.destination?`<span>${escapeHTML(v.destination)}</span>`:''}${v.stale?'<span>LAST KNOWN</span>':''}</div></div>
+    <div><div class="vessel-name">${escapeHTML(v.name||`MMSI ${v.mmsi}`)}</div><div class="vessel-meta"><span>${escapeHTML(v.direction||'AIS')}</span>${v.zone?`<span>${escapeHTML(v.zone)}</span>`:''}${v.destination?`<span>${escapeHTML(v.destination)}</span>`:''}${v.stale?`<span>${mode==='archive'?'ARCHIVE':'LAST KNOWN'}</span>`:''}</div></div>
     <div class="vessel-speed">${Number(v.sog||0).toFixed(1)} kn<span class="vessel-time">${formatAge(v.last_seen)}</span></div>
-  </div>`).join(''):'<div class="vessel-empty">No AIS positions reported in the last 24 hours.</div>';
+  </div>`).join(''):'<div class="vessel-empty">No AIS positions available from the connected providers.</div>';
 
   const c=data?.crossings||{};
   aisCrossings.textContent=`Crossings recorded: ${c.count ?? '—'}`;
