@@ -94,10 +94,8 @@ const journeyStarts = new Map();
 const trackerSince =
   new Date().toISOString();
 
-let wsState =
-  OPENWATERS_API_KEY
-    ? 'connecting'
-    : 'not_configured';
+let useApiKey = Boolean(OPENWATERS_API_KEY);
+let wsState = 'connecting';
 
 let lastMessageAt = null;
 let lastPositionAt = null;
@@ -497,12 +495,18 @@ function handleOpenWatersEvent(event) {
   */
 
   if (event.type === 'error') {
+    const message = String(event.error || event || '');
     wsState = 'error';
 
     console.error(
       '[OPENWATERS] Error:',
-      event.error || event
+      message
     );
+
+    if (useApiKey && /token.*not valid|invalid token|from this address/i.test(message)) {
+      useApiKey = false;
+      console.warn('[OPENWATERS] Falling back to anonymous access');
+    }
 
     return;
   }
@@ -833,17 +837,6 @@ function scheduleReconnect(delay) {
 ============================================================ */
 
 function connectOpenWaters() {
-  if (!OPENWATERS_API_KEY) {
-    wsState =
-      'not_configured';
-
-    console.error(
-      '[OPENWATERS] OPENWATERS_API_KEY missing'
-    );
-
-    return;
-  }
-
   if (
     activeWs &&
     (
@@ -865,10 +858,9 @@ function connectOpenWaters() {
 
   const url =
     'wss://ais.openwaters.io/v1/stream' +
-    '?key=' +
-    encodeURIComponent(
-      OPENWATERS_API_KEY
-    );
+    (useApiKey && OPENWATERS_API_KEY
+      ? '?key=' + encodeURIComponent(OPENWATERS_API_KEY)
+      : '');
 
   const ws =
     new WebSocket(
