@@ -182,7 +182,7 @@
       "value_usd": 6975,
       "range": "$6,750–$7,200",
       "confidence": "medium-high; reported as Argus market assessment",
-      "source_name": "Argus, reported by regional press",
+      "source_name": "Argus, reported by Anews",
       "source_url": "https://anews.az/en/ekonomika/527577/caspian-container-shipping-rates-rise-in-september/"
     },
     "latest_provider_snapshot": {
@@ -192,7 +192,7 @@
       "container_basis": "SOC 40HQ",
       "status": "published provider tariff",
       "source_name": "WideSafe",
-      "source_url": "https://www.widesafe.com/news_en/35.html"
+      "source_url": "https://www.widesafe.com/news_en"
     },
     "latest_turkey_market": {
       "period": "2026-09",
@@ -526,7 +526,7 @@
       "type": "observed",
       "observed_routes": 2,
       "confidence": "medium-high",
-      "basis": "30 Sep 2026 market update reports September ranges for Baku/Alat and Türkiye.",
+      "basis": "Latest public market update reports both core route ranges.",
       "source_url": "https://anews.az/en/ekonomika/527577/caspian-container-shipping-rates-rise-in-september/",
       "premium_vs_model_pct": 68.3,
       "mcfi_index": 168.3,
@@ -1599,7 +1599,7 @@
       "grade": "A-",
       "source_name": "Argus / market participants",
       "source_url": "https://anews.az/en/ekonomika/527577/caspian-container-shipping-rates-rise-in-september/",
-      "notes": "September assessment reported 30 Sep 2026.",
+      "notes": "Latest public market assessment.",
       "evidence_type": "market assessment"
     },
     {
@@ -1619,7 +1619,7 @@
       "grade": "A-",
       "source_name": "Argus / market participants",
       "source_url": "https://anews.az/en/ekonomika/527577/caspian-container-shipping-rates-rise-in-september/",
-      "notes": "September assessment reported 30 Sep 2026.",
+      "notes": "Latest public market assessment.",
       "evidence_type": "market assessment"
     }
   ],
@@ -1817,7 +1817,7 @@
         "container": "40HC",
         "source_name": "Argus, reported by Anews",
         "source_url": "https://anews.az/en/ekonomika/527577/caspian-container-shipping-rates-rise-in-september/",
-        "note": "Latest published September 2026 market assessment, reported 30 September 2026."
+        "note": "Latest publicly located market assessment."
       },
       "provider_quotes": [
         {
