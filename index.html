@@ -110,11 +110,11 @@
       <div class="section-head">
         <div>
           <div class="section-kicker">Route geography</div>
-          <h2>Xi'an → Horgos/Altynkol → Aktau → Alat</h2>
-          <p>The solid line is the MCFI core route. Dashed branches show the principal westbound Middle Corridor continuations toward Türkiye and the Black Sea.</p>
+          <h2>Xi'an → Altynkol → Aktau / Kuryk → Alat → Istanbul</h2>
+          <p>A geography-aware schematic of the Middle Corridor. The line follows the principal rail and maritime gateways rather than drawing straight point-to-point shortcuts; click nodes and route segments for details.</p>
         </div>
         <div class="route-legend">
-          <span><i class="rail"></i>Core rail</span>
+          <span><i class="rail"></i>China / Kazakhstan rail</span>
           <span><i class="sea"></i>Caspian crossing</span>
           <span><i class="west"></i>Türkiye continuation</span>
           <span><i class="blacksea"></i>Black Sea branch</span>
@@ -123,14 +123,20 @@
 
       <div class="route-board interactive-route">
         <div id="routeInteractiveMap" class="route-leaflet" aria-label="Interactive Middle Corridor route map"></div>
-        <div class="route-map-note">Click a node for details · use the layer control to show or hide corridor branches</div>
+        <div class="route-map-toolbar" aria-label="Map view controls">
+          <button type="button" data-route-view="full" class="active">Full corridor</button>
+          <button type="button" data-route-view="caspian">Kazakhstan + Caspian</button>
+          <button type="button" data-route-view="turkiye">Türkiye</button>
+          <button type="button" data-route-view="blacksea">Black Sea</button>
+        </div>
+        <div class="route-map-note">Hover a route · click a node or segment · use the layer control to toggle branches</div>
       </div>
 
       <div class="route-cards">
-        <article><span>China gateway</span><strong>Horgos (Khorgos)</strong><small>Exit from China; Xi'an–Poti/Baku services use the Horgos border.</small></article>
-        <article><span>Kazakhstan gateway</span><strong>Altynkol / Khorgos Gateway</strong><small>Gauge-change and dry-port interface on the Kazakhstan side.</small></article>
-        <article><span>Caspian east</span><strong>Port of Aktau</strong><small>Core MCFI seaport on the Kazakhstan shore.</small></article>
-        <article><span>Caspian west</span><strong>Port of Baku (Alat)</strong><small>The Port of Baku is physically located at Alat, south of Baku city.</small></article>
+        <article><span>China rail spine</span><strong>Xi'an → Lanzhou → Ürümqi → Khorgos</strong><small>The map follows the east–west rail geography to the China–Kazakhstan border.</small></article>
+        <article><span>Kazakhstan rail spine</span><strong>Altynkol → Aktogay → Zhezkazgan → Beineu</strong><small>The westbound line then reaches the Caspian gateways at Kuryk and Aktau.</small></article>
+        <article><span>Caspian gateways</span><strong>Kuryk / Aktau → Alat</strong><small>Kuryk is the principal ferry gateway; Aktau remains a major commercial Caspian port.</small></article>
+        <article><span>Western continuation</span><strong>Alat → Tbilisi → Kars → Istanbul</strong><small>The main rail continuation uses the Baku–Tbilisi–Kars axis, with a Black Sea branch via Poti.</small></article>
       </div>
 
       <div class="kpi-grid" id="aktauKpis"></div>
@@ -203,41 +209,30 @@
     <section class="panel live-panel" id="caspian-live">
       <div class="section-head">
         <div>
-          <div class="section-kicker">Caspian operations</div>
-          <h2>Caspian vessel activity</h2>
-          <p>Operational vessel picture built from the official Aktau and Kuryk port dispositions. Mid-Caspian ferry positions are estimates from official Kuryk ETA data and the published 18-hour Alat–Kuryk crossing time; they are not AIS positions.</p>
+          <div class="section-kicker">Aktau AIS</div>
+          <h2>Port of Aktau · live vessel map</h2>
+          <p>A dedicated VesselFinder view centred exclusively on the Port of Aktau and its immediate approaches.</p>
         </div>
-        <div class="ais-status-wrap"><span class="ais-status" id="portActivityStatus">CONNECTING</span><small id="portActivityUpdated">—</small></div>
+        <div class="aktau-map-badge"><span>VESSELFINDER</span><small>public terrestrial AIS</small></div>
       </div>
 
-      <div class="live-kpis">
-        <div class="inline-kpi"><span>Aktau · berthed</span><strong id="aktauBerthed">—</strong><small>official disposition</small></div>
-        <div class="inline-kpi"><span>Aktau · roadstead</span><strong id="aktauRoadstead">—</strong><small>official disposition</small></div>
-        <div class="inline-kpi"><span>Kuryk · berthed</span><strong id="kurykBerthed">—</strong><small>official disposition</small></div>
-        <div class="inline-kpi"><span>Kuryk · approaching</span><strong id="kurykApproaching">—</strong><small>official disposition</small></div>
-        <div class="inline-kpi"><span>Crossing now</span><strong id="corridorUnderway">—</strong><small>ETA-based estimate</small></div>
-        <div class="inline-kpi"><span>Operational vessels</span><strong id="operationalTotal">—</strong><small>port + roadstead + approaching</small></div>
-      </div>
-
-      <div class="live-grid">
-        <div class="radar-card vessel-map-card">
-          <div class="radar-head"><span>Alat / Baku ↔ Aktau / Kuryk</span><small>official port data + ETA estimates</small></div>
-          <div id="caspianOpsMap" class="caspian-ops-map" aria-label="Operational vessel map for the Caspian corridor"></div>
-          <div class="vf-map-note">Blue = official port/roadstead report · amber = estimated ferry position from official ETA · exact AIS coordinates are not implied</div>
+      <div class="radar-card vessel-map-card aktau-vf-card">
+        <div class="radar-head"><span>Port of Aktau</span><small>43.65° N · 51.17° E</small></div>
+        <div class="vf-map-wrap aktau-vf-map" aria-label="VesselFinder AIS map focused on the Port of Aktau">
+          <script type="text/javascript">
+            var width="100%";
+            var height="500";
+            var latitude="43.65";
+            var longitude="51.17";
+            var zoom="11";
+            var names=true;
+            var fleet_hide_old_positions=false;
+            var click_to_activate=false;
+            var default_maptype=2;
+          </script>
+          <script type="text/javascript" src="https://www.vesselfinder.com/aismap.js"></script>
         </div>
-
-        <div class="vessel-card">
-          <div class="radar-head"><span>Corridor vessel board</span><small id="corridorBoardDate">official port data</small></div>
-          <div class="vessel-list" id="corridorVesselList">
-            <div class="vessel-empty">Loading Aktau and Kuryk vessel dispositions…</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="live-foot">
-        <span id="aktauDispositionDate">Aktau disposition: —</span>
-        <span id="kurykDispositionDate">Kuryk disposition: —</span>
-        <span>Sources: Aktau Port + Port Kuryk</span>
+        <div class="vf-map-note">Focused on Aktau only · click a vessel for VesselFinder details · AIS visibility depends on public terrestrial coverage</div>
       </div>
     </section>
 
