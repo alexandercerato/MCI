@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="theme-color" content="#080c11" />
   <title>Middle Corridor Freight Monitor</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -16,6 +17,7 @@
         <a href="#tracks">What MCFI tracks</a>
         <a href="#index-chart">Index chart</a>
         <a href="#route">Route</a>
+        <a href="#news">Latest news</a>
         <a href="#structural">Structural benchmarks</a>
         <a href="#caspian-live">Caspian Live</a>
         <a href="#pricing">Pricing terminal</a>
@@ -85,19 +87,20 @@
       <div class="section-head chart-head">
         <div>
           <div class="section-kicker">MCFI history</div>
-          <h2>Market basket · 2024 to present</h2>
-          <p>Observed monthly freight basket. The historical chart remains in USD until a time-consistent historical fundamental-cost series is available.</p>
+          <h2>MCFI · historical fundamental-cost series</h2>
+          <p>Observed market freight divided by the period-specific fundamental cost. Official TITR anchors are used when available; post-March 2026 values carry forward the last published official anchor and are flagged accordingly.</p>
         </div>
         <div class="chart-summary" id="chartSummary">—</div>
       </div>
 
       <div class="chart-shell">
-        <div class="chart-y-label" id="chartYLabel">USD / 40HC</div>
-        <svg id="mcfiChart" class="mcfi-chart" viewBox="0 0 1200 430" role="img" aria-label="Monthly Middle Corridor market basket from 2024 to the present"></svg>
+        <div class="chart-y-label" id="chartYLabel">MCFI points</div>
+        <svg id="mcfiChart" class="mcfi-chart" viewBox="0 0 1200 430" role="img" aria-label="Historical Middle Corridor Freight Index"></svg>
         <div class="chart-tooltip" id="chartTooltip" hidden></div>
       </div>
       <div class="chart-legend">
-        <span><i class="legend-line"></i>Market basket</span>
+        <span><i class="legend-line"></i>MCFI</span>
+        <span><i class="legend-base"></i>Fundamental cost = 100</span>
         <span><i class="legend-dot"></i>Observed month</span>
         <span><i class="legend-today"></i>Current month</span>
       </div>
@@ -106,41 +109,41 @@
     <section class="panel route-panel" id="route">
       <div class="section-head">
         <div>
-          <div class="section-kicker">Core route</div>
-          <h2>Xi'an → Aktau → Europe</h2>
+          <div class="section-kicker">Route geography</div>
+          <h2>Xi'an → Horgos/Altynkol → Aktau → Alat</h2>
+          <p>The solid line is the MCFI core route. Dashed branches show the principal westbound Middle Corridor continuations toward Türkiye and the Black Sea.</p>
         </div>
-        <div class="route-legend"><span><i class="rail"></i>Rail</span><span><i class="sea"></i>Caspian / Black Sea</span></div>
+        <div class="route-legend"><span><i class="rail"></i>Rail</span><span><i class="sea"></i>Caspian / Black Sea</span><span><i class="branch"></i>Onward corridor</span></div>
       </div>
 
-      <div class="route-board">
-        <svg class="route-map" viewBox="0 0 1280 460" role="img" aria-label="Middle Corridor route via Aktau">
-          <defs>
-            <filter id="glow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-          </defs>
-          <path class="route-line rail-line" d="M90 235 C180 200 250 194 335 215 S475 256 585 224"/>
-          <path class="route-line sea-line" d="M585 224 C655 185 725 188 790 225"/>
-          <path class="route-line rail-line" d="M790 225 C875 225 925 205 995 223 S1110 252 1200 225"/>
-          <path class="route-line branch-line" d="M935 220 C925 160 930 116 1005 85 S1120 88 1192 100"/>
-          <path class="route-line branch-line" d="M1005 85 C1045 52 1090 48 1135 58"/>
+      <div class="route-board interactive-route">
+        <div id="routeInteractiveMap" class="route-leaflet" aria-label="Interactive Middle Corridor route map"></div>
+        <div class="route-map-note">Click a node for its role in the corridor. Scroll to zoom; drag to explore.</div>
+      </div>
 
-          <g class="map-node"><circle cx="90" cy="235" r="9"/><text x="90" y="205">Xi'an</text><text class="sub" x="90" y="268">China</text></g>
-          <g class="map-node"><circle cx="335" cy="215" r="9"/><text x="335" y="185">Altynkol</text><text class="sub" x="335" y="248">Kazakhstan</text></g>
-          <g class="map-node focus"><circle cx="585" cy="224" r="14" filter="url(#glow)"/><text x="585" y="185">AKTAU</text><text class="sub" x="585" y="263">Kazakhstan</text></g>
-          <g class="map-node"><circle cx="790" cy="225" r="9"/><text x="790" y="195">Alat / Baku</text><text class="sub" x="790" y="258">Azerbaijan</text></g>
-          <g class="map-node"><circle cx="935" cy="220" r="8"/><text x="935" y="190">Tbilisi</text><text class="sub" x="935" y="250">Georgia</text></g>
-          <g class="map-node"><circle cx="1005" cy="85" r="8"/><text x="1005" y="57">Poti</text><text class="sub" x="1005" y="112">Georgia</text></g>
-          <g class="map-node"><circle cx="1135" cy="58" r="7"/><text x="1135" y="34">Constanța</text><text class="sub" x="1135" y="84">Romania</text></g>
-          <g class="map-node"><circle cx="1200" cy="225" r="9"/><text x="1200" y="195">Istanbul</text><text class="sub" x="1200" y="258">Türkiye</text></g>
-
-          <g class="map-tag" transform="translate(505,315)"><rect width="160" height="70" rx="10"/><text x="16" y="27">Dostyk → Aktau</text><text class="value" x="16" y="53" id="mapEastPrice">—</text></g>
-          <g class="map-tag" transform="translate(708,310)"><rect width="190" height="70" rx="10"/><text x="16" y="27">Kuryk ↔ Alat ferry</text><text class="value" x="16" y="53" id="mapCaspianPrice">—</text></g>
-          <g class="map-tag" transform="translate(1010,310)"><rect width="205" height="70" rx="10"/><text x="16" y="27">Xi'an → Baku market</text><text class="value" x="16" y="53" id="mapBakuPrice">—</text></g>
-        </svg>
+      <div class="route-cards">
+        <article><span>China gateway</span><strong>Horgos (Khorgos)</strong><small>Exit from China; Xi'an–Poti/Baku services use the Horgos border.</small></article>
+        <article><span>Kazakhstan gateway</span><strong>Altynkol / Khorgos Gateway</strong><small>Gauge-change and dry-port interface on the Kazakhstan side.</small></article>
+        <article><span>Caspian east</span><strong>Port of Aktau</strong><small>Core MCFI seaport on the Kazakhstan shore.</small></article>
+        <article><span>Caspian west</span><strong>Port of Baku (Alat)</strong><small>The Port of Baku is physically located at Alat, south of Baku city.</small></article>
       </div>
 
       <div class="kpi-grid" id="aktauKpis"></div>
     </section>
 
+    <section class="panel news-panel" id="news">
+      <div class="section-head">
+        <div>
+          <div class="section-kicker">Live corridor intelligence</div>
+          <h2>Latest Middle Corridor news</h2>
+          <p>Recent public reporting on the Trans-Caspian International Transport Route, refreshed every five minutes.</p>
+        </div>
+        <div class="news-status"><span id="newsStatus">CONNECTING</span><small id="newsUpdated">—</small></div>
+      </div>
+      <div class="news-grid" id="newsGrid">
+        <div class="news-empty">Loading latest corridor news…</div>
+      </div>
+    </section>
 
     <section class="panel structural-panel" id="structural">
       <div class="section-head">
@@ -248,7 +251,7 @@
       <div class="year-stats" id="yearKpis"></div>
       <div class="table-wrap terminal-table">
         <table>
-          <thead><tr><th>Month</th><th>Market basket</th><th>Xi'an → Baku</th><th>Xi'an → Türkiye</th><th>Sources</th></tr></thead>
+          <thead><tr><th>Month</th><th>MCFI</th><th>Market basket</th><th>Fundamental cost</th><th>Xi'an → Baku</th><th>Xi'an → Türkiye</th><th>Sources</th></tr></thead>
           <tbody id="mcfiTable"></tbody>
         </table>
       </div>
@@ -288,6 +291,7 @@
       <span>Data refresh: every 5 minutes</span>
     </div>
   </footer>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="runtime-config.js"></script>
   <script src="app.js"></script>
 </body>
