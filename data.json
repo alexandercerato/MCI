@@ -5,7 +5,8 @@
     "as_of": "2026-10-01",
     "refresh_minutes": 5,
     "methodology_note": "MCFI Fundamental Cost v1.0: market freight is compared with a transparent modelled structural cost for one loaded SOC 40HC from Xi'an to Absheron/Alat. No calendar month is used as the index base.",
-    "data_warning": "Historical coverage reflects the availability of published market assessments."
+    "data_warning": "Historical coverage reflects the availability of published market assessments.",
+    "last_verified_market_update": "2026-09-30T15:30:00+04:00"
   },
   "model": {
     "name": "MCFI-40 Fundamental",
@@ -194,10 +195,12 @@
       "source_url": "https://www.widesafe.com/news_en/35.html"
     },
     "latest_turkey_market": {
-      "period": "2026-07",
-      "value_usd": 7550,
-      "range": "$7,200–$7,900",
-      "confidence": "medium-high"
+      "period": "2026-09",
+      "value_usd": 7600,
+      "range": "$7,200–$8,000",
+      "confidence": "medium-high; reported as Argus market assessment",
+      "source_name": "Argus, reported by Anews",
+      "source_url": "https://anews.az/en/ekonomika/527577/caspian-container-shipping-rates-rise-in-september/"
     }
   },
   "year_summary": [
@@ -221,11 +224,11 @@
     },
     {
       "year": "2026",
-      "complete_months": 7,
+      "complete_months": 9,
       "months_elapsed": 9,
-      "average_usd": 6852,
+      "average_usd": 6942,
       "low_usd": 6450,
-      "high_usd": 7200,
+      "high_usd": 7288,
       "note": "Average of observed monthly market-basket USD values; no normalized structural index is published while calibration is incomplete."
     }
   ],
@@ -497,6 +500,36 @@
       "source_url": "https://t.me/s/argus_price_agency?before=1622",
       "premium_vs_model_pct": 10.8,
       "mcfi_index": 166.3,
+      "fundamental_cost_usd": 4330,
+      "fundamental_anchor_status": "carry_forward"
+    },
+    {
+      "period": "2026-08",
+      "mcfi_usd": 7225,
+      "baku_midpoint_usd": 6900,
+      "turkey_midpoint_usd": 7550,
+      "type": "observed",
+      "observed_routes": 2,
+      "confidence": "medium-high",
+      "basis": "September Argus update states August comparator ranges for both core routes.",
+      "source_url": "https://anews.az/en/ekonomika/527577/caspian-container-shipping-rates-rise-in-september/",
+      "premium_vs_model_pct": 66.9,
+      "mcfi_index": 166.9,
+      "fundamental_cost_usd": 4330,
+      "fundamental_anchor_status": "carry_forward"
+    },
+    {
+      "period": "2026-09",
+      "mcfi_usd": 7288,
+      "baku_midpoint_usd": 6975,
+      "turkey_midpoint_usd": 7600,
+      "type": "observed",
+      "observed_routes": 2,
+      "confidence": "medium-high",
+      "basis": "30 Sep 2026 market update reports September ranges for Baku/Alat and Türkiye.",
+      "source_url": "https://anews.az/en/ekonomika/527577/caspian-container-shipping-rates-rise-in-september/",
+      "premium_vs_model_pct": 68.3,
+      "mcfi_index": 168.3,
       "fundamental_cost_usd": 4330,
       "fundamental_anchor_status": "carry_forward"
     }
@@ -1508,6 +1541,86 @@
       "source_url": "https://widesafe.com/news_en",
       "notes": "Public provider tariff.",
       "evidence_type": "provider tariff"
+    },
+    {
+      "date": "2026-08",
+      "period": "2026-08",
+      "route": "Xi’an → Alat/Absheron (Baku)",
+      "origin": "Xi’an",
+      "destination": "Baku",
+      "mode": "Middle Corridor multimodal",
+      "container": "40HC",
+      "ownership": "unspecified",
+      "low_usd": 6700,
+      "high_usd": 7100,
+      "midpoint_usd": 6900,
+      "scope": "Core market assessment",
+      "primary_eligible": true,
+      "grade": "A-",
+      "source_name": "Argus / market participants",
+      "source_url": "https://anews.az/en/ekonomika/527577/caspian-container-shipping-rates-rise-in-september/",
+      "notes": "August comparator reported in the 30 Sep 2026 market update.",
+      "evidence_type": "market assessment"
+    },
+    {
+      "date": "2026-08",
+      "period": "2026-08",
+      "route": "Xi’an → Mersin/Ambarli",
+      "origin": "Xi’an",
+      "destination": "Turkey",
+      "mode": "Middle Corridor multimodal",
+      "container": "40HC",
+      "ownership": "unspecified",
+      "low_usd": 7200,
+      "high_usd": 7900,
+      "midpoint_usd": 7550,
+      "scope": "Core market assessment",
+      "primary_eligible": true,
+      "grade": "A-",
+      "source_name": "Argus / market participants",
+      "source_url": "https://anews.az/en/ekonomika/527577/caspian-container-shipping-rates-rise-in-september/",
+      "notes": "August comparator reported in the 30 Sep 2026 market update.",
+      "evidence_type": "market assessment"
+    },
+    {
+      "date": "2026-09",
+      "period": "2026-09",
+      "route": "Xi’an → Alat/Absheron (Baku)",
+      "origin": "Xi’an",
+      "destination": "Baku",
+      "mode": "Middle Corridor multimodal",
+      "container": "40HC",
+      "ownership": "unspecified",
+      "low_usd": 6750,
+      "high_usd": 7200,
+      "midpoint_usd": 6975,
+      "scope": "Core market assessment",
+      "primary_eligible": true,
+      "grade": "A-",
+      "source_name": "Argus / market participants",
+      "source_url": "https://anews.az/en/ekonomika/527577/caspian-container-shipping-rates-rise-in-september/",
+      "notes": "September assessment reported 30 Sep 2026.",
+      "evidence_type": "market assessment"
+    },
+    {
+      "date": "2026-09",
+      "period": "2026-09",
+      "route": "Xi’an → Mersin/Ambarli",
+      "origin": "Xi’an",
+      "destination": "Turkey",
+      "mode": "Middle Corridor multimodal",
+      "container": "40HC",
+      "ownership": "unspecified",
+      "low_usd": 7200,
+      "high_usd": 8000,
+      "midpoint_usd": 7600,
+      "scope": "Core market assessment",
+      "primary_eligible": true,
+      "grade": "A-",
+      "source_name": "Argus / market participants",
+      "source_url": "https://anews.az/en/ekonomika/527577/caspian-container-shipping-rates-rise-in-september/",
+      "notes": "September assessment reported 30 Sep 2026.",
+      "evidence_type": "market assessment"
     }
   ],
   "external_benchmarks": {
@@ -1697,14 +1810,14 @@
     "market_defaults": {
       "latest_comparable_assessment": {
         "route": "Xi’an (China) → Baku/Alat (Azerbaijan)",
-        "period": "2026-07",
-        "low_usd": 6600,
-        "high_usd": 7100,
-        "midpoint_usd": 6850,
+        "period": "2026-09",
+        "low_usd": 6750,
+        "high_usd": 7200,
+        "midpoint_usd": 6975,
         "container": "40HC",
-        "source_name": "YDX / market analysis citing 2026 monthly all-in rates",
-        "source_url": "https://ydxtrans.com/newsDetail/57.html",
-        "note": "Latest month explicitly priced on the 21 Sep 2026 market-analysis page. It is not labelled as a September price."
+        "source_name": "Argus, reported by Anews",
+        "source_url": "https://anews.az/en/ekonomika/527577/caspian-container-shipping-rates-rise-in-september/",
+        "note": "Latest published September 2026 market assessment, reported 30 September 2026."
       },
       "provider_quotes": [
         {
