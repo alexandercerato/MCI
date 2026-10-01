@@ -244,10 +244,12 @@ function initRouteMap(){
   if(!window.L || !document.getElementById('routeInteractiveMap')) return;
 
   const palette={
-    core:'#28b7d8',
+    china:'#35a7d8',
+    kazakh:'#28b7d8',
     sea:'#f0a43c',
     west:'#48b57a',
     blackSea:'#8c74d8',
+    branch:'#d5a45c',
     origin:'#4aa3ff',
     gateway:'#35c4c7',
     port:'#f0a43c',
@@ -259,7 +261,8 @@ function initRouteMap(){
   const map=L.map('routeInteractiveMap',{
     scrollWheelZoom:false,
     zoomControl:true,
-    preferCanvas:true
+    preferCanvas:false,
+    minZoom:2
   }).setView([43,61],3);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
@@ -267,73 +270,149 @@ function initRouteMap(){
     attribution:'&copy; OpenStreetMap contributors'
   }).addTo(map);
 
-  const core=[
-    {name:"Xi'an International Port",country:"China",lat:34.40,lon:109.05,role:"Origin and China-Europe freight-train assembly hub",kind:"origin"},
-    {name:"Horgos (Khorgos) Port",country:"China",lat:44.21,lon:80.41,role:"China exit border for the Xi'an Middle Corridor service",kind:"gateway"},
-    {name:"Altynkol / Khorgos Gateway",country:"Kazakhstan",lat:44.18,lon:80.30,role:"Kazakhstan border station and dry-port transshipment interface",kind:"gateway"},
-    {name:"Port of Aktau",country:"Kazakhstan",lat:43.61,lon:51.23,role:"Caspian east-coast seaport on the MCFI core route",kind:"port"},
-    {name:"Port of Baku (Alat)",country:"Azerbaijan",lat:39.95,lon:49.40,role:"Caspian west-coast port; the Port of Baku is located at Alat",kind:"port"},
-    {name:"Absheron / Baku area",country:"Azerbaijan",lat:40.42,lon:49.86,role:"Market-assessment destination area used by the MCFI",kind:"destination"}
-  ];
-  const west=[
-    {name:"Boyuk-Kesik",country:"Azerbaijan",lat:41.31,lon:45.07,role:"Azerbaijan–Georgia rail border",kind:"gateway"},
-    {name:"Gardabani",country:"Georgia",lat:41.46,lon:45.09,role:"Georgia rail-border node",kind:"gateway"},
-    {name:"Tbilisi",country:"Georgia",lat:41.72,lon:44.79,role:"Major Georgian rail hub",kind:"gateway"},
-    {name:"Akhalkalaki",country:"Georgia",lat:41.41,lon:43.49,role:"Baku–Tbilisi–Kars gauge/interface node",kind:"gateway"},
-    {name:"Kars",country:"Türkiye",lat:40.61,lon:43.10,role:"Türkiye rail gateway",kind:"gateway"},
-    {name:"Istanbul",country:"Türkiye",lat:41.01,lon:28.97,role:"Principal Türkiye/Europe continuation",kind:"destination"}
-  ];
-  const blackSea=[
-    {name:"Poti",country:"Georgia",lat:42.15,lon:41.67,role:"Black Sea port branch",kind:"blackSeaNode"},
-    {name:"Constanța",country:"Romania",lat:44.17,lon:28.65,role:"Black Sea European gateway",kind:"blackSeaNode"}
-  ];
-
-  const coreRail=L.layerGroup().addTo(map);
-  const caspian=L.layerGroup().addTo(map);
-  const westLayer=L.layerGroup().addTo(map);
-  const blackSeaLayer=L.layerGroup().addTo(map);
-  const nodes=L.layerGroup().addTo(map);
-
-  const line=(points,options,layer)=>{
-    L.polyline(points.map(p=>Array.isArray(p)?p:[p.lat,p.lon]),options).addTo(layer);
+  const N={
+    xian:{name:"Xi'an",country:"China",lat:34.34,lon:108.94,role:"Eastern origin and consolidation hub",kind:"origin"},
+    lanzhou:{name:"Lanzhou",country:"China",lat:36.06,lon:103.83,role:"North-west China rail corridor",kind:"rail"},
+    urumqi:{name:"Ürümqi",country:"China",lat:43.82,lon:87.62,role:"Xinjiang rail hub",kind:"rail"},
+    khorgos:{name:"Khorgos",country:"China",lat:44.21,lon:80.41,role:"China–Kazakhstan rail border",kind:"gateway"},
+    altynkol:{name:"Altynkol",country:"Kazakhstan",lat:44.17,lon:80.29,role:"Kazakhstan border and gauge-transfer gateway",kind:"gateway"},
+    aktogay:{name:"Aktogay",country:"Kazakhstan",lat:46.95,lon:79.67,role:"Major Kazakhstan rail junction",kind:"rail"},
+    balkhash:{name:"Balkhash",country:"Kazakhstan",lat:46.85,lon:74.98,role:"Central Kazakhstan rail corridor",kind:"rail"},
+    zhezkazgan:{name:"Zhezkazgan",country:"Kazakhstan",lat:47.78,lon:67.70,role:"Key link on the Zhezkazgan–Beineu westbound axis",kind:"rail"},
+    saksaulsk:{name:"Saksaulsk",country:"Kazakhstan",lat:47.09,lon:61.16,role:"Western Kazakhstan rail junction",kind:"rail"},
+    beineu:{name:"Beineu",country:"Kazakhstan",lat:45.32,lon:55.20,role:"Rail gateway toward the Caspian coast",kind:"gateway"},
+    kuryk:{name:"Port of Kuryk",country:"Kazakhstan",lat:43.18,lon:51.66,role:"Principal Kazakhstan ferry gateway for the TITR",kind:"port"},
+    aktau:{name:"Port of Aktau",country:"Kazakhstan",lat:43.65,lon:51.17,role:"Major commercial Caspian port and MCFI focus",kind:"port"},
+    alat:{name:"Port of Baku (Alat)",country:"Azerbaijan",lat:39.95,lon:49.39,role:"Main Azerbaijan Caspian gateway",kind:"port"},
+    ganja:{name:"Ganja",country:"Azerbaijan",lat:40.68,lon:46.36,role:"Westbound Azerbaijan rail corridor",kind:"rail"},
+    boyuk:{name:"Boyuk-Kesik",country:"Azerbaijan",lat:41.31,lon:45.07,role:"Azerbaijan–Georgia rail border",kind:"gateway"},
+    tbilisi:{name:"Tbilisi",country:"Georgia",lat:41.72,lon:44.79,role:"Major Georgian rail hub",kind:"gateway"},
+    akhalkalaki:{name:"Akhalkalaki",country:"Georgia",lat:41.41,lon:43.49,role:"Baku–Tbilisi–Kars interface",kind:"gateway"},
+    kars:{name:"Kars",country:"Türkiye",lat:40.61,lon:43.10,role:"Türkiye gateway on the BTK railway",kind:"gateway"},
+    erzurum:{name:"Erzurum",country:"Türkiye",lat:39.90,lon:41.27,role:"Eastern Türkiye rail corridor",kind:"rail"},
+    ankara:{name:"Ankara",country:"Türkiye",lat:39.93,lon:32.86,role:"Central Türkiye rail hub",kind:"rail"},
+    istanbul:{name:"Istanbul",country:"Türkiye",lat:41.01,lon:28.97,role:"European gateway and principal western destination",kind:"destination"},
+    poti:{name:"Poti",country:"Georgia",lat:42.15,lon:41.67,role:"Black Sea port branch",kind:"blackSeaNode"},
+    constanta:{name:"Constanța",country:"Romania",lat:44.17,lon:28.65,role:"Black Sea European gateway",kind:"blackSeaNode"}
   };
 
-  line(core.slice(0,4),{color:palette.core,weight:5,opacity:.95,lineCap:'round'},coreRail);
-  line([core[3],core[4]],{color:palette.sea,weight:6,opacity:.95,dashArray:'12 8',lineCap:'round'},caspian);
-  line([core[4],...west],{color:palette.west,weight:4,opacity:.88,dashArray:'10 7',lineCap:'round'},westLayer);
-  line([core[4],west[0],west[1],west[2],blackSea[0]],{color:palette.blackSea,weight:4,opacity:.88,dashArray:'10 7',lineCap:'round'},blackSeaLayer);
-  line([blackSea[0],blackSea[1]],{color:palette.blackSea,weight:5,opacity:.8,dashArray:'5 10',lineCap:'round'},blackSeaLayer);
+  const layers={
+    china:L.layerGroup().addTo(map),
+    kazakhstan:L.layerGroup().addTo(map),
+    aktau:L.layerGroup().addTo(map),
+    caspian:L.layerGroup().addTo(map),
+    west:L.layerGroup().addTo(map),
+    blackSea:L.layerGroup().addTo(map),
+    nodes:L.layerGroup().addTo(map)
+  };
 
-  const markerColor=p=>palette[p.kind]||palette.gateway;
-  [...core,...west,...blackSea].forEach(p=>{
+  const segment=(points,options,layer,title,detail)=>{
+    const line=L.polyline(points.map(p=>[p.lat,p.lon]),{
+      ...options,
+      lineCap:'round',
+      lineJoin:'round',
+      interactive:true
+    }).addTo(layer);
+
+    line.bindTooltip(title,{sticky:true,className:'route-tooltip'});
+    line.bindPopup(`<div class="route-popup"><span class="route-popup-type">Route segment</span><strong>${escapeHTML(title)}</strong><p>${escapeHTML(detail)}</p></div>`);
+    const baseWeight=options.weight||4;
+    line.on('mouseover',()=>line.setStyle({weight:baseWeight+3,opacity:1}));
+    line.on('mouseout',()=>line.setStyle({weight:baseWeight,opacity:options.opacity??.9}));
+    return line;
+  };
+
+  const china=[N.xian,N.lanzhou,N.urumqi,N.khorgos];
+  const kazakhstan=[N.altynkol,N.aktogay,N.balkhash,N.zhezkazgan,N.saksaulsk,N.beineu,N.kuryk];
+  const west=[N.alat,N.ganja,N.boyuk,N.tbilisi,N.akhalkalaki,N.kars,N.erzurum,N.ankara,N.istanbul];
+  const blackSeaRail=[N.tbilisi,N.poti];
+
+  segment(china,{color:palette.china,weight:5,opacity:.96,className:'route-path route-path-china'},layers.china,
+    "China rail spine","Xi'an → Lanzhou → Ürümqi → Khorgos.");
+  segment(kazakhstan,{color:palette.kazakh,weight:5,opacity:.96,className:'route-path route-path-kazakh'},layers.kazakhstan,
+    "Kazakhstan rail spine","Altynkol → Aktogay → Balkhash → Zhezkazgan → Saksaulsk → Beineu → Kuryk.");
+  segment([N.beineu,N.aktau],{color:palette.branch,weight:4,opacity:.9,dashArray:'7 7',className:'route-path route-path-branch'},layers.aktau,
+    "Aktau branch","Beineu → Aktau commercial port branch.");
+  segment([N.kuryk,{lat:42.55,lon:51.20},{lat:41.65,lon:50.60},{lat:40.75,lon:49.95},N.alat],
+    {color:palette.sea,weight:6,opacity:.98,dashArray:'12 8',className:'route-path route-path-sea'},layers.caspian,
+    "Caspian crossing","Kuryk → Port of Baku (Alat), the principal ferry crossing in the current TITR routing.");
+  segment(west,{color:palette.west,weight:5,opacity:.92,className:'route-path route-path-west'},layers.west,
+    "Türkiye continuation","Alat → Ganja → Boyuk-Kesik → Tbilisi → Akhalkalaki → Kars → Erzurum → Ankara → Istanbul.");
+  segment(blackSeaRail,{color:palette.blackSea,weight:4,opacity:.9,dashArray:'8 7',className:'route-path route-path-blacksea'},layers.blackSea,
+    "Black Sea rail branch","Tbilisi → Poti.");
+  segment([N.poti,{lat:42.75,lon:37.0},{lat:43.55,lon:32.8},N.constanta],
+    {color:palette.blackSea,weight:5,opacity:.85,dashArray:'5 10',className:'route-path route-path-blacksea-sea'},layers.blackSea,
+    "Black Sea maritime branch","Poti → Constanța.");
+
+  const markerColor=p=>{
+    if(p.kind==='origin') return palette.origin;
+    if(p.kind==='port') return palette.port;
+    if(p.kind==='destination') return palette.destination;
+    if(p.kind==='blackSeaNode') return palette.blackSeaNode;
+    if(p.kind==='gateway') return palette.gateway;
+    return '#8fa7bb';
+  };
+
+  const visibleNodes=[
+    N.xian,N.lanzhou,N.urumqi,N.khorgos,N.altynkol,N.aktogay,N.zhezkazgan,N.beineu,
+    N.kuryk,N.aktau,N.alat,N.ganja,N.tbilisi,N.akhalkalaki,N.kars,N.ankara,N.istanbul,N.poti,N.constanta
+  ];
+
+  visibleNodes.forEach(p=>{
     const keyNode=['origin','port','destination','blackSeaNode'].includes(p.kind);
     const m=L.circleMarker([p.lat,p.lon],{
-      radius:keyNode?7:5,
+      radius:keyNode?7:4.5,
       color:palette.outline,
       weight:2,
       fillColor:markerColor(p),
-      fillOpacity:1
-    });
+      fillOpacity:1,
+      className:'route-node-marker'
+    }).addTo(layers.nodes);
+
     m.bindPopup(
-      `<div class="route-popup"><span class="route-popup-type">${escapeHTML(p.kind==='origin'?'Origin':p.kind==='port'?'Port':p.kind==='destination'?'Destination':p.kind==='blackSeaNode'?'Black Sea node':'Gateway')}</span><strong>${escapeHTML(p.name)}</strong><small>${escapeHTML(p.country)}</small><p>${escapeHTML(p.role)}</p></div>`
+      `<div class="route-popup"><span class="route-popup-type">${escapeHTML(p.kind==='origin'?'Origin':p.kind==='port'?'Port':p.kind==='destination'?'Destination':p.kind==='blackSeaNode'?'Black Sea node':p.kind==='gateway'?'Gateway':'Rail node')}</span><strong>${escapeHTML(p.name)}</strong><small>${escapeHTML(p.country)}</small><p>${escapeHTML(p.role)}</p></div>`
     );
     m.bindTooltip(p.name,{direction:'top',offset:[0,-7],className:'route-tooltip'});
-    m.addTo(nodes);
+    m.on('mouseover',()=>m.setStyle({radius:keyNode?10:7,weight:3}));
+    m.on('mouseout',()=>m.setStyle({radius:keyNode?7:4.5,weight:2}));
   });
 
   L.control.layers(null,{
-    'Core rail':coreRail,
-    'Caspian crossing':caspian,
-    'Türkiye continuation':westLayer,
-    'Black Sea branch':blackSeaLayer,
-    'Nodes':nodes
+    'China rail':layers.china,
+    'Kazakhstan rail':layers.kazakhstan,
+    'Aktau branch':layers.aktau,
+    'Caspian crossing':layers.caspian,
+    'Türkiye continuation':layers.west,
+    'Black Sea branch':layers.blackSea,
+    'Nodes':layers.nodes
   },{
     collapsed:window.innerWidth<760,
     position:'topright'
   }).addTo(map);
 
-  const allPoints=[...core,...west,...blackSea].map(p=>[p.lat,p.lon]);
-  map.fitBounds(L.latLngBounds(allPoints).pad(.05),{maxZoom:4});
+  L.control.scale({imperial:false,position:'bottomright'}).addTo(map);
+
+  const bounds={
+    full:L.latLngBounds([[33.5,27.8],[48.8,110.2]]),
+    caspian:L.latLngBounds([[39.1,48.4],[48.5,81.0]]),
+    turkiye:L.latLngBounds([[39.1,28.2],[42.3,50.1]]),
+    blacksea:L.latLngBounds([[40.8,27.8],[45.0,45.4]])
+  };
+
+  const setView=(key)=>{
+    const b=bounds[key]||bounds.full;
+    map.fitBounds(b,{padding:[28,28],maxZoom:key==='full'?4:6});
+    document.querySelectorAll('[data-route-view]').forEach(btn=>{
+      btn.classList.toggle('active',btn.dataset.routeView===key);
+    });
+    setTimeout(()=>map.invalidateSize(),80);
+  };
+
+  document.querySelectorAll('[data-route-view]').forEach(btn=>{
+    btn.addEventListener('click',()=>setView(btn.dataset.routeView));
+  });
+
+  setView('full');
   map.on('click',()=>map.scrollWheelZoom.enable());
 }
 let NEWS_DATA=null;
@@ -369,19 +448,17 @@ document.addEventListener('DOMContentLoaded',initRouteMap);
 loadNews();
 setInterval(loadNews,5*60*1000);
 
-// --- Caspian vessel / port activity ---
+// --- Shared display utilities ---
 
-const AIS_CFG = window.MCFM_CONFIG || {};
-const PORT_ACTIVITY_REFRESH_MS = 5 * 60 * 1000;
-let CASPIAN_OPS_MAP=null;
-let CASPIAN_OPS_LAYER=null;
-
-const CASPIAN_OPS_POINTS={
-  alat:{name:'Port of Baku (Alat)',lat:39.95,lon:49.39},
-  baku:{name:'Baku',lat:40.30,lon:49.92},
-  aktau:{name:'Aktau',lat:43.64,lon:51.17},
-  kuryk:{name:'Kuryk',lat:43.18,lon:51.66}
-};
+function escapeHTML(v){
+  return String(v??'').replace(/[&<>'"]/g,c=>({
+    '&':'&amp;',
+    '<':'&lt;',
+    '>':'&gt;',
+    "'":'&#39;',
+    '"':'&quot;'
+  }[c]));
+}
 
 function formatAge(iso){
   if(!iso) return '—';
@@ -391,233 +468,3 @@ function formatAge(iso){
   if(sec<86400) return `${Math.floor(sec/3600)}h ago`;
   return `${Math.floor(sec/86400)}d ago`;
 }
-
-function metric(value){
-  return Number.isFinite(Number(value))?Number(value):0;
-}
-
-function vesselPopup(title,status,detail,source){
-  return `<div class="route-popup"><span class="route-popup-type">${escapeHTML(status)}</span><strong>${escapeHTML(title)}</strong><p>${escapeHTML(detail||'')}</p><small>${escapeHTML(source||'')}</small></div>`;
-}
-
-function initCaspianOpsMap(){
-  if(CASPIAN_OPS_MAP || !window.L || !document.getElementById('caspianOpsMap')) return;
-
-  CASPIAN_OPS_MAP=L.map('caspianOpsMap',{
-    scrollWheelZoom:false,
-    zoomControl:true,
-    preferCanvas:true
-  }).setView([41.55,50.55],6);
-
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-    maxZoom:12,
-    attribution:'&copy; OpenStreetMap contributors'
-  }).addTo(CASPIAN_OPS_MAP);
-
-  L.polyline([
-    [CASPIAN_OPS_POINTS.alat.lat,CASPIAN_OPS_POINTS.alat.lon],
-    [CASPIAN_OPS_POINTS.kuryk.lat,CASPIAN_OPS_POINTS.kuryk.lon]
-  ],{
-    color:'#f0a43c',weight:4,opacity:.9,dashArray:'10 8'
-  }).addTo(CASPIAN_OPS_MAP).bindTooltip('Alat ↔ Kuryk ferry corridor');
-
-  L.polyline([
-    [CASPIAN_OPS_POINTS.alat.lat,CASPIAN_OPS_POINTS.alat.lon],
-    [CASPIAN_OPS_POINTS.aktau.lat,CASPIAN_OPS_POINTS.aktau.lon]
-  ],{
-    color:'#28b7d8',weight:2,opacity:.45,dashArray:'4 9'
-  }).addTo(CASPIAN_OPS_MAP).bindTooltip('Aktau commercial traffic axis');
-
-  Object.values(CASPIAN_OPS_POINTS).forEach(p=>{
-    L.circleMarker([p.lat,p.lon],{
-      radius:6,color:'#071018',weight:2,fillColor:'#f0a43c',fillOpacity:1
-    }).addTo(CASPIAN_OPS_MAP)
-      .bindTooltip(p.name,{direction:'top',className:'route-tooltip'});
-  });
-
-  CASPIAN_OPS_LAYER=L.layerGroup().addTo(CASPIAN_OPS_MAP);
-  CASPIAN_OPS_MAP.fitBounds([[39.55,48.90],[44.05,52.20]],{padding:[22,22]});
-  CASPIAN_OPS_MAP.on('click',()=>CASPIAN_OPS_MAP.scrollWheelZoom.enable());
-}
-
-function jitterPoint(base,index,type){
-  const perRing=8;
-  const ring=Math.floor(index/perRing)+1;
-  const angle=(index%perRing)*(Math.PI*2/perRing);
-  const scale=type==='roadstead'?.12:.065;
-  const lonBias=type==='roadstead'?-.16:0;
-  return [
-    base.lat + Math.sin(angle)*scale*ring,
-    base.lon + lonBias + Math.cos(angle)*scale*ring
-  ];
-}
-
-function addOperationalMarker(lat,lon,title,status,detail,source,kind='official'){
-  if(!CASPIAN_OPS_LAYER) return;
-  const estimated=kind==='estimated';
-  const html=`<div class="ops-vessel-marker ${estimated?'estimated':'official'}">
-    <span class="ops-vessel-icon">▲</span>
-    <span class="ops-vessel-label">${escapeHTML(title)}</span>
-  </div>`;
-  const icon=L.divIcon({
-    className:'ops-vessel-divicon',
-    html,
-    iconSize:[150,32],
-    iconAnchor:[12,15],
-    popupAnchor:[0,-14]
-  });
-  const marker=L.marker([lat,lon],{icon,zIndexOffset:estimated?900:600});
-  marker.bindPopup(vesselPopup(title,status,detail,source));
-  marker.bindTooltip(`${title} · ${status}`,{direction:'top',offset:[0,-12],className:'route-tooltip'});
-  marker.addTo(CASPIAN_OPS_LAYER);
-}
-
-function renderOperationalMap(data){
-  initCaspianOpsMap();
-  if(!CASPIAN_OPS_LAYER) return;
-  CASPIAN_OPS_LAYER.clearLayers();
-
-  const aktau=data?.aktau||{};
-  const kuryk=data?.kuryk||{};
-
-  (aktau.berthed||[]).forEach((v,i)=>{
-    const p=jitterPoint(CASPIAN_OPS_POINTS.aktau,i,'berth');
-    addOperationalMarker(
-      p[0],p[1],v.vessel_name,'AKTAU · BERTHED',
-      [v.berth,v.operation,v.reported_time].filter(Boolean).join(' · '),
-      'Aktau Port official disposition'
-    );
-  });
-
-  const roadstead=[...(aktau.roadstead_dry||[]),...(aktau.roadstead_tankers||[])];
-  roadstead.forEach((v,i)=>{
-    const p=jitterPoint(CASPIAN_OPS_POINTS.aktau,i,'roadstead');
-    addOperationalMarker(
-      p[0],p[1],v.vessel_name,'AKTAU · ROADSTEAD',
-      [v.category,v.reported_time].filter(Boolean).join(' · '),
-      'Aktau Port official disposition'
-    );
-  });
-
-  let kurykIndex=0;
-  (kuryk.berthed||[]).forEach(row=>{
-    (row.vessel_names||[]).forEach(name=>{
-      const p=jitterPoint(CASPIAN_OPS_POINTS.kuryk,kurykIndex++,'berth');
-      addOperationalMarker(
-        p[0],p[1],name,'KURYK · BERTHED',
-        [row.berth,row.operation,row.berthing_time].filter(Boolean).join(' · '),
-        'Port Kuryk official vessel traffic'
-      );
-    });
-  });
-
-  (kuryk.crossing_estimates||[]).forEach(v=>{
-    if(!Number.isFinite(Number(v.estimated_lat))||!Number.isFinite(Number(v.estimated_lon))) return;
-    const pct=Math.round(metric(v.estimated_progress)*100);
-    const state=v.estimate_status==='underway_estimated'?'ESTIMATED UNDERWAY':(v.estimate_status==='scheduled'?'SCHEDULED':'ETA ELAPSED');
-    addOperationalMarker(
-      Number(v.estimated_lat),Number(v.estimated_lon),v.vessel_name,state,
-      `ETA Kuryk ${v.eta||'—'} · estimated corridor progress ${pct}%`,
-      'Estimate: official Kuryk ETA + published 18h Alat–Kuryk crossing',
-      'estimated'
-    );
-  });
-}
-
-function rowHtml(name,label,meta,right,sub){
-  return `<div class="vessel-row">
-    <div><div class="vessel-name">${escapeHTML(name)}</div><div class="vessel-meta"><span>${escapeHTML(label)}</span>${meta?`<span>${escapeHTML(meta)}</span>`:''}</div></div>
-    <div class="vessel-speed">${escapeHTML(right||'')}<span class="vessel-time">${escapeHTML(sub||'')}</span></div>
-  </div>`;
-}
-
-function groupTitle(text){
-  return `<div class="vessel-group-title">${escapeHTML(text)}</div>`;
-}
-
-function renderPortActivity(data){
-  const status=document.getElementById('portActivityStatus');
-  const updated=document.getElementById('portActivityUpdated');
-  const aktau=data?.aktau||{};
-  const kuryk=data?.kuryk||{};
-  const a=aktau.summary||{};
-  const k=kuryk.summary||{};
-
-  const aktauB=metric(a.berthed_vessels);
-  const aktauR=metric(a.roadstead_vessels);
-  const kurykB=metric(k.berthed_vessels);
-  const kurykA=metric(k.approaching_vessels);
-  const underway=metric(k.estimated_underway);
-
-  document.getElementById('aktauBerthed').textContent=String(aktauB);
-  document.getElementById('aktauRoadstead').textContent=String(aktauR);
-  document.getElementById('kurykBerthed').textContent=String(kurykB);
-  document.getElementById('kurykApproaching').textContent=String(kurykA);
-  document.getElementById('corridorUnderway').textContent=String(underway);
-  document.getElementById('operationalTotal').textContent=String(aktauB+aktauR+kurykB+kurykA);
-
-  const kind=data?.status==='live'?'live':(data?.status==='partial'?'stale':'offline');
-  status.className=`ais-status ${kind}`;
-  status.textContent=data?.status==='live'?'PORT DATA LIVE':(data?.status==='partial'?'PORT DATA PARTIAL':'PORT DATA OFFLINE');
-  updated.textContent=data?.updated_at?`Updated ${formatAge(data.updated_at)}`:'—';
-
-  document.getElementById('aktauDispositionDate').textContent=`Aktau disposition: ${aktau.traffic_date||'—'}`;
-  document.getElementById('kurykDispositionDate').textContent=`Kuryk disposition: ${kuryk.traffic_date||'—'}`;
-  document.getElementById('corridorBoardDate').textContent=
-    `Aktau ${aktau.traffic_date||'—'} · Kuryk ${kuryk.traffic_date||'—'}`;
-
-  const parts=[];
-
-  const crossings=(kuryk.crossing_estimates||[]);
-  if(crossings.length){
-    parts.push(groupTitle('Alat → Kuryk · ETA-based crossing estimate'));
-    crossings.forEach(v=>{
-      const pct=Math.round(metric(v.estimated_progress)*100);
-      const label=v.estimate_status==='underway_estimated'?'ESTIMATED UNDERWAY':(v.estimate_status==='scheduled'?'SCHEDULED':'ETA ELAPSED');
-      parts.push(rowHtml(v.vessel_name,label,`ETA ${v.eta||'—'}`,`${pct}%`,'not AIS'));
-    });
-  }
-
-  const roadstead=[...(aktau.roadstead_dry||[]),...(aktau.roadstead_tankers||[])];
-  if(roadstead.length){
-    parts.push(groupTitle('Aktau · roadstead'));
-    roadstead.forEach(v=>parts.push(rowHtml(v.vessel_name,'ROADSTEAD',v.category||'',v.reported_time||'','official')));
-  }
-
-  if((aktau.berthed||[]).length){
-    parts.push(groupTitle('Aktau · berthed'));
-    aktau.berthed.forEach(v=>parts.push(rowHtml(v.vessel_name,v.berth||'BERTHED',v.operation||'',v.reported_time||'','official')));
-  }
-
-  if((kuryk.berthed||[]).length){
-    parts.push(groupTitle('Kuryk · berthed'));
-    kuryk.berthed.forEach(row=>(row.vessel_names||[]).forEach(name=>
-      parts.push(rowHtml(name,row.berth||'BERTHED',row.operation||'',row.berthing_time||'','official'))
-    ));
-  }
-
-  document.getElementById('corridorVesselList').innerHTML=
-    parts.join('')||'<div class="vessel-empty">No operational vessel rows are currently published.</div>';
-
-  renderOperationalMap(data);
-}
-
-async function loadPortActivity(){
-  const base=(AIS_CFG.aisApiBase||'').replace(/\/$/,'');
-  if(!base){
-    renderPortActivity({status:'offline'});
-    return;
-  }
-  try{
-    const res=await fetch(`${base}/api/port-activity?t=${Date.now()}`,{cache:'no-store'});
-    if(!res.ok) throw new Error(`Port activity HTTP ${res.status}`);
-    renderPortActivity(await res.json());
-  }catch(err){
-    renderPortActivity({status:'offline'});
-    console.warn(err);
-  }
-}
-
-loadPortActivity();
-setInterval(loadPortActivity,PORT_ACTIVITY_REFRESH_MS);
-
