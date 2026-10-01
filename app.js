@@ -461,7 +461,6 @@ async function loadAIS(){
     renderAIS(await res.json());
   }catch(err){
     renderAIS({status:'offline',provider:'AISStream',vessels:[]});
-    aisEmpty.textContent='AIS backend unavailable.';
     console.warn(err);
   }
 }
