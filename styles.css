@@ -694,3 +694,80 @@ footer{border-top:1px solid var(--line);padding:22px 0 30px;color:var(--muted2);
   .aktau-traffic-strip{grid-template-columns:1fr}
   .aktau-vessel-grid{grid-template-columns:1fr}
 }
+
+
+/* Official berthed vessels over VesselFinder Aktau map */
+.aktau-vf-map{position:relative}
+.aktau-berth-overlay{
+  position:absolute;
+  inset:0;
+  z-index:9;
+  pointer-events:none;
+  overflow:hidden
+}
+.aktau-berth-overlay-legend{
+  position:absolute;
+  left:10px;
+  bottom:10px;
+  display:flex;
+  align-items:center;
+  gap:7px;
+  padding:6px 8px;
+  background:rgba(7,16,24,.9);
+  border:1px solid rgba(240,164,60,.42);
+  color:#d7e0e8;
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+  backdrop-filter:blur(5px)
+}
+.aktau-berth-overlay-legend i{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:#f0a43c;
+  box-shadow:0 0 9px rgba(240,164,60,.85)
+}
+.aktau-official-berth-marker{
+  position:absolute;
+  transform:translate(-50%,-50%);
+  display:flex;
+  align-items:center;
+  gap:5px;
+  max-width:145px;
+  pointer-events:auto;
+  cursor:default;
+  filter:drop-shadow(0 2px 4px rgba(0,0,0,.65))
+}
+.aktau-official-berth-dot{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-width:27px;
+  height:27px;
+  padding:0 4px;
+  border-radius:50%;
+  border:2px solid #071018;
+  background:#f0a43c;
+  color:#101820;
+  font:900 8px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  box-shadow:0 0 13px rgba(240,164,60,.9)
+}
+.aktau-official-berth-marker strong{
+  display:block;
+  max-width:105px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  padding:3px 5px;
+  background:rgba(7,16,24,.9);
+  border:1px solid rgba(240,164,60,.45);
+  color:#f4e1bd;
+  font-size:9px;
+  font-weight:800
+}
+@media(max-width:560px){
+  .aktau-official-berth-marker strong{display:none}
+  .aktau-berth-overlay-legend{font-size:8px;max-width:75%}
+}
