@@ -243,50 +243,99 @@ setInterval(()=>loadPricing().catch(()=>{}),5*60*1000);
 function initRouteMap(){
   if(!window.L || !document.getElementById('routeInteractiveMap')) return;
 
-  const map=L.map('routeInteractiveMap',{scrollWheelZoom:false,zoomControl:true}).setView([43,61],3);
+  const palette={
+    core:'#28b7d8',
+    sea:'#f0a43c',
+    west:'#48b57a',
+    blackSea:'#8c74d8',
+    origin:'#4aa3ff',
+    gateway:'#35c4c7',
+    port:'#f0a43c',
+    destination:'#56c58a',
+    blackSeaNode:'#9b83e6',
+    outline:'#081018'
+  };
+
+  const map=L.map('routeInteractiveMap',{
+    scrollWheelZoom:false,
+    zoomControl:true,
+    preferCanvas:true
+  }).setView([43,61],3);
+
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
     maxZoom:12,
     attribution:'&copy; OpenStreetMap contributors'
   }).addTo(map);
 
   const core=[
-    {name:"Xi'an International Port",country:"China",lat:34.40,lon:109.05,role:"Origin and China-Europe freight-train assembly hub"},
-    {name:"Horgos (Khorgos) Port",country:"China",lat:44.21,lon:80.41,role:"China exit border for the Xi'an Middle Corridor service"},
-    {name:"Altynkol / Khorgos Gateway",country:"Kazakhstan",lat:44.18,lon:80.30,role:"Kazakhstan border station and dry-port transshipment interface"},
-    {name:"Port of Aktau",country:"Kazakhstan",lat:43.61,lon:51.23,role:"Caspian east-coast seaport on the MCFI core route"},
-    {name:"Port of Baku (Alat)",country:"Azerbaijan",lat:39.95,lon:49.40,role:"Caspian west-coast port; the Port of Baku is located at Alat"},
-    {name:"Absheron / Baku area",country:"Azerbaijan",lat:40.42,lon:49.86,role:"Market-assessment destination area used by the MCFI"}
+    {name:"Xi'an International Port",country:"China",lat:34.40,lon:109.05,role:"Origin and China-Europe freight-train assembly hub",kind:"origin"},
+    {name:"Horgos (Khorgos) Port",country:"China",lat:44.21,lon:80.41,role:"China exit border for the Xi'an Middle Corridor service",kind:"gateway"},
+    {name:"Altynkol / Khorgos Gateway",country:"Kazakhstan",lat:44.18,lon:80.30,role:"Kazakhstan border station and dry-port transshipment interface",kind:"gateway"},
+    {name:"Port of Aktau",country:"Kazakhstan",lat:43.61,lon:51.23,role:"Caspian east-coast seaport on the MCFI core route",kind:"port"},
+    {name:"Port of Baku (Alat)",country:"Azerbaijan",lat:39.95,lon:49.40,role:"Caspian west-coast port; the Port of Baku is located at Alat",kind:"port"},
+    {name:"Absheron / Baku area",country:"Azerbaijan",lat:40.42,lon:49.86,role:"Market-assessment destination area used by the MCFI",kind:"destination"}
   ];
   const west=[
-    {name:"Boyuk-Kesik",country:"Azerbaijan",lat:41.31,lon:45.07,role:"Azerbaijan–Georgia rail border"},
-    {name:"Gardabani",country:"Georgia",lat:41.46,lon:45.09,role:"Georgia rail-border node"},
-    {name:"Tbilisi",country:"Georgia",lat:41.72,lon:44.79,role:"Major Georgian rail hub"},
-    {name:"Akhalkalaki",country:"Georgia",lat:41.41,lon:43.49,role:"Baku–Tbilisi–Kars gauge/interface node"},
-    {name:"Kars",country:"Türkiye",lat:40.61,lon:43.10,role:"Türkiye rail gateway"},
-    {name:"Istanbul",country:"Türkiye",lat:41.01,lon:28.97,role:"Principal Türkiye/Europe continuation"}
+    {name:"Boyuk-Kesik",country:"Azerbaijan",lat:41.31,lon:45.07,role:"Azerbaijan–Georgia rail border",kind:"gateway"},
+    {name:"Gardabani",country:"Georgia",lat:41.46,lon:45.09,role:"Georgia rail-border node",kind:"gateway"},
+    {name:"Tbilisi",country:"Georgia",lat:41.72,lon:44.79,role:"Major Georgian rail hub",kind:"gateway"},
+    {name:"Akhalkalaki",country:"Georgia",lat:41.41,lon:43.49,role:"Baku–Tbilisi–Kars gauge/interface node",kind:"gateway"},
+    {name:"Kars",country:"Türkiye",lat:40.61,lon:43.10,role:"Türkiye rail gateway",kind:"gateway"},
+    {name:"Istanbul",country:"Türkiye",lat:41.01,lon:28.97,role:"Principal Türkiye/Europe continuation",kind:"destination"}
   ];
   const blackSea=[
-    {name:"Poti",country:"Georgia",lat:42.15,lon:41.67,role:"Black Sea port branch"},
-    {name:"Constanța",country:"Romania",lat:44.17,lon:28.65,role:"Black Sea European gateway"}
+    {name:"Poti",country:"Georgia",lat:42.15,lon:41.67,role:"Black Sea port branch",kind:"blackSeaNode"},
+    {name:"Constanța",country:"Romania",lat:44.17,lon:28.65,role:"Black Sea European gateway",kind:"blackSeaNode"}
   ];
 
-  const coreLine=core.map(x=>[x.lat,x.lon]);
-  L.polyline(coreLine,{weight:4,opacity:.9}).addTo(map);
-  L.polyline([core[4],...west].map(x=>[x.lat,x.lon]),{weight:3,opacity:.65,dashArray:'8 8'}).addTo(map);
-  L.polyline([core[4],west[0],west[1],west[2],blackSea[0]].map(x=>[x.lat,x.lon]),{weight:3,opacity:.55,dashArray:'8 8'}).addTo(map);
-  L.polyline([[blackSea[0].lat,blackSea[0].lon],[blackSea[1].lat,blackSea[1].lon]],{weight:3,opacity:.5,dashArray:'4 10'}).addTo(map);
+  const coreRail=L.layerGroup().addTo(map);
+  const caspian=L.layerGroup().addTo(map);
+  const westLayer=L.layerGroup().addTo(map);
+  const blackSeaLayer=L.layerGroup().addTo(map);
+  const nodes=L.layerGroup().addTo(map);
 
-  [...core,...west,...blackSea].forEach((p,idx)=>{
-    const m=L.circleMarker([p.lat,p.lon],{radius:idx<core.length?6:4,weight:2,fillOpacity:.9});
-    m.bindPopup(`<strong>${escapeHTML(p.name)}</strong><br><span>${escapeHTML(p.country)}</span><br><small>${escapeHTML(p.role)}</small>`);
-    m.bindTooltip(p.name,{direction:'top',offset:[0,-5]});
-    m.addTo(map);
+  const line=(points,options,layer)=>{
+    L.polyline(points.map(p=>Array.isArray(p)?p:[p.lat,p.lon]),options).addTo(layer);
+  };
+
+  line(core.slice(0,4),{color:palette.core,weight:5,opacity:.95,lineCap:'round'},coreRail);
+  line([core[3],core[4]],{color:palette.sea,weight:6,opacity:.95,dashArray:'12 8',lineCap:'round'},caspian);
+  line([core[4],...west],{color:palette.west,weight:4,opacity:.88,dashArray:'10 7',lineCap:'round'},westLayer);
+  line([core[4],west[0],west[1],west[2],blackSea[0]],{color:palette.blackSea,weight:4,opacity:.88,dashArray:'10 7',lineCap:'round'},blackSeaLayer);
+  line([blackSea[0],blackSea[1]],{color:palette.blackSea,weight:5,opacity:.8,dashArray:'5 10',lineCap:'round'},blackSeaLayer);
+
+  const markerColor=p=>palette[p.kind]||palette.gateway;
+  [...core,...west,...blackSea].forEach(p=>{
+    const keyNode=['origin','port','destination','blackSeaNode'].includes(p.kind);
+    const m=L.circleMarker([p.lat,p.lon],{
+      radius:keyNode?7:5,
+      color:palette.outline,
+      weight:2,
+      fillColor:markerColor(p),
+      fillOpacity:1
+    });
+    m.bindPopup(
+      `<div class="route-popup"><span class="route-popup-type">${escapeHTML(p.kind==='origin'?'Origin':p.kind==='port'?'Port':p.kind==='destination'?'Destination':p.kind==='blackSeaNode'?'Black Sea node':'Gateway')}</span><strong>${escapeHTML(p.name)}</strong><small>${escapeHTML(p.country)}</small><p>${escapeHTML(p.role)}</p></div>`
+    );
+    m.bindTooltip(p.name,{direction:'top',offset:[0,-7],className:'route-tooltip'});
+    m.addTo(nodes);
   });
 
-  map.fitBounds(L.latLngBounds(coreLine).pad(.08));
+  L.control.layers(null,{
+    'Core rail':coreRail,
+    'Caspian crossing':caspian,
+    'Türkiye continuation':westLayer,
+    'Black Sea branch':blackSeaLayer,
+    'Nodes':nodes
+  },{
+    collapsed:window.innerWidth<760,
+    position:'topright'
+  }).addTo(map);
+
+  const allPoints=[...core,...west,...blackSea].map(p=>[p.lat,p.lon]);
+  map.fitBounds(L.latLngBounds(allPoints).pad(.05),{maxZoom:4});
   map.on('click',()=>map.scrollWheelZoom.enable());
 }
-
 let NEWS_DATA=null;
 
 function renderNews(data){
