@@ -1,0 +1,114 @@
+{
+  "meta": {
+    "model": "MCFI Theoretical Cost Model",
+    "version": "0.1.0",
+    "status": "research_draft",
+    "as_of": "2026-10-01",
+    "public_site_enabled": false
+  },
+  "lane": {
+    "container": "1 x 40HC loaded",
+    "ownership": "SOC",
+    "cargo": "general dry, non-hazardous",
+    "direction": "westbound",
+    "origin": "Xi'an Xinzhu / Xi'an International Port",
+    "destination": "Absheron (Baku)",
+    "path": [
+      "Xi'an",
+      "Alashankou",
+      "Altynkol/Dostyk",
+      "Aktau",
+      "Alat",
+      "Absheron"
+    ],
+    "excluded": [
+      "first_last_mile_trucking",
+      "customs_duties",
+      "cargo_insurance",
+      "inspection_costs",
+      "storage_demurrage",
+      "dangerous_reefer_surcharges",
+      "VAT_taxes"
+    ]
+  },
+  "formula": {
+    "theoretical_cost": "china_rail_usd + china_origin_handling_usd + border_transshipment_usd + titr_backbone_usd",
+    "index": "100 * market_freight_usd / theoretical_cost_usd",
+    "interpretation_100": "market freight equals theoretical structural cost"
+  },
+  "inputs": {
+    "china_rail": {
+      "currency": "CNY",
+      "base_1": 532,
+      "base_2_per_container_km": 3.357,
+      "tariff_km": 3151,
+      "value_cny": 11109.907,
+      "confidence": "medium_high",
+      "sources": [
+        "https://swj.huaibei.gov.cn/swzx/tzgg/57529481.html",
+        "https://news.cnr.cn/native/city/20160811/t20160811_522952755.shtml",
+        "https://ec.95306.cn/del-query"
+      ]
+    },
+    "china_origin_handling": {
+      "currency": "CNY",
+      "value": 292.5,
+      "basis": "standard loaded 40ft railway handling benchmark",
+      "confidence": "medium",
+      "needs_exact_xian_rate": true
+    },
+    "border_transshipment": {
+      "currency": "CNY",
+      "value": 225,
+      "basis": "national-standard loaded 40ft rail-border transshipment proxy",
+      "confidence": "medium_low",
+      "needs_exact_alashankou_rate": true,
+      "source": "https://mohe.gov.cn/mohe/c101577/202309/c13_260730.shtml"
+    },
+    "titr_backbone": {
+      "currency": "USD",
+      "value": 2610,
+      "route": "Altynkol exp. -> Absheron",
+      "container": "40ft loaded",
+      "valid_until": "2026-03-31",
+      "confidence": "medium_current_period",
+      "includes": [
+        "loaded_rail_KZ_AZ",
+        "aktau_rail_extra_charges",
+        "aktau_baku_port_charges",
+        "aktau_baku_alat_sea_freight",
+        "transit_customs_declaration",
+        "dispatching",
+        "forwarder_fee"
+      ],
+      "excludes": [
+        "destination_station_handling"
+      ],
+      "source": "https://www.ktze.kz/en/services/calculators?tab=0"
+    }
+  },
+  "fx_snapshot": {
+    "date": "2026-10-01",
+    "usd_kzt": 440.86,
+    "cny_kzt": 65.76,
+    "cny_usd": 0.1491629996,
+    "source": "https://nationalbank.kz/en/exchangerates/ezhednevnye-oficialnye-rynochnye-kursy-valyut"
+  },
+  "snapshot": {
+    "china_block_cny": 11627.407,
+    "china_block_usd": 1734.38,
+    "theoretical_cost_usd": 4344.38,
+    "market_period": "2026-09",
+    "market_low_usd": 6750,
+    "market_high_usd": 7200,
+    "market_midpoint_usd": 6975,
+    "prototype_mcfi": 160.6,
+    "publishable": false
+  },
+  "cross_checks": {
+    "dostyk_aktau_40ft_usd": 1250,
+    "altynkol_baku_alat_2025_40ft_usd": 2348,
+    "baku_port_40ft_transit_direct_usd": 100,
+    "baku_port_40ft_transit_full_usd": 120
+  }
+}
