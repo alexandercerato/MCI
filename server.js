@@ -1500,28 +1500,20 @@ async function refreshNews() {
 
 
 /* ============================================================
-   EAST CASPIAN PORT ACTIVITY
+   EAST CASPIAN OFFICIAL VESSEL TRAFFIC
 ============================================================ */
 
 const PORT_ACTIVITY_REFRESH_MS = 5 * 60 * 1000;
-const PORT_ACTIVITY_SOURCES = {
-  aktau: {
-    name: 'Aktau',
-    unlocode: 'KZAAU',
-    url: 'https://www.myshiptracking.com/ports/port-of-aktau-in-kz-kazakhstan-id-5905'
-  },
-  kuryk: {
-    name: 'Kuryk',
-    unlocode: 'KZKUR',
-    url: 'https://www.myshiptracking.com/ports/port-of-kuryk-in-kz-kazakhstan-id-5845'
-  }
-};
+const KURYK_TRAFFIC_URL = 'https://portkuryk.kz/en/dispoziciya-sudov';
 
 let portActivityCache = {
   status: 'connecting',
   updated_at: null,
-  source: 'MyShipTracking',
-  ports: {}
+  source: 'Port Kuryk',
+  source_url: KURYK_TRAFFIC_URL,
+  traffic_date: null,
+  berthed: [],
+  approaching: []
 };
 
 function decodeHtmlText(value='') {
@@ -1539,87 +1531,85 @@ function decodeHtmlText(value='') {
     .trim();
 }
 
-function metricFromText(text, patterns) {
-  for (const pattern of patterns) {
-    const m = text.match(pattern);
-    if (m) {
-      const n = Number(m[1]);
-      if (Number.isFinite(n)) return n;
-    }
-  }
-  return null;
-}
-
-async function fetchPortActivity(source) {
-  const res = await fetch(source.url, {
-    headers: {
-      'accept': 'text/html,application/xhtml+xml',
-      'user-agent': 'Mozilla/5.0 (compatible; MCFI-Middle-Corridor-Monitor/1.0)'
-    }
-  });
-  if (!res.ok) throw new Error(source.name + ' HTTP ' + res.status);
-
-  const html = await res.text();
-  const text = decodeHtmlText(html);
-
-  const vessels_in_port = metricFromText(text, [
-    /Vessels In Port\s*[:|-]?\s*(\d+)/i,
-    /Vessels in Port\s*[:|-]?\s*(\d+)/i
-  ]);
-  const arrivals_24h = metricFromText(text, [
-    /Arrivals\s*\(24h\)\s*[:|-]?\s*(\d+)/i,
-    /Arrivals\s*24h\s*[:|-]?\s*(\d+)/i
-  ]);
-  const departures_24h = metricFromText(text, [
-    /Departures\s*\(24h\)\s*[:|-]?\s*(\d+)/i,
-    /Departures\s*24h\s*[:|-]?\s*(\d+)/i
-  ]);
-  const expected_arrivals = metricFromText(text, [
-    /Expected Arrivals\s*[:|-]?\s*(\d+)/i
-  ]);
-
-  const metrics = { vessels_in_port, arrivals_24h, departures_24h, expected_arrivals };
-  if (Object.values(metrics).every(v => v === null)) {
-    throw new Error(source.name + ' page parsed but no port metrics were found');
-  }
-
-  return {
-    name: source.name,
-    unlocode: source.unlocode,
-    source_url: source.url,
-    ...metrics
-  };
+function splitVesselNames(value='') {
+  return String(value)
+    .split(/[,;]+/)
+    .map(x => x.replace(/^т\/х\.?|^п\.?/i,'').trim())
+    .filter(Boolean);
 }
 
 async function refreshPortActivity() {
-  const ports = {};
-  const errors = [];
+  try {
+    const res = await fetch(KURYK_TRAFFIC_URL, {
+      headers: {
+        'accept': 'text/html,application/xhtml+xml',
+        'user-agent': 'Mozilla/5.0 (compatible; MCFI-Middle-Corridor-Monitor/1.0)'
+      }
+    });
+    if (!res.ok) throw new Error('Port Kuryk HTTP ' + res.status);
 
-  for (const [key, source] of Object.entries(PORT_ACTIVITY_SOURCES)) {
-    try {
-      ports[key] = await fetchPortActivity(source);
-    } catch (err) {
-      errors.push(err.message);
-      if (portActivityCache.ports?.[key]) ports[key] = portActivityCache.ports[key];
+    const text = decodeHtmlText(await res.text());
+    const dateMatch = text.match(/Vessel traffic as of\s+([0-9.]+)/i);
+    const traffic_date = dateMatch ? dateMatch[1] : null;
+
+    const approachIndex = text.search(/Approaching vessels/i);
+    const berthedText = approachIndex >= 0 ? text.slice(0,approachIndex) : text;
+    const approachText = approachIndex >= 0 ? text.slice(approachIndex) : '';
+
+    const berthed = [];
+    const berthRe = /Berth No\.\s+(.+?)\s+Vessel name\s+(.+?)\s+Berthing time\s+([0-9.]+\s*\/\s*[0-9:]+)\s+Operation type\s+(.+?)(?=Berth No\.|Approaching vessels|$)/gi;
+    for (const m of berthedText.matchAll(berthRe)) {
+      berthed.push({
+        berth: m[1].trim(),
+        vessel_names: splitVesselNames(m[2]),
+        berthing_time: m[3].replace(/\s+/g,' ').trim(),
+        operation: m[4].trim()
+      });
     }
+
+    const approaching = [];
+    const approachRe = /Vessel name\s+(.+?)\s+Date and time of vessel approach\s+([0-9.]+\s*\/\s*[0-9:]+)/gi;
+    for (const m of approachText.matchAll(approachRe)) {
+      approaching.push({
+        vessel_name: splitVesselNames(m[1])[0] || m[1].trim(),
+        eta: m[2].replace(/\s+/g,' ').trim()
+      });
+    }
+
+    if (!berthed.length && !approaching.length) {
+      throw new Error('Port Kuryk page loaded but vessel rows were not parsed');
+    }
+
+    const berthedVesselCount = berthed.reduce((n,row)=>n+row.vessel_names.length,0);
+
+    portActivityCache = {
+      status: 'live',
+      updated_at: new Date().toISOString(),
+      source: 'Port Kuryk',
+      source_url: KURYK_TRAFFIC_URL,
+      traffic_date,
+      summary: {
+        berthed_vessels: berthedVesselCount,
+        active_berth_entries: berthed.length,
+        approaching_vessels: approaching.length,
+        next_eta: approaching[0]?.eta || null
+      },
+      berthed,
+      approaching
+    };
+
+    console.log('[PORT KURYK] live · berthed=' + berthedVesselCount +
+      ' · approaching=' + approaching.length +
+      ' · date=' + (traffic_date || 'n/a'));
+  } catch (err) {
+    console.error('[PORT KURYK] refresh error:', err.message);
+    portActivityCache = {
+      ...portActivityCache,
+      status: portActivityCache.berthed?.length || portActivityCache.approaching?.length ? 'stale' : 'offline',
+      updated_at: portActivityCache.updated_at || new Date().toISOString(),
+      error: err.message
+    };
   }
-
-  const liveCount = Object.keys(ports).length;
-  portActivityCache = {
-    status: liveCount ? (errors.length ? 'partial' : 'live') : 'offline',
-    updated_at: new Date().toISOString(),
-    source: 'MyShipTracking',
-    errors,
-    ports
-  };
-
-  console.log('[PORT ACTIVITY] ' + portActivityCache.status + ' · ' +
-    Object.entries(ports).map(([k,p]) =>
-      k + ': in-port=' + (p.vessels_in_port ?? 'n/a') +
-      ', arrivals24=' + (p.arrivals_24h ?? 'n/a') +
-      ', departures24=' + (p.departures_24h ?? 'n/a') +
-      ', expected=' + (p.expected_arrivals ?? 'n/a')
-    ).join(' · '));
 }
 
 /* ============================================================
