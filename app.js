@@ -204,7 +204,7 @@ setInterval(()=>loadPricing().catch(()=>{}),5*60*1000);
 
 const AIS_CFG = window.MCFM_CONFIG || {};
 const AIS_REFRESH_MS = 30 * 1000;
-const AIS_BOUNDS = { south: 39.0, west: 48.0, north: 45.2, east: 53.0 };
+let AIS_BOUNDS = { south: 39.0, west: 48.0, north: 45.2, east: 53.0 };
 
 function setAisStatus(kind, label, updated){
   if(!window.aisStatus) return;
@@ -228,6 +228,10 @@ function formatAge(iso){
 }
 
 function renderAIS(data){
+  const b=data?.bounds;
+  if(b && [b.south,b.west,b.north,b.east].every(Number.isFinite) && b.north>b.south && b.east>b.west){
+    AIS_BOUNDS={south:b.south,west:b.west,north:b.north,east:b.east};
+  }
   const live=data?.status==='live';
   setAisStatus(live?'live':(data?.status==='connecting'?'connecting':'offline'), live?'LIVE':(data?.status==='connecting'?'CONNECTING':'OFFLINE'), data?.updated_at?`Updated ${formatAge(data.updated_at)}`:'—');
   aisProvider.textContent=data?.provider||'AISStream';
