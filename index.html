@@ -205,30 +205,30 @@
         <div>
           <div class="section-kicker">Caspian operations</div>
           <h2>Caspian vessel activity</h2>
-          <p>VesselFinder provides the visual AIS layer. Public terrestrial AIS coverage is denser around Baku/Alat; Aktau and Kuryk activity is therefore supplemented with live port-call statistics.</p>
+          <p>Public terrestrial AIS is strongest around Baku/Alat. East-Caspian traffic is therefore shown from Port Kuryk's official vessel disposition rather than inferred from an incomplete AIS map.</p>
         </div>
         <div class="ais-status-wrap"><span class="ais-status" id="portActivityStatus">CONNECTING</span><small id="portActivityUpdated">—</small></div>
       </div>
 
       <div class="live-kpis">
-        <div class="inline-kpi"><span>Aktau · in port</span><strong id="aktauInPort">—</strong><small>KZAAU</small></div>
-        <div class="inline-kpi"><span>Aktau · arrivals</span><strong id="aktauArrivals">—</strong><small>last 24 h</small></div>
-        <div class="inline-kpi"><span>Aktau · departures</span><strong id="aktauDepartures">—</strong><small>last 24 h</small></div>
-        <div class="inline-kpi"><span>Kuryk · in port</span><strong id="kurykInPort">—</strong><small>KZKUR</small></div>
-        <div class="inline-kpi"><span>Kuryk · arrivals</span><strong id="kurykArrivals">—</strong><small>last 24 h</small></div>
-        <div class="inline-kpi"><span>Kuryk · expected</span><strong id="kurykExpected">—</strong><small>expected arrivals</small></div>
+        <div class="inline-kpi"><span>Kuryk · berthed vessels</span><strong id="kurykBerthed">—</strong><small>official disposition</small></div>
+        <div class="inline-kpi"><span>Kuryk · approaching</span><strong id="kurykApproaching">—</strong><small>official disposition</small></div>
+        <div class="inline-kpi"><span>Kuryk · active berth entries</span><strong id="kurykBerths">—</strong><small>current table</small></div>
+        <div class="inline-kpi"><span>Next reported approach</span><strong id="kurykNextEta">—</strong><small>Kuryk local schedule</small></div>
+        <div class="inline-kpi"><span>Ferry route</span><strong>18 h</strong><small>Baku ↔ Kuryk · favorable weather</small></div>
+        <div class="inline-kpi"><span>Ferry handling</span><strong>4</strong><small>simultaneous ferry berths</small></div>
       </div>
 
       <div class="live-grid">
         <div class="radar-card vessel-map-card">
-          <div class="radar-head"><span>Caspian AIS map</span><small>VesselFinder terrestrial AIS</small></div>
-          <div class="vf-map-wrap" aria-label="VesselFinder AIS map of the Caspian Sea">
+          <div class="radar-head"><span>West Caspian public AIS</span><small>Baku / Alat · VesselFinder</small></div>
+          <div class="vf-map-wrap" aria-label="VesselFinder AIS map of Baku and Alat">
             <script type="text/javascript">
               var width="100%";
               var height="410";
-              var latitude="41.50";
-              var longitude="51.00";
-              var zoom="5";
+              var latitude="40.15";
+              var longitude="49.65";
+              var zoom="7";
               var names=true;
               var fleet_hide_old_positions=false;
               var click_to_activate=false;
@@ -236,22 +236,22 @@
             </script>
             <script type="text/javascript" src="https://www.vesselfinder.com/aismap.js"></script>
           </div>
-          <div class="vf-map-note">Terrestrial AIS coverage varies by coast · Baku/Alat currently has denser public reception</div>
+          <div class="vf-map-note">VesselFinder terrestrial AIS · public coverage is currently concentrated on the Azerbaijan coast</div>
         </div>
 
         <div class="vessel-card">
-          <div class="radar-head"><span>East Caspian port activity</span><small>Aktau + Kuryk</small></div>
-          <div class="vessel-list" id="portActivityList">
-            <div class="vessel-empty">Loading Aktau and Kuryk activity…</div>
+          <div class="radar-head"><span>East Caspian · Kuryk live disposition</span><small id="kurykTrafficDate">official port data</small></div>
+          <div class="vessel-list" id="kurykVesselList">
+            <div class="vessel-empty">Loading Port Kuryk vessel disposition…</div>
           </div>
-          <div class="vf-map-note">Port activity source: MyShipTracking · refreshed every 5 minutes</div>
+          <div class="vf-map-note">Official source: Port Kuryk · Aktau ferry services are routed through Kuryk</div>
         </div>
       </div>
 
       <div class="live-foot">
-        <span id="aktauPortSummary">Aktau: —</span>
-        <span id="kurykPortSummary">Kuryk: —</span>
-        <span>Map source: VesselFinder</span>
+        <span id="kurykBerthedSummary">Berthed: —</span>
+        <span id="kurykApproachSummary">Approaching: —</span>
+        <span>Sources: Port Kuryk + VesselFinder</span>
       </div>
     </section>
 
