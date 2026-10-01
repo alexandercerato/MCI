@@ -426,3 +426,11 @@ footer{border-top:1px solid var(--line);padding:22px 0 30px;color:var(--muted2);
   .route-legend{justify-content:flex-start}
   .route-map-note{max-width:calc(100% - 24px)}
 }
+
+
+/* AIS stale-position fallback */
+.ais-status.stale{color:var(--gold);border-color:rgba(215,168,79,.45);box-shadow:0 0 16px rgba(215,168,79,.06)}
+.vessel-dot.stale{background:var(--gold);box-shadow:0 0 10px rgba(215,168,79,.5);opacity:.72}
+.vessel-dot.corridor.stale{background:var(--gold);box-shadow:0 0 12px rgba(215,168,79,.55)}
+.vessel-row.stale{opacity:.78}
+.vessel-row.stale .vessel-time{color:var(--gold)}
