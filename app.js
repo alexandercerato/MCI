@@ -494,13 +494,16 @@ function translateAktauState(value){
 
 async function loadAktauOfficialActivity(){
   const base=((window.MCFM_CONFIG||{}).aisApiBase||'').replace(/\/$/,'');
+  const occupancyPctEl=document.getElementById('aktauOccupancyPct');
+  const occupancyMetaEl=document.getElementById('aktauOccupancyMeta');
+  const occupancyFillEl=document.getElementById('aktauOccupancyFill');
   const berthedEl=document.getElementById('aktauOfficialBerthed');
   const roadsteadEl=document.getElementById('aktauOfficialRoadstead');
   const totalEl=document.getElementById('aktauOfficialTotal');
   const dateEl=document.getElementById('aktauOfficialDate');
   const updatedEl=document.getElementById('aktauOfficialUpdated');
   const board=document.getElementById('aktauOfficialVessels');
-  if(!berthedEl || !roadsteadEl || !totalEl || !dateEl || !board || !base) return;
+  if(!occupancyPctEl || !occupancyMetaEl || !occupancyFillEl || !berthedEl || !roadsteadEl || !totalEl || !dateEl || !board || !base) return;
 
   try{
     const res=await fetch(`${base}/api/port-activity?t=${Date.now()}`,{cache:'no-store'});
@@ -513,6 +516,15 @@ async function loadAktauOfficialActivity(){
 
     const berthedCount=Number.isFinite(Number(s.berthed_vessels))?Number(s.berthed_vessels):berthed.length;
     const roadsteadCount=Number.isFinite(Number(s.roadstead_vessels))?Number(s.roadstead_vessels):roadstead.length;
+    const occupiedBerths=Number.isFinite(Number(s.occupied_main_berths))?Number(s.occupied_main_berths):0;
+    const berthCapacity=Number.isFinite(Number(s.berth_capacity))?Number(s.berth_capacity):11;
+    const occupancyPct=Number.isFinite(Number(s.berth_occupancy_pct))
+      ?Math.max(0,Math.min(100,Number(s.berth_occupancy_pct)))
+      :Math.round((occupiedBerths/berthCapacity)*1000)/10;
+
+    occupancyPctEl.textContent=`${occupancyPct.toFixed(occupancyPct%1?1:0)}%`;
+    occupancyMetaEl.textContent=`${occupiedBerths} / ${berthCapacity} berths occupied`;
+    occupancyFillEl.style.width=`${occupancyPct}%`;
 
     berthedEl.textContent=String(berthedCount);
     roadsteadEl.textContent=String(roadsteadCount);
@@ -546,6 +558,9 @@ async function loadAktauOfficialActivity(){
       <small>${escapeHTML(v.detail||'')}</small>
     </div>`).join(''):'<div class="vessel-empty">No vessels currently listed in the official Aktau disposition.</div>';
   }catch(err){
+    occupancyPctEl.textContent='—%';
+    occupancyMetaEl.textContent='occupancy data unavailable';
+    occupancyFillEl.style.width='0%';
     berthedEl.textContent='—';
     roadsteadEl.textContent='—';
     totalEl.textContent='—';
