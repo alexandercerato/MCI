@@ -397,55 +397,56 @@ function formatAge(iso){
 }
 
 function renderAIS(data){
-  const b=data?.bounds;
-  if(b && [b.south,b.west,b.north,b.east].every(Number.isFinite) && b.north>b.south && b.east>b.west){
-    AIS_BOUNDS={south:b.south,west:b.west,north:b.north,east:b.east};
-  }
-
   const mode=data?.display_mode || 'empty';
   const connected=data?.status==='live';
   const connecting=data?.status==='connecting'||data?.status==='subscribing';
-  const statusKind=(mode==='last_known'||mode==='archive')?'stale':(connected?'live':(connecting?'connecting':'offline'));
-  const statusLabel=mode==='archive'?'ARCHIVE':(mode==='last_known'?'LAST KNOWN':(connected?'LIVE':(connecting?'CONNECTING':'OFFLINE')));
-  setAisStatus(statusKind,statusLabel,data?.updated_at?`Updated ${formatAge(data.updated_at)}`:'—');
 
-  aisProvider.textContent=data?.provider||'Open Waters';
   const s=data?.summary||{};
-  aisVessels.textContent=s.vessels_display ?? s.vessels_30m ?? '—';
-  aisUnderway.textContent=s.underway ?? '—';
-  aisEastPorts.textContent=((s.near_aktau||0)+(s.near_kuryk||0)) || ((connected||mode==='last_known')?0:'—');
-  aisWestPorts.textContent=((s.near_alat||0)+(s.near_baku||0)) || ((connected||mode==='last_known')?0:'—');
-  aisWestbound.textContent=s.westbound ?? '—';
-  aisEastbound.textContent=s.eastbound ?? '—';
+  const vesselCount=Number(s.vessels_display ?? s.vessels_30m ?? 0) || 0;
+  const underway=Number(s.underway ?? 0) || 0;
+  const east=(Number(s.near_aktau ?? 0)||0)+(Number(s.near_kuryk ?? 0)||0);
+  const west=(Number(s.near_alat ?? 0)||0)+(Number(s.near_baku ?? 0)||0);
+  const westbound=Number(s.westbound ?? 0) || 0;
+  const eastbound=Number(s.eastbound ?? 0) || 0;
 
-  if(window.aisWindowLabel) aisWindowLabel.textContent=mode==='archive'?'historical last known':(mode==='last_known'?'last known · ≤24 h':'last 30 min');
-  if(window.aisWindow) aisWindow.textContent=mode==='archive'?'historical last-known positions':(mode==='last_known'?'24 h last-known window':'30 min live window');
+  aisVessels.textContent=String(vesselCount);
+  aisUnderway.textContent=String(underway);
+  aisEastPorts.textContent=String(east);
+  aisWestPorts.textContent=String(west);
+  aisWestbound.textContent=String(westbound);
+  aisEastbound.textContent=String(eastbound);
 
-  const existing=[...aisRadar.querySelectorAll('.vessel-dot')]; existing.forEach(x=>x.remove());
+  if(window.aisProvider) aisProvider.textContent=data?.provider||'Open Waters + AISStream + facha.dev';
+  if(window.aisWindowLabel) aisWindowLabel.textContent=
+    mode==='archive'?'historical last known':
+    mode==='last_known'?'last known · ≤24 h':
+    'last 30 min';
+  if(window.aisWindow) aisWindow.textContent=
+    mode==='archive'?'historical last-known window':
+    mode==='last_known'?'24 h last-known window':
+    '30 min live window';
+
   const vessels=(data?.vessels||[]).filter(v=>Number.isFinite(v.lat)&&Number.isFinite(v.lon));
-  if(!vessels.length && connected){
-    setAisStatus('stale','VESSELFINDER MAP',data?.updated_at?`Open feeds checked ${formatAge(data.updated_at)}`:'External AIS map available');
-    if(window.aisWindow) aisWindow.textContent='Open feeds empty · external map active';
-  }
-  aisEmpty.style.display=vessels.length?'none':'flex';
-  aisEmpty.textContent=connected?'No AIS positions are available from the connected providers for this Caspian sector.':'AIS backend unavailable.';
 
-  vessels.forEach(v=>{
-    const p=radarPosition(v.lat,v.lon), dot=document.createElement('div');
-    dot.className='vessel-dot'+((v.sog||0)<1.5?' stationary':'')+(v.corridor_candidate?' corridor':'')+(v.stale?' stale':'');
-    dot.style.left=`${p.x}%`; dot.style.top=`${p.y}%`;
-    dot.dataset.label=`${v.name||v.mmsi} · ${Number(v.sog||0).toFixed(1)} kn · ${formatAge(v.last_seen)}`;
-    dot.title=dot.dataset.label;
-    aisRadar.appendChild(dot);
-  });
+  if(vessels.length){
+    const statusKind=(mode==='last_known'||mode==='archive')?'stale':'live';
+    const statusLabel=mode==='archive'?'ARCHIVE':(mode==='last_known'?'LAST KNOWN':'OPEN FEED LIVE');
+    setAisStatus(statusKind,statusLabel,data?.updated_at?`Updated ${formatAge(data.updated_at)}`:'—');
+  }else if(connected){
+    setAisStatus('stale','OPEN FEED · 0',data?.updated_at?`Checked ${formatAge(data.updated_at)}`:'—');
+  }else if(connecting){
+    setAisStatus('connecting','CONNECTING','—');
+  }else{
+    setAisStatus('offline','OPEN FEED OFFLINE','—');
+  }
 
   vesselList.innerHTML=vessels.length?vessels.slice(0,18).map(v=>`<div class="vessel-row${v.stale?' stale':''}">
     <div><div class="vessel-name">${escapeHTML(v.name||`MMSI ${v.mmsi}`)}</div><div class="vessel-meta"><span>${escapeHTML(v.direction||'AIS')}</span>${v.zone?`<span>${escapeHTML(v.zone)}</span>`:''}${v.destination?`<span>${escapeHTML(v.destination)}</span>`:''}${v.stale?`<span>${mode==='archive'?'ARCHIVE':'LAST KNOWN'}</span>`:''}</div></div>
     <div class="vessel-speed">${Number(v.sog||0).toFixed(1)} kn<span class="vessel-time">${formatAge(v.last_seen)}</span></div>
-  </div>`).join(''):'<div class="vessel-empty">Open AIS feeds currently have no Caspian positions. Use the VesselFinder map on the left for vessel traffic.</div>';
+  </div>`).join(''):'<div class="vessel-empty">No positions are currently available from the open feeds. Vessel traffic remains visible on the VesselFinder map.</div>';
 
   const c=data?.crossings||{};
-  aisCrossings.textContent=`Crossings recorded: ${c.count ?? '—'}`;
+  aisCrossings.textContent=`Crossings recorded: ${Number(c.count ?? 0)}`;
   aisMedian.textContent=`Median crossing time: ${Number.isFinite(c.median_hours)?`${c.median_hours.toFixed(1)} h`:'—'}`;
   aisTrackerSince.textContent=`Tracker since: ${data?.tracker_since?new Date(data.tracker_since).toLocaleDateString('en-GB'):'—'}`;
 }
