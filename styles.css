@@ -640,3 +640,57 @@ footer{border-top:1px solid var(--line);padding:22px 0 30px;color:var(--muted2);
   .aktau-vf-card{min-height:432px}
   .aktau-vf-map,.aktau-vf-map iframe{height:380px!important}
 }
+
+/* Aktau AIS + official traffic */
+.aktau-traffic-strip{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+  margin-top:10px
+}
+.aktau-vessel-board{
+  margin-top:10px;
+  border:1px solid var(--line);
+  background:#091018
+}
+.aktau-vessel-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:0
+}
+.aktau-vessel-chip{
+  padding:12px 14px;
+  min-height:84px;
+  border-right:1px solid #182430;
+  border-bottom:1px solid #182430
+}
+.aktau-vessel-chip strong{
+  display:block;
+  color:#e7eef5;
+  font-size:11px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis
+}
+.aktau-vessel-chip span{
+  display:inline-block;
+  margin-top:6px;
+  color:#63c6bf;
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:.08em
+}
+.aktau-vessel-chip small{
+  display:block;
+  margin-top:5px;
+  color:#718499;
+  font-size:9px;
+  line-height:1.35
+}
+@media(max-width:900px){
+  .aktau-vessel-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:560px){
+  .aktau-traffic-strip{grid-template-columns:1fr}
+  .aktau-vessel-grid{grid-template-columns:1fr}
+}
