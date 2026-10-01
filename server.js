@@ -59,7 +59,8 @@ const EAST_ZONES = new Set(['Aktau', 'Kuryk']);
 const WEST_ZONES = new Set(['Alat', 'Baku']);
 
 const STALE_MS = 30 * 60 * 1000;
-const HARD_TTL_MS = 2 * 60 * 60 * 1000;
+const FALLBACK_MS = 24 * 60 * 60 * 1000;
+const HARD_TTL_MS = 25 * 60 * 60 * 1000;
 const MAX_PUBLIC_VESSELS = 100;
 
 fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -743,12 +744,12 @@ function featureValue(props, ...keys) {
 
 async function refreshOpenWatersSnapshot() {
   const bbox = [BOUNDS.south, BOUNDS.west, BOUNDS.north, BOUNDS.east].join(',');
-  const url = 'https://ais.openwaters.io/v1/vessels?bbox=' + encodeURIComponent(bbox) + '&max_age=30m';
+  const url = 'https://ais.openwaters.io/v1/vessels?bbox=' + encodeURIComponent(bbox) + '&max_age=24h';
 
   try {
-    const res = await fetch(url, {
-      headers: { 'accept': 'application/geo+json, application/json' }
-    });
+    const headers = { 'accept': 'application/geo+json, application/json' };
+    if (OPENWATERS_API_KEY) headers.authorization = 'Bearer ' + OPENWATERS_API_KEY;
+    const res = await fetch(url, { headers });
 
     if (!res.ok) {
       throw new Error('Snapshot HTTP ' + res.status);
@@ -800,8 +801,21 @@ async function refreshOpenWatersSnapshot() {
 
     lastSnapshotAt = nowIso;
     lastMessageAt = nowIso;
+
+    const newestSeen = features
+      .map(f => featureValue(f?.properties || {}, 'seen', 'time', 'last_seen', 'timestamp'))
+      .filter(Boolean)
+      .map(x => new Date(x).getTime())
+      .filter(Number.isFinite)
+      .sort((a,b) => b-a)[0];
+
+    if (Number.isFinite(newestSeen)) {
+      lastPositionAt = new Date(newestSeen).toISOString();
+    }
+
     if (features.length || wsState !== 'live') wsState = 'live';
-    console.log('[OPENWATERS] Snapshot loaded: ' + features.length + ' vessels');
+    const liveCount = [...vessels.values()].filter(v => v.last_seen && new Date(v.last_seen).getTime() >= Date.now() - STALE_MS).length;
+    console.log('[OPENWATERS] Snapshot loaded: ' + features.length + ' vessels · live 30m: ' + liveCount);
   } catch (err) {
     console.error('[OPENWATERS] Snapshot error:', err.message);
   }
@@ -1023,220 +1037,89 @@ function connectOpenWaters() {
 function publicSnapshot() {
   cleanup();
 
-  const cutoff =
-    Date.now() -
-    STALE_MS;
+  const now = Date.now();
+  const liveCutoff = now - STALE_MS;
+  const fallbackCutoff = now - FALLBACK_MS;
 
-  const recent =
-    [
-      ...vessels.values()
-    ].filter(
-      v =>
-        v.last_seen &&
-        new Date(
-          v.last_seen
-        ).getTime() >= cutoff
+  const all = [...vessels.values()].filter(v => {
+    if (!v.last_seen) return false;
+    const t = new Date(v.last_seen).getTime();
+    return Number.isFinite(t) && t >= fallbackCutoff;
+  });
+
+  const recent = all.filter(v => new Date(v.last_seen).getTime() >= liveCutoff);
+  const displayMode = recent.length ? 'live' : (all.length ? 'last_known' : 'empty');
+  const display = (recent.length ? recent : all)
+    .map(v => {
+      const ageSeconds = Math.max(0, Math.floor((now - new Date(v.last_seen).getTime()) / 1000));
+      const copy = {...v};
+      copy.direction = courseDirection(copy.cog, copy.sog);
+      copy.corridor_candidate = corridorCandidate(copy);
+      copy.age_seconds = ageSeconds;
+      copy.stale = ageSeconds > (STALE_MS / 1000);
+      return copy;
+    })
+    .sort((a,b) =>
+      Number(b.corridor_candidate) - Number(a.corridor_candidate) ||
+      Number(validSog(b.sog) || 0) - Number(validSog(a.sog) || 0) ||
+      Number(a.age_seconds || 0) - Number(b.age_seconds || 0)
     );
 
-  recent.forEach(
-    v => {
-      v.direction =
-        courseDirection(
-          v.cog,
-          v.sog
-        );
+  const summarize = rows => ({
+    vessels_display: rows.length,
+    vessels_30m: recent.length,
+    underway: rows.filter(v => {
+      const speed = validSog(v.sog);
+      return speed !== null && speed >= 1.5;
+    }).length,
+    near_aktau: rows.filter(v => v.zone === 'Aktau').length,
+    near_kuryk: rows.filter(v => v.zone === 'Kuryk').length,
+    near_alat: rows.filter(v => v.zone === 'Alat').length,
+    near_baku: rows.filter(v => v.zone === 'Baku').length,
+    westbound: rows.filter(v => corridorCandidate(v) && courseDirection(v.cog,v.sog) === 'Westbound').length,
+    eastbound: rows.filter(v => corridorCandidate(v) && courseDirection(v.cog,v.sog) === 'Eastbound').length
+  });
 
-      v.corridor_candidate =
-        corridorCandidate(v);
-    }
-  );
-
-  recent.sort(
-    (a, b) =>
-      Number(
-        b.corridor_candidate
-      ) -
-        Number(
-          a.corridor_candidate
-        ) ||
-
-      Number(
-        validSog(b.sog) || 0
-      ) -
-        Number(
-          validSog(a.sog) || 0
-        )
-  );
-
-  const summary = {
-    vessels_30m:
-      recent.length,
-
-    underway:
-      recent.filter(
-        v => {
-          const speed =
-            validSog(
-              v.sog
-            );
-
-          return (
-            speed !== null &&
-            speed >= 1.5
-          );
-        }
-      ).length,
-
-    near_aktau:
-      recent.filter(
-        v =>
-          v.zone === 'Aktau'
-      ).length,
-
-    near_kuryk:
-      recent.filter(
-        v =>
-          v.zone === 'Kuryk'
-      ).length,
-
-    near_alat:
-      recent.filter(
-        v =>
-          v.zone === 'Alat'
-      ).length,
-
-    near_baku:
-      recent.filter(
-        v =>
-          v.zone === 'Baku'
-      ).length,
-
-    westbound:
-      recent.filter(
-        v =>
-          v.corridor_candidate &&
-          v.direction ===
-            'Westbound'
-      ).length,
-
-    eastbound:
-      recent.filter(
-        v =>
-          v.corridor_candidate &&
-          v.direction ===
-            'Eastbound'
-      ).length
-  };
-
-  const cutoff7 =
-    Date.now() -
-    7 * 86400000;
-
-  const crossings7d =
-    crossings.filter(
-      c =>
-        new Date(
-          c.arrived_at
-        ).getTime() >= cutoff7
-    );
+  const cutoff7 = now - 7 * 86400000;
+  const crossings7d = crossings.filter(c => new Date(c.arrived_at).getTime() >= cutoff7);
 
   return {
-    status:
-      wsState,
-
-    provider:
-      'Open Waters',
-
-    updated_at:
-      lastMessageAt,
-
-    last_position_at:
-      lastPositionAt,
-
-    tracker_since:
-      trackerSince,
-
-    bounds:
-      BOUNDS,
-
-    summary,
-
+    status: wsState,
+    provider: 'Open Waters',
+    display_mode: displayMode,
+    display_window: displayMode === 'live' ? '30m' : (displayMode === 'last_known' ? '24h' : null),
+    updated_at: lastMessageAt,
+    last_position_at: lastPositionAt,
+    tracker_since: trackerSince,
+    bounds: BOUNDS,
+    summary: summarize(display),
+    live_summary: summarize(recent),
     crossings: {
-      count:
-        crossings7d.length,
-
-      median_hours:
-        median(
-          crossings7d.map(
-            c =>
-              Number(c.hours)
-          )
-        )
+      count: crossings7d.length,
+      median_hours: median(crossings7d.map(c => Number(c.hours)))
     },
-
-    vessels:
-      recent
-        .slice(
-          0,
-          MAX_PUBLIC_VESSELS
-        )
-        .map(
-          v => ({
-            mmsi:
-              v.mmsi,
-
-            name:
-              v.name,
-
-            lat:
-              v.lat,
-
-            lon:
-              v.lon,
-
-            sog:
-              validSog(
-                v.sog
-              ),
-
-            cog:
-              validCog(
-                v.cog
-              ),
-
-            heading:
-              validHeading(
-                v.heading
-              ),
-
-            zone:
-              v.zone,
-
-            direction:
-              v.direction,
-
-            corridor_candidate:
-              v.corridor_candidate,
-
-            destination:
-              v.destination ||
-              null,
-
-            ship_type:
-              v.ship_type ??
-              null,
-
-            source:
-              v.source ||
-              null,
-
-            last_seen:
-              v.last_seen
-          })
-        )
+    vessels: display
+      .slice(0, MAX_PUBLIC_VESSELS)
+      .map(v => ({
+        mmsi: v.mmsi,
+        name: v.name,
+        lat: v.lat,
+        lon: v.lon,
+        sog: validSog(v.sog),
+        cog: validCog(v.cog),
+        heading: validHeading(v.heading),
+        zone: v.zone,
+        direction: v.direction,
+        corridor_candidate: v.corridor_candidate,
+        destination: v.destination || null,
+        ship_type: v.ship_type ?? null,
+        source: v.source || null,
+        last_seen: v.last_seen,
+        age_seconds: v.age_seconds,
+        stale: v.stale
+      }))
   };
 }
-
 
 /* ============================================================
    MIDDLE CORRIDOR NEWS
