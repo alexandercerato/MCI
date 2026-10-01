@@ -373,10 +373,15 @@ setInterval(loadNews,5*60*1000);
 
 const AIS_CFG = window.MCFM_CONFIG || {};
 const PORT_ACTIVITY_REFRESH_MS = 5 * 60 * 1000;
+let CASPIAN_OPS_MAP=null;
+let CASPIAN_OPS_LAYER=null;
 
-function escapeHTML(v){
-  return String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
-}
+const CASPIAN_OPS_POINTS={
+  alat:{name:'Port of Baku (Alat)',lat:39.95,lon:49.39},
+  baku:{name:'Baku',lat:40.30,lon:49.92},
+  aktau:{name:'Aktau',lat:43.64,lon:51.17},
+  kuryk:{name:'Kuryk',lat:43.18,lon:51.66}
+};
 
 function formatAge(iso){
   if(!iso) return '—';
@@ -387,54 +392,208 @@ function formatAge(iso){
   return `${Math.floor(sec/86400)}d ago`;
 }
 
-function cleanVesselName(name){
-  return String(name||'').replace(/^т\/х\.?|^п\.?/i,'').trim() || 'Unnamed vessel';
+function metric(value){
+  return Number.isFinite(Number(value))?Number(value):0;
+}
+
+function vesselPopup(title,status,detail,source){
+  return `<div class="route-popup"><span class="route-popup-type">${escapeHTML(status)}</span><strong>${escapeHTML(title)}</strong><p>${escapeHTML(detail||'')}</p><small>${escapeHTML(source||'')}</small></div>`;
+}
+
+function initCaspianOpsMap(){
+  if(CASPIAN_OPS_MAP || !window.L || !document.getElementById('caspianOpsMap')) return;
+
+  CASPIAN_OPS_MAP=L.map('caspianOpsMap',{
+    scrollWheelZoom:false,
+    zoomControl:true,
+    preferCanvas:true
+  }).setView([41.55,50.55],6);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    maxZoom:12,
+    attribution:'&copy; OpenStreetMap contributors'
+  }).addTo(CASPIAN_OPS_MAP);
+
+  L.polyline([
+    [CASPIAN_OPS_POINTS.alat.lat,CASPIAN_OPS_POINTS.alat.lon],
+    [CASPIAN_OPS_POINTS.kuryk.lat,CASPIAN_OPS_POINTS.kuryk.lon]
+  ],{
+    color:'#f0a43c',weight:4,opacity:.9,dashArray:'10 8'
+  }).addTo(CASPIAN_OPS_MAP).bindTooltip('Alat ↔ Kuryk ferry corridor');
+
+  L.polyline([
+    [CASPIAN_OPS_POINTS.alat.lat,CASPIAN_OPS_POINTS.alat.lon],
+    [CASPIAN_OPS_POINTS.aktau.lat,CASPIAN_OPS_POINTS.aktau.lon]
+  ],{
+    color:'#28b7d8',weight:2,opacity:.45,dashArray:'4 9'
+  }).addTo(CASPIAN_OPS_MAP).bindTooltip('Aktau commercial traffic axis');
+
+  Object.values(CASPIAN_OPS_POINTS).forEach(p=>{
+    L.circleMarker([p.lat,p.lon],{
+      radius:6,color:'#071018',weight:2,fillColor:'#f0a43c',fillOpacity:1
+    }).addTo(CASPIAN_OPS_MAP)
+      .bindTooltip(p.name,{direction:'top',className:'route-tooltip'});
+  });
+
+  CASPIAN_OPS_LAYER=L.layerGroup().addTo(CASPIAN_OPS_MAP);
+  CASPIAN_OPS_MAP.fitBounds([[39.65,48.95],[43.95,52.05]],{padding:[18,18]});
+  CASPIAN_OPS_MAP.on('click',()=>CASPIAN_OPS_MAP.scrollWheelZoom.enable());
+}
+
+function jitterPoint(base,index,type){
+  const ring=Math.floor(index/8)+1;
+  const angle=(index%8)*(Math.PI/4);
+  const scale=type==='roadstead'?.055:.022;
+  const lonBias=type==='roadstead'?-.08:0;
+  return [
+    base.lat + Math.sin(angle)*scale*ring,
+    base.lon + lonBias + Math.cos(angle)*scale*ring
+  ];
+}
+
+function addOperationalMarker(lat,lon,title,status,detail,source,kind='official'){
+  if(!CASPIAN_OPS_LAYER) return;
+  const estimated=kind==='estimated';
+  const marker=L.circleMarker([lat,lon],{
+    radius:estimated?7:6,
+    color:'#071018',
+    weight:2,
+    fillColor:estimated?'#f0a43c':'#28b7d8',
+    fillOpacity:estimated?.9:.95
+  });
+  marker.bindPopup(vesselPopup(title,status,detail,source));
+  marker.bindTooltip(`${title} · ${status}`,{direction:'top',offset:[0,-7],className:'route-tooltip'});
+  marker.addTo(CASPIAN_OPS_LAYER);
+}
+
+function renderOperationalMap(data){
+  initCaspianOpsMap();
+  if(!CASPIAN_OPS_LAYER) return;
+  CASPIAN_OPS_LAYER.clearLayers();
+
+  const aktau=data?.aktau||{};
+  const kuryk=data?.kuryk||{};
+
+  (aktau.berthed||[]).forEach((v,i)=>{
+    const p=jitterPoint(CASPIAN_OPS_POINTS.aktau,i,'berth');
+    addOperationalMarker(
+      p[0],p[1],v.vessel_name,'AKTAU · BERTHED',
+      [v.berth,v.operation,v.reported_time].filter(Boolean).join(' · '),
+      'Aktau Port official disposition'
+    );
+  });
+
+  const roadstead=[...(aktau.roadstead_dry||[]),...(aktau.roadstead_tankers||[])];
+  roadstead.forEach((v,i)=>{
+    const p=jitterPoint(CASPIAN_OPS_POINTS.aktau,i,'roadstead');
+    addOperationalMarker(
+      p[0],p[1],v.vessel_name,'AKTAU · ROADSTEAD',
+      [v.category,v.reported_time].filter(Boolean).join(' · '),
+      'Aktau Port official disposition'
+    );
+  });
+
+  let kurykIndex=0;
+  (kuryk.berthed||[]).forEach(row=>{
+    (row.vessel_names||[]).forEach(name=>{
+      const p=jitterPoint(CASPIAN_OPS_POINTS.kuryk,kurykIndex++,'berth');
+      addOperationalMarker(
+        p[0],p[1],name,'KURYK · BERTHED',
+        [row.berth,row.operation,row.berthing_time].filter(Boolean).join(' · '),
+        'Port Kuryk official vessel traffic'
+      );
+    });
+  });
+
+  (kuryk.crossing_estimates||[]).forEach(v=>{
+    if(!Number.isFinite(Number(v.estimated_lat))||!Number.isFinite(Number(v.estimated_lon))) return;
+    const pct=Math.round(metric(v.estimated_progress)*100);
+    const state=v.estimate_status==='underway_estimated'?'ESTIMATED UNDERWAY':(v.estimate_status==='scheduled'?'SCHEDULED':'ETA ELAPSED');
+    addOperationalMarker(
+      Number(v.estimated_lat),Number(v.estimated_lon),v.vessel_name,state,
+      `ETA Kuryk ${v.eta||'—'} · estimated corridor progress ${pct}%`,
+      'Estimate: official Kuryk ETA + published 18h Alat–Kuryk crossing',
+      'estimated'
+    );
+  });
+}
+
+function rowHtml(name,label,meta,right,sub){
+  return `<div class="vessel-row">
+    <div><div class="vessel-name">${escapeHTML(name)}</div><div class="vessel-meta"><span>${escapeHTML(label)}</span>${meta?`<span>${escapeHTML(meta)}</span>`:''}</div></div>
+    <div class="vessel-speed">${escapeHTML(right||'')}<span class="vessel-time">${escapeHTML(sub||'')}</span></div>
+  </div>`;
+}
+
+function groupTitle(text){
+  return `<div class="vessel-group-title">${escapeHTML(text)}</div>`;
 }
 
 function renderPortActivity(data){
   const status=document.getElementById('portActivityStatus');
   const updated=document.getElementById('portActivityUpdated');
-  const summary=data?.summary||{};
-  const berthed=Array.isArray(data?.berthed)?data.berthed:[];
-  const approaching=Array.isArray(data?.approaching)?data.approaching:[];
+  const aktau=data?.aktau||{};
+  const kuryk=data?.kuryk||{};
+  const a=aktau.summary||{};
+  const k=kuryk.summary||{};
 
-  document.getElementById('kurykBerthed').textContent=Number.isFinite(Number(summary.berthed_vessels))?String(Number(summary.berthed_vessels)):'—';
-  document.getElementById('kurykApproaching').textContent=Number.isFinite(Number(summary.approaching_vessels))?String(Number(summary.approaching_vessels)):'—';
-  document.getElementById('kurykBerths').textContent=Number.isFinite(Number(summary.active_berth_entries))?String(Number(summary.active_berth_entries)):'—';
-  document.getElementById('kurykNextEta').textContent=summary.next_eta||'—';
-  document.getElementById('kurykTrafficDate').textContent=data?.traffic_date?`as of ${data.traffic_date}`:'official port data';
+  const aktauB=metric(a.berthed_vessels);
+  const aktauR=metric(a.roadstead_vessels);
+  const kurykB=metric(k.berthed_vessels);
+  const kurykA=metric(k.approaching_vessels);
+  const underway=metric(k.estimated_underway);
 
-  const kind=data?.status==='live'?'live':(data?.status==='stale'?'stale':'offline');
+  document.getElementById('aktauBerthed').textContent=String(aktauB);
+  document.getElementById('aktauRoadstead').textContent=String(aktauR);
+  document.getElementById('kurykBerthed').textContent=String(kurykB);
+  document.getElementById('kurykApproaching').textContent=String(kurykA);
+  document.getElementById('corridorUnderway').textContent=String(underway);
+  document.getElementById('operationalTotal').textContent=String(aktauB+aktauR+kurykB+kurykA);
+
+  const kind=data?.status==='live'?'live':(data?.status==='partial'?'stale':'offline');
   status.className=`ais-status ${kind}`;
-  status.textContent=data?.status==='live'?'KURYK LIVE':(data?.status==='stale'?'KURYK STALE':'KURYK OFFLINE');
+  status.textContent=data?.status==='live'?'PORT DATA LIVE':(data?.status==='partial'?'PORT DATA PARTIAL':'PORT DATA OFFLINE');
   updated.textContent=data?.updated_at?`Updated ${formatAge(data.updated_at)}`:'—';
 
-  const berthedRows=berthed.flatMap(row=>
-    (row.vessel_names||[]).map(name=>`<div class="vessel-row">
-      <div>
-        <div class="vessel-name">${cleanVesselName(name)}</div>
-        <div class="vessel-meta"><span>${row.berth||'Kuryk berth'}</span><span>${row.operation||'At berth'}</span></div>
-      </div>
-      <div class="vessel-speed">BERTHED<span class="vessel-time">${row.berthing_time||'—'}</span></div>
-    </div>`)
-  );
+  document.getElementById('aktauDispositionDate').textContent=`Aktau disposition: ${aktau.traffic_date||'—'}`;
+  document.getElementById('kurykDispositionDate').textContent=`Kuryk disposition: ${kuryk.traffic_date||'—'}`;
+  document.getElementById('corridorBoardDate').textContent=
+    `Aktau ${aktau.traffic_date||'—'} · Kuryk ${kuryk.traffic_date||'—'}`;
 
-  const approachRows=approaching.map(v=>`<div class="vessel-row">
-    <div>
-      <div class="vessel-name">${cleanVesselName(v.vessel_name)}</div>
-      <div class="vessel-meta"><span>Approaching Kuryk</span></div>
-    </div>
-    <div class="vessel-speed">ETA<span class="vessel-time">${v.eta||'—'}</span></div>
-  </div>`);
+  const parts=[];
 
-  document.getElementById('kurykVesselList').innerHTML=
-    [...berthedRows,...approachRows].join('') ||
-    '<div class="vessel-empty">No vessel rows are currently published by Port Kuryk.</div>';
+  const crossings=(kuryk.crossing_estimates||[]);
+  if(crossings.length){
+    parts.push(groupTitle('Alat → Kuryk · ETA-based crossing estimate'));
+    crossings.forEach(v=>{
+      const pct=Math.round(metric(v.estimated_progress)*100);
+      const label=v.estimate_status==='underway_estimated'?'ESTIMATED UNDERWAY':(v.estimate_status==='scheduled'?'SCHEDULED':'ETA ELAPSED');
+      parts.push(rowHtml(v.vessel_name,label,`ETA ${v.eta||'—'}`,`${pct}%`,'not AIS'));
+    });
+  }
 
-  document.getElementById('kurykBerthedSummary').textContent=
-    `Berthed vessels: ${Number.isFinite(Number(summary.berthed_vessels))?summary.berthed_vessels:'—'}`;
-  document.getElementById('kurykApproachSummary').textContent=
-    `Approaching vessels: ${Number.isFinite(Number(summary.approaching_vessels))?summary.approaching_vessels:'—'}`;
+  const roadstead=[...(aktau.roadstead_dry||[]),...(aktau.roadstead_tankers||[])];
+  if(roadstead.length){
+    parts.push(groupTitle('Aktau · roadstead'));
+    roadstead.forEach(v=>parts.push(rowHtml(v.vessel_name,'ROADSTEAD',v.category||'',v.reported_time||'','official')));
+  }
+
+  if((aktau.berthed||[]).length){
+    parts.push(groupTitle('Aktau · berthed'));
+    aktau.berthed.forEach(v=>parts.push(rowHtml(v.vessel_name,v.berth||'BERTHED',v.operation||'',v.reported_time||'','official')));
+  }
+
+  if((kuryk.berthed||[]).length){
+    parts.push(groupTitle('Kuryk · berthed'));
+    kuryk.berthed.forEach(row=>(row.vessel_names||[]).forEach(name=>
+      parts.push(rowHtml(name,row.berth||'BERTHED',row.operation||'',row.berthing_time||'','official'))
+    ));
+  }
+
+  document.getElementById('corridorVesselList').innerHTML=
+    parts.join('')||'<div class="vessel-empty">No operational vessel rows are currently published.</div>';
+
+  renderOperationalMap(data);
 }
 
 async function loadPortActivity(){
