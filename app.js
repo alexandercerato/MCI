@@ -130,7 +130,9 @@ function renderMcfiTable(){
   const rows=DATA.mcfi_monthly.filter(x=>y==='all'||x.period.startsWith(y)).slice().reverse();
   mcfiTable.innerHTML=rows.map(x=>`<tr>
     <td>${fmtMonth(x.period)}</td>
+    <td class="price">${Number.isFinite(Number(x.mcfi_index))?Number(x.mcfi_index).toFixed(1):'—'}</td>
     <td>${fmtUSD(x.mcfi_usd)}</td>
+    <td>${fmtUSD(x.fundamental_cost_usd)}</td>
     <td>${fmtUSD(x.baku_midpoint_usd)}</td>
     <td>${fmtUSD(x.turkey_midpoint_usd)}</td>
     <td><a href="${x.source_url}" target="_blank" rel="noopener">View ↗</a></td>
@@ -144,23 +146,66 @@ function svgEl(tag,attrs={},textValue=null){ const el=document.createElementNS('
 function renderMcfiChart(){
   if(!window.mcfiChart || !DATA?.mcfi_monthly?.length) return;
   const svg=mcfiChart; while(svg.firstChild) svg.removeChild(svg.firstChild);
-  const W=1200,H=430,pad={l:86,r:30,t:34,b:54}; const plotW=W-pad.l-pad.r,plotH=H-pad.t-pad.b;
+  const W=1200,H=430,pad={l:70,r:30,t:34,b:54}; const plotW=W-pad.l-pad.r,plotH=H-pad.t-pad.b;
   const today=new Date(),start=new Date(2024,10,1),end=new Date(today.getFullYear(),today.getMonth(),1),totalMonths=Math.max(1,monthDiff(start,end));
-  const rows=DATA.mcfi_monthly.filter(x=>x.period&&Number.isFinite(Number(x.mcfi_usd))).map(x=>({...x,value:Number(x.mcfi_usd),date:monthKeyToDate(x.period)})).filter(x=>x.date>=start&&x.date<=end).sort((a,b)=>a.date-b.date);
+  const rows=DATA.mcfi_monthly
+    .filter(x=>x.period&&Number.isFinite(Number(x.mcfi_index)))
+    .map(x=>({...x,value:Number(x.mcfi_index),date:monthKeyToDate(x.period)}))
+    .filter(x=>x.date>=start&&x.date<=end).sort((a,b)=>a.date-b.date);
   if(!rows.length) return;
-  const values=rows.map(x=>x.value),rawMin=Math.min(...values),rawMax=Math.max(...values); const step=500;
-  const yMin=Math.floor((rawMin-250)/step)*step, yMax=Math.ceil((rawMax+250)/step)*step;
-  const xOf=d=>pad.l+(monthDiff(start,d)/totalMonths)*plotW; const yOf=v=>pad.t+((yMax-v)/(yMax-yMin||1))*plotH;
-  for(let v=yMin;v<=yMax;v+=step){ const y=yOf(v); svg.appendChild(svgEl('line',{x1:pad.l,y1:y,x2:W-pad.r,y2:y,class:'chart-grid'})); svg.appendChild(svgEl('text',{x:pad.l-12,y:y+4,'text-anchor':'end',class:'chart-axis-text'},`$${(v/1000).toFixed(v%1000?1:0)}k`)); }
-  for(let y=start.getFullYear();y<=end.getFullYear();y++){ const yd=y===start.getFullYear()?start:new Date(y,0,1); if(yd>end) break; const x=xOf(yd); svg.appendChild(svgEl('line',{x1:x,y1:pad.t,x2:x,y2:H-pad.b,class:'chart-year-line'})); svg.appendChild(svgEl('text',{x:x+6,y:H-17,class:'chart-year-text'},String(y))); [0,3,6,9].forEach(m=>{const d=new Date(y,m,1); if(d>=start&&d<=end) svg.appendChild(svgEl('text',{x:xOf(d),y:H-38,'text-anchor':'middle',class:'chart-axis-text'},d.toLocaleDateString('en-GB',{month:'short'})));}); }
-  for(let i=1;i<rows.length;i++){ const a=rows[i-1],b=rows[i],cls=monthDiff(a.date,b.date)===1?'chart-path':'chart-gap'; svg.appendChild(svgEl('line',{x1:xOf(a.date),y1:yOf(a.value),x2:xOf(b.date),y2:yOf(b.value),class:cls})); }
-  const currentX=xOf(end); svg.appendChild(svgEl('line',{x1:currentX,y1:pad.t,x2:currentX,y2:H-pad.b,class:'chart-current-line'})); svg.appendChild(svgEl('text',{x:Math.min(W-pad.r-2,currentX-5),y:pad.t+11,'text-anchor':'end',class:'chart-current-label'},'CURRENT MONTH'));
-  rows.forEach((r,i)=>{ const c=svgEl('circle',{cx:xOf(r.date),cy:yOf(r.value),r:i===rows.length-1?5.5:4.3,class:`chart-point${i===rows.length-1?' latest':''}`}); c.addEventListener('mouseenter',ev=>showChartTooltip(ev,r)); c.addEventListener('mousemove',moveChartTooltip); c.addEventListener('mouseleave',hideChartTooltip); svg.appendChild(c); });
-  const latest=rows[rows.length-1],prev=rows.length>1?rows[rows.length-2]:null; const change=prev?((latest.value-prev.value)/prev.value)*100:null;
-  chartSummary.innerHTML=`${fmtUSD(latest.value)} / 40HC<small>${fmtMonth(latest.period)}${change===null?'':` · ${change>=0?'+':''}${change.toFixed(1)}% vs previous observed month`}</small>`;
-  if(window.chartYLabel) chartYLabel.textContent='USD / 40HC';
+  const values=rows.map(x=>x.value),rawMin=Math.min(100,...values),rawMax=Math.max(100,...values),step=20;
+  const yMin=Math.max(0,Math.floor((rawMin-10)/step)*step),yMax=Math.ceil((rawMax+10)/step)*step;
+  const xOf=d=>pad.l+(monthDiff(start,d)/totalMonths)*plotW;
+  const yOf=v=>pad.t+((yMax-v)/(yMax-yMin||1))*plotH;
+
+  for(let v=yMin;v<=yMax;v+=step){
+    const y=yOf(v);
+    svg.appendChild(svgEl('line',{x1:pad.l,y1:y,x2:W-pad.r,y2:y,class:v===100?'chart-baseline-line':'chart-grid'}));
+    svg.appendChild(svgEl('text',{x:pad.l-12,y:y+4,'text-anchor':'end',class:'chart-axis-text'},String(v)));
+  }
+  svg.appendChild(svgEl('text',{x:pad.l+8,y:yOf(100)-8,class:'chart-baseline-label'},'FUNDAMENTAL COST = 100'));
+
+  for(let y=start.getFullYear();y<=end.getFullYear();y++){
+    const yd=y===start.getFullYear()?start:new Date(y,0,1);
+    if(yd>end) break;
+    const x=xOf(yd);
+    svg.appendChild(svgEl('line',{x1:x,y1:pad.t,x2:x,y2:H-pad.b,class:'chart-year-line'}));
+    svg.appendChild(svgEl('text',{x:x+6,y:H-17,class:'chart-year-text'},String(y)));
+    [0,3,6,9].forEach(m=>{
+      const dd=new Date(y,m,1);
+      if(dd>=start&&dd<=end) svg.appendChild(svgEl('text',{x:xOf(dd),y:H-38,'text-anchor':'middle',class:'chart-axis-text'},dd.toLocaleDateString('en-GB',{month:'short'})));
+    });
+  }
+
+  for(let i=1;i<rows.length;i++){
+    const a=rows[i-1],b=rows[i],cls=monthDiff(a.date,b.date)===1?'chart-path':'chart-gap';
+    svg.appendChild(svgEl('line',{x1:xOf(a.date),y1:yOf(a.value),x2:xOf(b.date),y2:yOf(b.value),class:cls}));
+  }
+
+  const currentX=xOf(end);
+  svg.appendChild(svgEl('line',{x1:currentX,y1:pad.t,x2:currentX,y2:H-pad.b,class:'chart-current-line'}));
+  svg.appendChild(svgEl('text',{x:Math.min(W-pad.r-2,currentX-5),y:pad.t+11,'text-anchor':'end',class:'chart-current-label'},'CURRENT MONTH'));
+
+  rows.forEach((r,i)=>{
+    const c=svgEl('circle',{cx:xOf(r.date),cy:yOf(r.value),r:i===rows.length-1?5.5:4.3,class:`chart-point${i===rows.length-1?' latest':''}`});
+    c.addEventListener('mouseenter',ev=>showChartTooltip(ev,r));
+    c.addEventListener('mousemove',moveChartTooltip);
+    c.addEventListener('mouseleave',hideChartTooltip);
+    svg.appendChild(c);
+  });
+
+  const latest=rows[rows.length-1],prev=rows.length>1?rows[rows.length-2]:null;
+  const change=prev?(latest.value-prev.value):null;
+  chartSummary.innerHTML=`MCFI ${latest.value.toFixed(1)}<small>${fmtMonth(latest.period)} · fundamental ${fmtUSD(latest.fundamental_cost_usd)}${change===null?'':` · ${change>=0?'+':''}${change.toFixed(1)} pts`}</small>`;
+  if(window.chartYLabel) chartYLabel.textContent='MCFI points';
 }
-function showChartTooltip(ev,row){ if(!window.chartTooltip) return; chartTooltip.innerHTML=`<strong>${fmtUSD(row.mcfi_usd)} / 40HC</strong>${fmtMonth(row.period)}<span>Baku ${fmtUSD(row.baku_midpoint_usd)} · Türkiye ${fmtUSD(row.turkey_midpoint_usd)}</span><span>Observed market basket; no structural normalization applied</span>`; chartTooltip.hidden=false; moveChartTooltip(ev); }
+function showChartTooltip(ev,row){
+  if(!window.chartTooltip) return;
+  const status=row.fundamental_anchor_status==='carry_forward'?'carry-forward anchor':'official-period anchor';
+  chartTooltip.innerHTML=`<strong>MCFI ${Number(row.mcfi_index).toFixed(1)}</strong>${fmtMonth(row.period)}<span>Market ${fmtUSD(row.mcfi_usd)} · Fundamental ${fmtUSD(row.fundamental_cost_usd)}</span><span>${status}</span>`;
+  chartTooltip.hidden=false;
+  moveChartTooltip(ev);
+}
 function moveChartTooltip(ev){ if(!window.chartTooltip||chartTooltip.hidden)return; const box=chartTooltip.parentElement.getBoundingClientRect(); let left=ev.clientX-box.left+14,top=ev.clientY-box.top-18; left=Math.max(8,Math.min(box.width-chartTooltip.offsetWidth-8,left)); top=Math.max(8,Math.min(box.height-chartTooltip.offsetHeight-8,top)); chartTooltip.style.left=`${left}px`; chartTooltip.style.top=`${top}px`; }
 function hideChartTooltip(){ if(window.chartTooltip) chartTooltip.hidden=true; }
 
@@ -192,6 +237,88 @@ async function loadPricing(){
 loadData().then(loadPricing).catch(err=>{refreshStatus.textContent='Market data unavailable'; console.error(err)});
 setInterval(()=>loadData().catch(()=>{}),5*60*1000);
 setInterval(()=>loadPricing().catch(()=>{}),5*60*1000);
+
+// --- Interactive Middle Corridor map ---
+
+function initRouteMap(){
+  if(!window.L || !document.getElementById('routeInteractiveMap')) return;
+
+  const map=L.map('routeInteractiveMap',{scrollWheelZoom:false,zoomControl:true}).setView([43,61],3);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    maxZoom:12,
+    attribution:'&copy; OpenStreetMap contributors'
+  }).addTo(map);
+
+  const core=[
+    {name:"Xi'an International Port",country:"China",lat:34.40,lon:109.05,role:"Origin and China-Europe freight-train assembly hub"},
+    {name:"Horgos (Khorgos) Port",country:"China",lat:44.21,lon:80.41,role:"China exit border for the Xi'an Middle Corridor service"},
+    {name:"Altynkol / Khorgos Gateway",country:"Kazakhstan",lat:44.18,lon:80.30,role:"Kazakhstan border station and dry-port transshipment interface"},
+    {name:"Port of Aktau",country:"Kazakhstan",lat:43.61,lon:51.23,role:"Caspian east-coast seaport on the MCFI core route"},
+    {name:"Port of Baku (Alat)",country:"Azerbaijan",lat:39.95,lon:49.40,role:"Caspian west-coast port; the Port of Baku is located at Alat"},
+    {name:"Absheron / Baku area",country:"Azerbaijan",lat:40.42,lon:49.86,role:"Market-assessment destination area used by the MCFI"}
+  ];
+  const west=[
+    {name:"Boyuk-Kesik",country:"Azerbaijan",lat:41.31,lon:45.07,role:"Azerbaijan–Georgia rail border"},
+    {name:"Gardabani",country:"Georgia",lat:41.46,lon:45.09,role:"Georgia rail-border node"},
+    {name:"Tbilisi",country:"Georgia",lat:41.72,lon:44.79,role:"Major Georgian rail hub"},
+    {name:"Akhalkalaki",country:"Georgia",lat:41.41,lon:43.49,role:"Baku–Tbilisi–Kars gauge/interface node"},
+    {name:"Kars",country:"Türkiye",lat:40.61,lon:43.10,role:"Türkiye rail gateway"},
+    {name:"Istanbul",country:"Türkiye",lat:41.01,lon:28.97,role:"Principal Türkiye/Europe continuation"}
+  ];
+  const blackSea=[
+    {name:"Poti",country:"Georgia",lat:42.15,lon:41.67,role:"Black Sea port branch"},
+    {name:"Constanța",country:"Romania",lat:44.17,lon:28.65,role:"Black Sea European gateway"}
+  ];
+
+  const coreLine=core.map(x=>[x.lat,x.lon]);
+  L.polyline(coreLine,{weight:4,opacity:.9}).addTo(map);
+  L.polyline([core[4],...west].map(x=>[x.lat,x.lon]),{weight:3,opacity:.65,dashArray:'8 8'}).addTo(map);
+  L.polyline([core[4],west[0],west[1],west[2],blackSea[0]].map(x=>[x.lat,x.lon]),{weight:3,opacity:.55,dashArray:'8 8'}).addTo(map);
+  L.polyline([[blackSea[0].lat,blackSea[0].lon],[blackSea[1].lat,blackSea[1].lon]],{weight:3,opacity:.5,dashArray:'4 10'}).addTo(map);
+
+  [...core,...west,...blackSea].forEach((p,idx)=>{
+    const m=L.circleMarker([p.lat,p.lon],{radius:idx<core.length?6:4,weight:2,fillOpacity:.9});
+    m.bindPopup(`<strong>${escapeHTML(p.name)}</strong><br><span>${escapeHTML(p.country)}</span><br><small>${escapeHTML(p.role)}</small>`);
+    m.bindTooltip(p.name,{direction:'top',offset:[0,-5]});
+    m.addTo(map);
+  });
+
+  map.fitBounds(L.latLngBounds(coreLine).pad(.08));
+  map.on('click',()=>map.scrollWheelZoom.enable());
+}
+
+let NEWS_DATA=null;
+
+function renderNews(data){
+  NEWS_DATA=data;
+  if(!window.newsGrid) return;
+  const items=data?.items||[];
+  newsStatus.textContent=data?.status==='live'?'LIVE':'OFFLINE';
+  newsStatus.className=data?.status==='live'?'live':'offline';
+  newsUpdated.textContent=data?.updated_at?`Updated ${formatAge(data.updated_at)}`:'—';
+
+  newsGrid.innerHTML=items.length?items.slice(0,8).map(n=>`<article class="news-card">
+    <div class="news-meta"><span>${escapeHTML(n.source||'News')}</span><time>${n.published_at?new Date(n.published_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):''}</time></div>
+    <h3><a href="${n.url}" target="_blank" rel="noopener">${escapeHTML(n.title)}</a></h3>
+  </article>`).join(''):'<div class="news-empty">No recent Middle Corridor stories available.</div>';
+}
+
+async function loadNews(){
+  const base=((window.MCFM_CONFIG||{}).aisApiBase||'').replace(/\/$/,'');
+  if(!base){ renderNews({status:'offline',items:[]}); return; }
+  try{
+    const res=await fetch(`${base}/api/news?t=${Date.now()}`,{cache:'no-store'});
+    if(!res.ok) throw new Error(`News HTTP ${res.status}`);
+    renderNews(await res.json());
+  }catch(err){
+    renderNews({status:'offline',items:NEWS_DATA?.items||[]});
+    console.warn(err);
+  }
+}
+
+document.addEventListener('DOMContentLoaded',initRouteMap);
+loadNews();
+setInterval(loadNews,5*60*1000);
 
 // --- Caspian Live / AISStream proxy ---
 
