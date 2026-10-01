@@ -203,26 +203,26 @@
     <section class="panel live-panel" id="caspian-live">
       <div class="section-head">
         <div>
-          <div class="section-kicker">AIS operations</div>
-          <h2>Caspian Live</h2>
-          <p>Live vessel activity across the Aktau–Kuryk–Alat/Baku sector. The interactive vessel map is provided by VesselFinder; MCFI open-feed metrics are calculated independently below.</p>
+          <div class="section-kicker">Caspian operations</div>
+          <h2>Caspian vessel activity</h2>
+          <p>VesselFinder provides the visual AIS layer. Public terrestrial AIS coverage is denser around Baku/Alat; Aktau and Kuryk activity is therefore supplemented with live port-call statistics.</p>
         </div>
-        <div class="ais-status-wrap"><span class="ais-status" id="aisStatus">NOT CONNECTED</span><small id="aisUpdated">—</small></div>
+        <div class="ais-status-wrap"><span class="ais-status" id="portActivityStatus">CONNECTING</span><small id="portActivityUpdated">—</small></div>
       </div>
 
       <div class="live-kpis">
-        <div class="inline-kpi"><span>Open-feed vessels</span><strong id="aisVessels">0</strong><small id="aisWindowLabel">last 30 min</small></div>
-        <div class="inline-kpi"><span>Underway</span><strong id="aisUnderway">0</strong><small>speed ≥ 1.5 kn</small></div>
-        <div class="inline-kpi"><span>East Caspian</span><strong id="aisEastPorts">0</strong><small>Aktau / Kuryk area</small></div>
-        <div class="inline-kpi"><span>West Caspian</span><strong id="aisWestPorts">0</strong><small>Alat / Baku area</small></div>
-        <div class="inline-kpi"><span>Westbound</span><strong id="aisWestbound">0</strong><small>corridor candidates</small></div>
-        <div class="inline-kpi"><span>Eastbound</span><strong id="aisEastbound">0</strong><small>corridor candidates</small></div>
+        <div class="inline-kpi"><span>Aktau · in port</span><strong id="aktauInPort">—</strong><small>KZAAU</small></div>
+        <div class="inline-kpi"><span>Aktau · arrivals</span><strong id="aktauArrivals">—</strong><small>last 24 h</small></div>
+        <div class="inline-kpi"><span>Aktau · departures</span><strong id="aktauDepartures">—</strong><small>last 24 h</small></div>
+        <div class="inline-kpi"><span>Kuryk · in port</span><strong id="kurykInPort">—</strong><small>KZKUR</small></div>
+        <div class="inline-kpi"><span>Kuryk · arrivals</span><strong id="kurykArrivals">—</strong><small>last 24 h</small></div>
+        <div class="inline-kpi"><span>Kuryk · expected</span><strong id="kurykExpected">—</strong><small>expected arrivals</small></div>
       </div>
 
       <div class="live-grid">
         <div class="radar-card vessel-map-card">
-          <div class="radar-head"><span>Live Caspian vessel map</span><small>VesselFinder AIS</small></div>
-          <div class="vf-map-wrap" aria-label="VesselFinder live AIS map of the Caspian Sea">
+          <div class="radar-head"><span>Caspian AIS map</span><small>VesselFinder terrestrial AIS</small></div>
+          <div class="vf-map-wrap" aria-label="VesselFinder AIS map of the Caspian Sea">
             <script type="text/javascript">
               var width="100%";
               var height="410";
@@ -236,20 +236,22 @@
             </script>
             <script type="text/javascript" src="https://www.vesselfinder.com/aismap.js"></script>
           </div>
-          <div class="vf-map-note">Interactive AIS map · click a vessel for details · source: VesselFinder</div>
+          <div class="vf-map-note">Terrestrial AIS coverage varies by coast · Baku/Alat currently has denser public reception</div>
         </div>
 
         <div class="vessel-card">
-          <div class="radar-head"><span>Open-feed vessel stats</span><small id="aisWindow">30 min live window</small></div>
-          <div class="vessel-list" id="vesselList"><div class="vessel-empty">No open-feed positions currently available.</div></div>
-          <div class="vf-map-note"><span id="aisProvider">Open Waters + AISStream + facha.dev</span> · metrics are independent from the VesselFinder map</div>
+          <div class="radar-head"><span>East Caspian port activity</span><small>Aktau + Kuryk</small></div>
+          <div class="vessel-list" id="portActivityList">
+            <div class="vessel-empty">Loading Aktau and Kuryk activity…</div>
+          </div>
+          <div class="vf-map-note">Port activity source: MyShipTracking · refreshed every 5 minutes</div>
         </div>
       </div>
 
       <div class="live-foot">
-        <span id="aisCrossings">Crossings recorded: —</span>
-        <span id="aisMedian">Median crossing time: —</span>
-        <span id="aisTrackerSince">Tracker since: —</span>
+        <span id="aktauPortSummary">Aktau: —</span>
+        <span id="kurykPortSummary">Kuryk: —</span>
+        <span>Map source: VesselFinder</span>
       </div>
     </section>
 
