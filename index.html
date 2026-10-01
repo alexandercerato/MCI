@@ -205,7 +205,7 @@
         <div>
           <div class="section-kicker">AIS operations</div>
           <h2>Caspian Live</h2>
-          <p>Live vessel activity across the Aktau–Kuryk–Alat/Baku sector.</p>
+          <p>Live vessel activity across the Aktau–Kuryk–Alat/Baku sector. The interactive vessel map is provided by VesselFinder; MCFI open-feed metrics are calculated independently below.</p>
         </div>
         <div class="ais-status-wrap"><span class="ais-status" id="aisStatus">NOT CONNECTED</span><small id="aisUpdated">—</small></div>
       </div>
@@ -220,23 +220,39 @@
       </div>
 
       <div class="live-grid">
-        <div class="radar-card">
-          <div class="radar-head"><span>Caspian AIS</span><small id="aisProvider">AISStream</small></div>
-          <div class="ais-radar" id="aisRadar" aria-label="Live AIS positions in the central Caspian">
-            <div class="radar-grid"></div>
-            <div class="port-pin port-aktau" title="Aktau"><i></i><span>AKTAU</span></div>
-            <div class="port-pin port-kuryk" title="Kuryk"><i></i><span>KURYK</span></div>
-            <div class="port-pin port-alat" title="Alat"><i></i><span>ALAT</span></div>
-            <div class="port-pin port-baku" title="Baku"><i></i><span>BAKU</span></div>
-            <div class="ais-empty" id="aisEmpty">Connect the AIS backend to start receiving live positions.</div>
+        <div class="radar-card vessel-map-card">
+          <div class="radar-head"><span>Live Caspian vessel map</span><small>VesselFinder AIS</small></div>
+          <div class="vf-map-wrap" aria-label="VesselFinder live AIS map of the Caspian Sea">
+            <script type="text/javascript">
+              var width="100%";
+              var height="410";
+              var latitude="41.80";
+              var longitude="50.30";
+              var zoom="6";
+              var names=true;
+            </script>
+            <script type="text/javascript" src="https://www.vesselfinder.com/aismap.js"></script>
           </div>
+          <div class="vf-map-note">Interactive AIS map · click a vessel for details · source: VesselFinder</div>
         </div>
 
         <div class="vessel-card">
-          <div class="radar-head"><span>Active vessels</span><small id="aisWindow">30 min window</small></div>
-          <div class="vessel-list" id="vesselList"><div class="vessel-empty">No live feed connected.</div></div>
+          <div class="radar-head"><span>MCFI open-feed vessels</span><small id="aisWindow">30 min live window</small></div>
+          <div class="vessel-list" id="vesselList"><div class="vessel-empty">No open-feed positions yet.</div></div>
         </div>
       </div>
+
+      <details class="ais-diagnostic">
+        <summary>Open-feed tracker diagnostics <span id="aisProvider">Open Waters + AISStream</span></summary>
+        <div class="ais-radar" id="aisRadar" aria-label="MCFI open-feed AIS positions in the Caspian">
+          <div class="radar-grid"></div>
+          <div class="port-pin port-aktau" title="Aktau"><i></i><span>AKTAU</span></div>
+          <div class="port-pin port-kuryk" title="Kuryk"><i></i><span>KURYK</span></div>
+          <div class="port-pin port-alat" title="Alat"><i></i><span>ALAT</span></div>
+          <div class="port-pin port-baku" title="Baku"><i></i><span>BAKU</span></div>
+          <div class="ais-empty" id="aisEmpty">No open-feed AIS positions available.</div>
+        </div>
+      </details>
 
       <div class="live-foot">
         <span id="aisCrossings">Crossings recorded: —</span>
