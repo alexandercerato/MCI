@@ -455,3 +455,5 @@ footer{border-top:1px solid var(--line);padding:22px 0 30px;color:var(--muted2);
   .ais-diagnostic summary{display:block}
   .ais-diagnostic summary span{display:block;margin-top:4px}
 }
+
+.ais-status.archive{color:var(--gold);border-color:rgba(215,168,79,.45)}
