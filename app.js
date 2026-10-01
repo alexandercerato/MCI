@@ -468,3 +468,53 @@ function formatAge(iso){
   if(sec<86400) return `${Math.floor(sec/3600)}h ago`;
   return `${Math.floor(sec/86400)}d ago`;
 }
+
+// --- Aktau official port activity supplement ---
+
+async function loadAktauOfficialActivity(){
+  const base=((window.MCFM_CONFIG||{}).aisApiBase||'').replace(/\/$/,'');
+  const berthedEl=document.getElementById('aktauOfficialBerthed');
+  const roadsteadEl=document.getElementById('aktauOfficialRoadstead');
+  const dateEl=document.getElementById('aktauOfficialDate');
+  const board=document.getElementById('aktauOfficialVessels');
+  if(!berthedEl || !roadsteadEl || !dateEl || !board || !base) return;
+
+  try{
+    const res=await fetch(`${base}/api/port-activity?t=${Date.now()}`,{cache:'no-store'});
+    if(!res.ok) throw new Error(`Aktau activity HTTP ${res.status}`);
+    const data=await res.json();
+    const aktau=data?.aktau||{};
+    const s=aktau.summary||{};
+    const berthed=Array.isArray(aktau.berthed)?aktau.berthed:[];
+    const roadstead=[...(aktau.roadstead_dry||[]),...(aktau.roadstead_tankers||[])];
+
+    berthedEl.textContent=Number.isFinite(Number(s.berthed_vessels))?String(Number(s.berthed_vessels)):'—';
+    roadsteadEl.textContent=Number.isFinite(Number(s.roadstead_vessels))?String(Number(s.roadstead_vessels)):'—';
+    dateEl.textContent=aktau.traffic_date||'—';
+
+    const rows=[
+      ...berthed.slice(0,8).map(v=>({
+        name:v.vessel_name,
+        state:'BERTHED',
+        detail:[v.berth,v.operation,v.reported_time].filter(Boolean).join(' · ')
+      })),
+      ...roadstead.slice(0,8).map(v=>({
+        name:v.vessel_name,
+        state:'ROADSTEAD',
+        detail:[v.category,v.reported_time].filter(Boolean).join(' · ')
+      }))
+    ];
+
+    board.innerHTML=rows.length?rows.map(v=>`<div class="aktau-vessel-chip">
+      <strong>${escapeHTML(v.name||'Unnamed vessel')}</strong>
+      <span>${escapeHTML(v.state)}</span>
+      <small>${escapeHTML(v.detail||'')}</small>
+    </div>`).join(''):'<div class="vessel-empty">No vessels currently listed in the official Aktau disposition.</div>';
+  }catch(err){
+    board.innerHTML='<div class="vessel-empty">Aktau official vessel data temporarily unavailable.</div>';
+    console.warn(err);
+  }
+}
+
+loadAktauOfficialActivity();
+setInterval(loadAktauOfficialActivity,5*60*1000);
