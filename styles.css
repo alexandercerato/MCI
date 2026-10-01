@@ -457,3 +457,28 @@ footer{border-top:1px solid var(--line);padding:22px 0 30px;color:var(--muted2);
 }
 
 .ais-status.archive{color:var(--gold);border-color:rgba(215,168,79,.45)}
+
+
+/* Caspian operational vessel map */
+.caspian-ops-map{height:410px;background:#071018}
+.caspian-ops-map .leaflet-tile-pane{filter:saturate(.58) brightness(.62) contrast(1.12)}
+.caspian-ops-map .leaflet-control-zoom a{
+  background:#101923!important;color:#cdd7e1!important;border-color:#314151!important
+}
+.caspian-ops-map .leaflet-control-attribution{
+  background:rgba(7,16,24,.82)!important;color:#718499!important;font-size:8px!important
+}
+.caspian-ops-map .leaflet-control-attribution a{color:#91a8bb!important}
+.vessel-group-title{
+  position:sticky;top:0;z-index:2;
+  padding:8px 14px;
+  border-bottom:1px solid #263442;
+  background:#0d1720;
+  color:#8fa3b6;
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:.09em;
+  text-transform:uppercase
+}
+@media(max-width:900px){.caspian-ops-map{height:370px}}
+@media(max-width:560px){.caspian-ops-map{height:330px}}
