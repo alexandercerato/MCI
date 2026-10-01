@@ -61,7 +61,8 @@ const WEST_ZONES = new Set(['Alat', 'Baku']);
 
 const STALE_MS = 30 * 60 * 1000;
 const FALLBACK_MS = 24 * 60 * 60 * 1000;
-const HARD_TTL_MS = 25 * 60 * 60 * 1000;
+const ARCHIVE_MS = 365 * 24 * 60 * 60 * 1000;
+const HARD_TTL_MS = ARCHIVE_MS;
 const MAX_PUBLIC_VESSELS = 100;
 
 fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -1031,7 +1032,7 @@ function featureValue(props, ...keys) {
 
 async function refreshOpenWatersSnapshot() {
   const bbox = [BOUNDS.south, BOUNDS.west, BOUNDS.north, BOUNDS.east].join(',');
-  const url = 'https://ais.openwaters.io/v1/vessels?bbox=' + encodeURIComponent(bbox) + '&max_age=24h';
+  const url = 'https://ais.openwaters.io/v1/vessels?bbox=' + encodeURIComponent(bbox) + '&max_age=all';
 
   try {
     const headers = { 'accept': 'application/geo+json, application/json' };
@@ -1327,16 +1328,19 @@ function publicSnapshot() {
   const now = Date.now();
   const liveCutoff = now - STALE_MS;
   const fallbackCutoff = now - FALLBACK_MS;
+  const archiveCutoff = now - ARCHIVE_MS;
 
   const all = [...vessels.values()].filter(v => {
     if (!v.last_seen) return false;
     const t = new Date(v.last_seen).getTime();
-    return Number.isFinite(t) && t >= fallbackCutoff;
+    return Number.isFinite(t) && t >= archiveCutoff;
   });
 
   const recent = all.filter(v => new Date(v.last_seen).getTime() >= liveCutoff);
-  const displayMode = recent.length ? 'live' : (all.length ? 'last_known' : 'empty');
-  const display = (recent.length ? recent : all)
+  const day = all.filter(v => new Date(v.last_seen).getTime() >= fallbackCutoff);
+  const displayMode = recent.length ? 'live' : (day.length ? 'last_known' : (all.length ? 'archive' : 'empty'));
+  const displayRows = recent.length ? recent : (day.length ? day : all);
+  const display = displayRows
     .map(v => {
       const ageSeconds = Math.max(0, Math.floor((now - new Date(v.last_seen).getTime()) / 1000));
       const copy = {...v};
@@ -1375,7 +1379,7 @@ function publicSnapshot() {
       ((wsState === 'connecting' || wsState === 'subscribing' || aisStreamState === 'connecting') ? 'connecting' : 'offline'),
     provider: AISSTREAM_API_KEY ? 'Open Waters + AISStream + facha.dev' : 'Open Waters + facha.dev',
     display_mode: displayMode,
-    display_window: displayMode === 'live' ? '30m' : (displayMode === 'last_known' ? '24h' : null),
+    display_window: displayMode === 'live' ? '30m' : (displayMode === 'last_known' ? '24h' : (displayMode === 'archive' ? 'archive' : null)),
     updated_at: lastMessageAt,
     last_position_at: lastPositionAt,
     tracker_since: trackerSince,
