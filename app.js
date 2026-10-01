@@ -436,15 +436,16 @@ function initCaspianOpsMap(){
   });
 
   CASPIAN_OPS_LAYER=L.layerGroup().addTo(CASPIAN_OPS_MAP);
-  CASPIAN_OPS_MAP.fitBounds([[39.65,48.95],[43.95,52.05]],{padding:[18,18]});
+  CASPIAN_OPS_MAP.fitBounds([[39.55,48.90],[44.05,52.20]],{padding:[22,22]});
   CASPIAN_OPS_MAP.on('click',()=>CASPIAN_OPS_MAP.scrollWheelZoom.enable());
 }
 
 function jitterPoint(base,index,type){
-  const ring=Math.floor(index/8)+1;
-  const angle=(index%8)*(Math.PI/4);
-  const scale=type==='roadstead'?.055:.022;
-  const lonBias=type==='roadstead'?-.08:0;
+  const perRing=8;
+  const ring=Math.floor(index/perRing)+1;
+  const angle=(index%perRing)*(Math.PI*2/perRing);
+  const scale=type==='roadstead'?.12:.065;
+  const lonBias=type==='roadstead'?-.16:0;
   return [
     base.lat + Math.sin(angle)*scale*ring,
     base.lon + lonBias + Math.cos(angle)*scale*ring
@@ -454,15 +455,20 @@ function jitterPoint(base,index,type){
 function addOperationalMarker(lat,lon,title,status,detail,source,kind='official'){
   if(!CASPIAN_OPS_LAYER) return;
   const estimated=kind==='estimated';
-  const marker=L.circleMarker([lat,lon],{
-    radius:estimated?7:6,
-    color:'#071018',
-    weight:2,
-    fillColor:estimated?'#f0a43c':'#28b7d8',
-    fillOpacity:estimated?.9:.95
+  const html=`<div class="ops-vessel-marker ${estimated?'estimated':'official'}">
+    <span class="ops-vessel-icon">▲</span>
+    <span class="ops-vessel-label">${escapeHTML(title)}</span>
+  </div>`;
+  const icon=L.divIcon({
+    className:'ops-vessel-divicon',
+    html,
+    iconSize:[150,32],
+    iconAnchor:[12,15],
+    popupAnchor:[0,-14]
   });
+  const marker=L.marker([lat,lon],{icon,zIndexOffset:estimated?900:600});
   marker.bindPopup(vesselPopup(title,status,detail,source));
-  marker.bindTooltip(`${title} · ${status}`,{direction:'top',offset:[0,-7],className:'route-tooltip'});
+  marker.bindTooltip(`${title} · ${status}`,{direction:'top',offset:[0,-12],className:'route-tooltip'});
   marker.addTo(CASPIAN_OPS_LAYER);
 }
 
