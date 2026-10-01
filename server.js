@@ -1239,6 +1239,91 @@ function publicSnapshot() {
 
 
 /* ============================================================
+   MIDDLE CORRIDOR NEWS
+============================================================ */
+
+const NEWS_REFRESH_MS = 5 * 60 * 1000;
+let newsCache = {
+  status: 'connecting',
+  updated_at: null,
+  items: []
+};
+
+const FALLBACK_NEWS = [
+  {
+    title: 'New Sorting Tracks at Khorgos Gateway Increase Terminal Capacity by 48%',
+    url: 'https://www.ktze.kz/en/news/0bb00126-8e18-4b4b-add2-b02ddd7260b0',
+    source: 'KTZ Express',
+    published_at: '2026-07-13T00:00:00Z'
+  },
+  {
+    title: 'KTZ Express and Pasifik Eurasia Develop Eastbound Backhaul via the Middle Corridor',
+    url: 'https://www.ktze.kz/en/news/bd9b0191-0328-4cfe-a9dc-e410ff6d5ea1',
+    source: 'KTZ Express',
+    published_at: '2026-05-08T00:00:00Z'
+  },
+  {
+    title: 'Development of Container Transportation along the Middle Corridor: New Logistics Solutions',
+    url: 'https://www.ktze.kz/en/news/da815d04-a0e5-42e8-9497-81af8dadbeed',
+    source: 'KTZ Express',
+    published_at: '2026-04-14T00:00:00Z'
+  }
+];
+
+function decodeXml(value='') {
+  return String(value)
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g,'$1')
+    .replace(/&amp;/g,'&')
+    .replace(/&quot;/g,'"')
+    .replace(/&#39;|&apos;/g,"'")
+    .replace(/&lt;/g,'<')
+    .replace(/&gt;/g,'>');
+}
+
+function tagValue(block, tag) {
+  const m=block.match(new RegExp('<'+tag+'(?:\\s[^>]*)?>([\\s\\S]*?)<\\/'+tag+'>','i'));
+  return m ? decodeXml(m[1].trim()) : '';
+}
+
+async function refreshNews() {
+  const q=encodeURIComponent('"Middle Corridor" OR "Trans-Caspian International Transport Route" OR TITR');
+  const url='https://news.google.com/rss/search?q='+q+'&hl=en&gl=GB&ceid=GB:en';
+
+  try {
+    const res=await fetch(url,{headers:{'user-agent':'MCFI-Middle-Corridor-Monitor/1.0'}});
+    if(!res.ok) throw new Error('RSS HTTP '+res.status);
+    const xml=await res.text();
+    const blocks=[...xml.matchAll(/<item>([\s\S]*?)<\/item>/gi)].map(m=>m[1]);
+    const items=blocks.map(block=>{
+      const sourceMatch=block.match(/<source[^>]*>([\s\S]*?)<\/source>/i);
+      return {
+        title:tagValue(block,'title'),
+        url:tagValue(block,'link'),
+        source:sourceMatch?decodeXml(sourceMatch[1].trim()):'Google News',
+        published_at:tagValue(block,'pubDate')
+      };
+    }).filter(x=>x.title&&x.url)
+      .sort((a,b)=>new Date(b.published_at)-new Date(a.published_at))
+      .slice(0,12);
+
+    newsCache={
+      status:'live',
+      updated_at:new Date().toISOString(),
+      items:items.length?items:FALLBACK_NEWS
+    };
+    console.log('[NEWS] Refreshed: '+newsCache.items.length+' stories');
+  } catch(err) {
+    console.error('[NEWS] Refresh error:',err.message);
+    newsCache={
+      status:newsCache.items.length?'live':'offline',
+      updated_at:newsCache.updated_at||new Date().toISOString(),
+      items:newsCache.items.length?newsCache.items:FALLBACK_NEWS
+    };
+  }
+}
+
+
+/* ============================================================
    HTTP API
 ============================================================ */
 
@@ -1299,6 +1384,14 @@ app.get(
 );
 
 app.get(
+  '/api/news',
+  (_req, res) => {
+    res.set('Cache-Control','no-store');
+    res.json(newsCache);
+  }
+);
+
+app.get(
   '/api/caspian',
   (_req, res) => {
     res.set(
@@ -1329,6 +1422,7 @@ app.listen(
     );
 
     refreshOpenWatersSnapshot();
+    refreshNews();
     connectOpenWaters();
   }
 );
@@ -1347,3 +1441,5 @@ setInterval(
   refreshOpenWatersSnapshot,
   60 * 1000
 ).unref();
+
+setInterval(refreshNews, NEWS_REFRESH_MS).unref();
