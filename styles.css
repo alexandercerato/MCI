@@ -482,3 +482,56 @@ footer{border-top:1px solid var(--line);padding:22px 0 30px;color:var(--muted2);
 }
 @media(max-width:900px){.caspian-ops-map{height:370px}}
 @media(max-width:560px){.caspian-ops-map{height:330px}}
+
+
+/* High-visibility vessel markers */
+.ops-vessel-divicon{background:transparent!important;border:0!important}
+.ops-vessel-marker{
+  display:flex;
+  align-items:center;
+  gap:5px;
+  min-width:140px;
+  pointer-events:auto;
+  filter:drop-shadow(0 1px 2px #061018);
+}
+.ops-vessel-icon{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:24px;
+  height:24px;
+  border-radius:50%;
+  border:2px solid #071018;
+  background:#28b7d8;
+  color:#f2f7fb;
+  font-size:12px;
+  line-height:1;
+  transform:rotate(45deg);
+  box-shadow:0 0 13px rgba(40,183,216,.8);
+  flex:0 0 auto;
+}
+.ops-vessel-marker.estimated .ops-vessel-icon{
+  background:#f0a43c;
+  box-shadow:0 0 15px rgba(240,164,60,.9);
+}
+.ops-vessel-label{
+  max-width:112px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  padding:3px 5px;
+  border:1px solid rgba(58,78,96,.9);
+  background:rgba(7,16,24,.88);
+  color:#e8eff5;
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:.02em;
+}
+.ops-vessel-marker.estimated .ops-vessel-label{
+  border-color:rgba(240,164,60,.55);
+  color:#f3c77f;
+}
+@media(max-width:560px){
+  .ops-vessel-label{display:none}
+  .ops-vessel-marker{min-width:26px}
+}
