@@ -1498,6 +1498,130 @@ async function refreshNews() {
 }
 
 
+
+/* ============================================================
+   EAST CASPIAN PORT ACTIVITY
+============================================================ */
+
+const PORT_ACTIVITY_REFRESH_MS = 5 * 60 * 1000;
+const PORT_ACTIVITY_SOURCES = {
+  aktau: {
+    name: 'Aktau',
+    unlocode: 'KZAAU',
+    url: 'https://www.myshiptracking.com/ports/port-of-aktau-in-kz-kazakhstan-id-5905'
+  },
+  kuryk: {
+    name: 'Kuryk',
+    unlocode: 'KZKUR',
+    url: 'https://www.myshiptracking.com/ports/port-of-kuryk-in-kz-kazakhstan-id-5845'
+  }
+};
+
+let portActivityCache = {
+  status: 'connecting',
+  updated_at: null,
+  source: 'MyShipTracking',
+  ports: {}
+};
+
+function decodeHtmlText(value='') {
+  return String(value)
+    .replace(/<script[\s\S]*?<\/script>/gi,' ')
+    .replace(/<style[\s\S]*?<\/style>/gi,' ')
+    .replace(/<[^>]+>/g,' ')
+    .replace(/&nbsp;/gi,' ')
+    .replace(/&amp;/gi,'&')
+    .replace(/&quot;/gi,'"')
+    .replace(/&#39;|&apos;/gi,"'")
+    .replace(/&lt;/gi,'<')
+    .replace(/&gt;/gi,'>')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+
+function metricFromText(text, patterns) {
+  for (const pattern of patterns) {
+    const m = text.match(pattern);
+    if (m) {
+      const n = Number(m[1]);
+      if (Number.isFinite(n)) return n;
+    }
+  }
+  return null;
+}
+
+async function fetchPortActivity(source) {
+  const res = await fetch(source.url, {
+    headers: {
+      'accept': 'text/html,application/xhtml+xml',
+      'user-agent': 'Mozilla/5.0 (compatible; MCFI-Middle-Corridor-Monitor/1.0)'
+    }
+  });
+  if (!res.ok) throw new Error(source.name + ' HTTP ' + res.status);
+
+  const html = await res.text();
+  const text = decodeHtmlText(html);
+
+  const vessels_in_port = metricFromText(text, [
+    /Vessels In Port\s*[:|-]?\s*(\d+)/i,
+    /Vessels in Port\s*[:|-]?\s*(\d+)/i
+  ]);
+  const arrivals_24h = metricFromText(text, [
+    /Arrivals\s*\(24h\)\s*[:|-]?\s*(\d+)/i,
+    /Arrivals\s*24h\s*[:|-]?\s*(\d+)/i
+  ]);
+  const departures_24h = metricFromText(text, [
+    /Departures\s*\(24h\)\s*[:|-]?\s*(\d+)/i,
+    /Departures\s*24h\s*[:|-]?\s*(\d+)/i
+  ]);
+  const expected_arrivals = metricFromText(text, [
+    /Expected Arrivals\s*[:|-]?\s*(\d+)/i
+  ]);
+
+  const metrics = { vessels_in_port, arrivals_24h, departures_24h, expected_arrivals };
+  if (Object.values(metrics).every(v => v === null)) {
+    throw new Error(source.name + ' page parsed but no port metrics were found');
+  }
+
+  return {
+    name: source.name,
+    unlocode: source.unlocode,
+    source_url: source.url,
+    ...metrics
+  };
+}
+
+async function refreshPortActivity() {
+  const ports = {};
+  const errors = [];
+
+  for (const [key, source] of Object.entries(PORT_ACTIVITY_SOURCES)) {
+    try {
+      ports[key] = await fetchPortActivity(source);
+    } catch (err) {
+      errors.push(err.message);
+      if (portActivityCache.ports?.[key]) ports[key] = portActivityCache.ports[key];
+    }
+  }
+
+  const liveCount = Object.keys(ports).length;
+  portActivityCache = {
+    status: liveCount ? (errors.length ? 'partial' : 'live') : 'offline',
+    updated_at: new Date().toISOString(),
+    source: 'MyShipTracking',
+    errors,
+    ports
+  };
+
+  console.log('[PORT ACTIVITY] ' + portActivityCache.status + ' · ' +
+    Object.entries(ports).map(([k,p]) =>
+      k + ': in-port=' + (p.vessels_in_port ?? 'n/a') +
+      ', arrivals24=' + (p.arrivals_24h ?? 'n/a') +
+      ', departures24=' + (p.departures_24h ?? 'n/a') +
+      ', expected=' + (p.expected_arrivals ?? 'n/a')
+    ).join(' · '));
+}
+
 /* ============================================================
    HTTP API
 ============================================================ */
@@ -1575,6 +1699,14 @@ app.get(
 );
 
 app.get(
+  '/api/port-activity',
+  (_req, res) => {
+    res.set('Cache-Control','no-store');
+    res.json(portActivityCache);
+  }
+);
+
+app.get(
   '/api/news',
   (_req, res) => {
     res.set('Cache-Control','no-store');
@@ -1614,6 +1746,7 @@ app.listen(
 
     refreshOpenWatersSnapshot();
     refreshNews();
+    refreshPortActivity();
     connectOpenWaters();
     connectAisStream();
     refreshFachaSnapshot();
@@ -1636,4 +1769,5 @@ setInterval(
 ).unref();
 
 setInterval(refreshNews, NEWS_REFRESH_MS).unref();
+setInterval(refreshPortActivity, PORT_ACTIVITY_REFRESH_MS).unref();
 setInterval(refreshFachaSnapshot, FACHA_REFRESH_MS).unref();
