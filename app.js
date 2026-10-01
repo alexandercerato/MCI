@@ -45,7 +45,6 @@ function render(){
     ['Container',s.container],['Cargo',s.cargo],['Direction',s.direction],['Origin',s.origin],['Core path',s.core_path]
   ].map(([a,b])=>`<div class="spec"><span>${a}</span><strong>${b}</strong></div>`).join('');
   formulaText.textContent=DATA.model.index_formula;
-  methodologyLink.href=DATA.model.methodology_source;
 
   aktauKpis.innerHTML=`
     <div class="inline-kpi"><span>Port capacity</span><strong>${DATA.aktau.capacity_mtpa} Mt/y</strong><small>Aktau (Kazakhstan)</small></div>
@@ -60,12 +59,6 @@ function render(){
   renderMcfiTable();
   renderMcfiChart();
   renderHistoryTable();
-
-  gapsTable.innerHTML=DATA.coverage_gaps.map(x=>`<tr><td>${x.period}</td><td>${coverageLabel(x)}</td></tr>`).join('');
-
-  const mm=DATA.external_benchmarks.maxmodal_msri_middle_20ft||[];
-  maxmodalTable.innerHTML=mm.length?mm.map(x=>`<tr><td>${fmtMonth(x.period)}</td><td class="price">${fmtUSD(x.value_usd)}</td></tr>`).join(''):'<tr><td colspan="2">—</td></tr>';
-  externalNote.textContent='External corridor reference series with a different container and route methodology.';
 }
 
 function renderStructural(live){
