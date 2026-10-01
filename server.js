@@ -109,6 +109,8 @@ let aisStreamState = AISSTREAM_API_KEY ? 'connecting' : 'disabled';
 let activeAisStreamWs = null;
 let aisStreamReconnectTimer = null;
 let lastAisStreamMessageAt = null;
+let fachaState = 'connecting';
+let lastFachaSnapshotAt = null;
 
 
 /* ============================================================
@@ -869,6 +871,123 @@ function connectAisStream() {
 
 
 /* ============================================================
+   FACHA.DEV SNAPSHOT FALLBACK
+============================================================ */
+
+const FACHA_REFRESH_MS = 5 * 60 * 1000;
+const FACHA_AREAS = [
+  { name:'Aktau', lat:43.64, lon:51.17, radiusKm:120 },
+  { name:'Baku-Alat', lat:40.15, lon:49.65, radiusKm:120 },
+  { name:'Central Caspian', lat:41.85, lon:50.55, radiusKm:220 }
+];
+
+async function refreshFachaSnapshot() {
+  let successful = 0;
+  let rows = [];
+
+  for (const area of FACHA_AREAS) {
+    const url =
+      'https://api.facha.dev/v1/ship/radius/' +
+      area.lat + '/' + area.lon + '/' + area.radiusKm;
+
+    try {
+      const res = await fetch(url, {
+        headers: { 'accept':'application/json', 'user-agent':'MCFI-Caspian-Monitor/1.0' }
+      });
+
+      if (!res.ok) {
+        console.warn('[FACHA] ' + area.name + ' HTTP ' + res.status);
+        continue;
+      }
+
+      const data = await res.json();
+      if (Array.isArray(data)) rows.push(...data);
+      successful += 1;
+    } catch (err) {
+      console.warn('[FACHA] ' + area.name + ' error: ' + err.message);
+    }
+  }
+
+  const unique = new Map();
+  for (const row of rows) {
+    const mmsi = String(row?.mmsi || '');
+    if (!mmsi) continue;
+
+    const lat = Number(row?.latitude);
+    const lon = Number(row?.longitude);
+    if (
+      !Number.isFinite(lat) || !Number.isFinite(lon) ||
+      lat < BOUNDS.south || lat > BOUNDS.north ||
+      lon < BOUNDS.west || lon > BOUNDS.east
+    ) continue;
+
+    const seen = row?.timestamp ? new Date(row.timestamp) : new Date();
+    if (!Number.isFinite(seen.getTime())) continue;
+
+    const previous = unique.get(mmsi);
+    if (!previous || new Date(previous.timestamp).getTime() < seen.getTime()) {
+      unique.set(mmsi, row);
+    }
+  }
+
+  let accepted = 0;
+  let newest = null;
+
+  for (const row of unique.values()) {
+    const mmsi = String(row.mmsi);
+    const seen = new Date(row.timestamp).toISOString();
+    const seenMs = new Date(seen).getTime();
+    const old = vessels.get(mmsi) || { mmsi };
+    const oldMs = old.last_seen ? new Date(old.last_seen).getTime() : -Infinity;
+
+    if (Number.isFinite(oldMs) && oldMs > seenMs) continue;
+
+    const lat = Number(row.latitude);
+    const lon = Number(row.longitude);
+    const oldZone = old.zone || null;
+    const newZone = zoneFor(lat, lon);
+
+    const next = {
+      ...old,
+      mmsi,
+      name: row.name ? String(row.name).trim() : (old.name || null),
+      destination: row.destination ? String(row.destination).trim() : (old.destination || null),
+      ship_type: row.type ?? row.vesselType ?? old.ship_type ?? null,
+      lat,
+      lon,
+      sog: validSog(row.speedOverGround) ?? old.sog ?? null,
+      cog: validCog(row.courseOverGround) ?? old.cog ?? null,
+      heading: validHeading(row.heading) ?? old.heading ?? null,
+      zone: newZone,
+      source: 'facha.dev',
+      msg_type: 'radius-snapshot',
+      last_seen: seen
+    };
+
+    next.direction = courseDirection(next.cog, next.sog);
+    next.corridor_candidate = corridorCandidate(next);
+    vessels.set(mmsi, next);
+    inferCrossing(mmsi, oldZone, newZone, seenMs);
+
+    if (!newest || seenMs > newest) newest = seenMs;
+    accepted += 1;
+  }
+
+  lastFachaSnapshotAt = new Date().toISOString();
+  fachaState = successful ? 'live' : 'offline';
+
+  if (Number.isFinite(newest)) {
+    const iso = new Date(newest).toISOString();
+    if (!lastPositionAt || new Date(lastPositionAt).getTime() < newest) {
+      lastPositionAt = iso;
+    }
+  }
+
+  console.log('[FACHA] Snapshot: ' + accepted + ' vessels from ' + successful + '/' + FACHA_AREAS.length + ' areas');
+}
+
+
+/* ============================================================
    CLEANUP
 ============================================================ */
 
@@ -1248,7 +1367,7 @@ function publicSnapshot() {
   return {
     status: (wsState === 'live' || aisStreamState === 'live') ? 'live' :
       ((wsState === 'connecting' || wsState === 'subscribing' || aisStreamState === 'connecting') ? 'connecting' : 'offline'),
-    provider: AISSTREAM_API_KEY ? 'Open Waters + AISStream' : 'Open Waters',
+    provider: AISSTREAM_API_KEY ? 'Open Waters + AISStream + facha.dev' : 'Open Waters + facha.dev',
     display_mode: displayMode,
     display_window: displayMode === 'live' ? '30m' : (displayMode === 'last_known' ? '24h' : null),
     updated_at: lastMessageAt,
@@ -1410,7 +1529,7 @@ app.get(
           ((wsState === 'connecting' || wsState === 'subscribing' || aisStreamState === 'connecting') ? 'connecting' : 'offline'),
 
       provider:
-        AISSTREAM_API_KEY ? 'Open Waters + AISStream' : 'Open Waters',
+        AISSTREAM_API_KEY ? 'Open Waters + AISStream + facha.dev' : 'Open Waters + facha.dev',
 
       open_waters_status:
         wsState,
@@ -1418,8 +1537,14 @@ app.get(
       aisstream_status:
         aisStreamState,
 
+      facha_status:
+        fachaState,
+
       last_aisstream_message_at:
         lastAisStreamMessageAt,
+
+      last_facha_snapshot_at:
+        lastFachaSnapshotAt,
 
       last_message_at:
         lastMessageAt,
@@ -1481,6 +1606,7 @@ app.listen(
     refreshNews();
     connectOpenWaters();
     connectAisStream();
+    refreshFachaSnapshot();
   }
 );
 
@@ -1500,3 +1626,4 @@ setInterval(
 ).unref();
 
 setInterval(refreshNews, NEWS_REFRESH_MS).unref();
+setInterval(refreshFachaSnapshot, FACHA_REFRESH_MS).unref();
