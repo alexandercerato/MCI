@@ -1739,7 +1739,7 @@ async function fetchAktauActivity() {
   for (const row of rows) {
     const joined = row.join(' ');
 
-    if (!inRoadstead && /\bАМСТ\b/i.test(joined)) {
+    if (!inRoadstead && /АМСТ/i.test(joined)) {
       inAMST = true;
       continue;
     }
