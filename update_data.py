@@ -19,7 +19,7 @@ from bs4 import BeautifulSoup
 ROOT = Path(__file__).resolve().parent
 DATA = ROOT / "data.json"
 
-ANEWS_BUSINESS = "https://anews.az/en/ekonomika/"
+ANEWS_BUSINESS = "https://anews.az/en/all/"
 ANEWS_FALLBACK = "https://anews.az/en/ekonomika/527577/caspian-container-shipping-rates-rise-in-september/"
 WIDESAFE_NEWS = "https://www.widesafe.com/news_en"
 
