@@ -36,9 +36,9 @@ function render(){
   const structural=DATA.structural_benchmarks;
   const east=structural.segments.find(x=>x.id==='dostyk_aktau');
   const caspian=structural.segments.find(x=>x.id==='kuryk_alat');
-  mapEastPrice.textContent=fmtUSD(east?.value_usd);
-  mapCaspianPrice.textContent=fmtUSD(caspian?.value_usd);
-  mapBakuPrice.textContent=fmtUSD(h.latest_baku_market.value_usd);
+  if(window.mapEastPrice) mapEastPrice.textContent=fmtUSD(east?.value_usd);
+  if(window.mapCaspianPrice) mapCaspianPrice.textContent=fmtUSD(caspian?.value_usd);
+  if(window.mapBakuPrice) mapBakuPrice.textContent=fmtUSD(h.latest_baku_market.value_usd);
 
   const s=DATA.model.shipment;
   modelSpecs.innerHTML=[
@@ -225,7 +225,7 @@ async function loadPricing(){
     PRICING_LIVE=await res.json();
     renderStructural(PRICING_LIVE);
     const a=PRICING_LIVE?.market?.assessment;
-    if(a?.midpoint_usd){ bakuValue.textContent=fmtUSD(a.midpoint_usd); bakuMeta.textContent=`${fmtMonth(a.period)} · ${fmtUSD(a.low_usd)}–${fmtUSD(a.high_usd)}`; mapBakuPrice.textContent=fmtUSD(a.midpoint_usd); }
+    if(a?.midpoint_usd){ bakuValue.textContent=fmtUSD(a.midpoint_usd); bakuMeta.textContent=`${fmtMonth(a.period)} · ${fmtUSD(a.low_usd)}–${fmtUSD(a.high_usd)}`; if(window.mapBakuPrice) mapBakuPrice.textContent=fmtUSD(a.midpoint_usd); }
     const q=(PRICING_LIVE?.market?.provider_quotes||[]).find(x=>/Baku|Absheron/i.test(x.route||''));
     if(q?.value_usd){ providerValue.textContent=fmtUSD(q.value_usd); providerMeta.textContent=`${q.container||'40HQ'} · provider quote`; }
   }catch(err){
