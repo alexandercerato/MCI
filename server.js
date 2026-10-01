@@ -1414,6 +1414,251 @@ function publicSnapshot() {
 }
 
 /* ============================================================
+   MIDDLE CORRIDOR PRICING SOURCE WATCH
+============================================================ */
+
+const PRICING_REFRESH_MS = 5 * 60 * 1000;
+const ANEWS_BUSINESS_URL = 'https://anews.az/en/ekonomika/';
+const ANEWS_PRICING_FALLBACK_URL = 'https://anews.az/en/ekonomika/527577/caspian-container-shipping-rates-rise-in-september/';
+const WIDESAFE_NEWS_URL = 'https://www.widesafe.com/news_en';
+
+let pricingCache = {
+  status: 'connecting',
+  checked_at: null,
+  review_required: false,
+  market: {
+    assessment: {
+      route: "Xi'an (China) → Baku/Alat (Azerbaijan)",
+      period: '2026-09',
+      low_usd: 6750,
+      high_usd: 7200,
+      midpoint_usd: 6975,
+      container: '40HC',
+      source_name: 'Argus, reported by Anews',
+      source_url: ANEWS_PRICING_FALLBACK_URL
+    },
+    turkey_assessment: {
+      route: "Xi'an (China) → Ambarli/Mersin (Türkiye)",
+      period: '2026-09',
+      low_usd: 7200,
+      high_usd: 8000,
+      midpoint_usd: 7600,
+      container: '40HC',
+      source_name: 'Argus, reported by Anews',
+      source_url: ANEWS_PRICING_FALLBACK_URL
+    },
+    provider_quotes: [
+      {
+        route: "Xi'an (China) → Baku/Absheron (Azerbaijan)",
+        value_usd: 5000,
+        price_floor: false,
+        container: 'SOC 40HQ',
+        period: '2026-08',
+        source_name: 'WideSafe',
+        source_url: WIDESAFE_NEWS_URL
+      },
+      {
+        route: "Xi'an (China) → Poti (Georgia)",
+        value_usd: 4400,
+        price_floor: false,
+        container: 'SOC 40HQ',
+        period: '2026-08',
+        source_name: 'WideSafe',
+        source_url: WIDESAFE_NEWS_URL
+      },
+      {
+        route: "Xi'an (China) → Tbilisi (Georgia)",
+        value_usd: 4200,
+        price_floor: false,
+        container: 'SOC 40HQ',
+        period: '2026-08',
+        source_name: 'WideSafe',
+        source_url: WIDESAFE_NEWS_URL
+      },
+      {
+        route: "Xi'an (China) → Mersin/Istanbul (Türkiye)",
+        value_usd: 4700,
+        price_floor: true,
+        container: 'SOC 40HQ',
+        period: '2026-08',
+        source_name: 'WideSafe',
+        source_url: WIDESAFE_NEWS_URL
+      }
+    ]
+  },
+  errors: []
+};
+
+const MONTH_NUM = {
+  january:'01',february:'02',march:'03',april:'04',may:'05',june:'06',
+  july:'07',august:'08',september:'09',october:'10',november:'11',december:'12'
+};
+
+function moneyInt(v='') {
+  const n = Number(String(v).replace(/[^0-9.]/g,''));
+  return Number.isFinite(n) ? Math.round(n) : null;
+}
+
+function inferPeriodFromText(text='') {
+  const m = String(text).match(/\b(January|February|March|April|May|June|July|August|September|October|November|December)\s+(20\d{2})\b/i);
+  if (!m) return null;
+  return m[2] + '-' + MONTH_NUM[m[1].toLowerCase()];
+}
+
+async function discoverLatestAnewsPricingUrl() {
+  try {
+    const res = await fetch(ANEWS_BUSINESS_URL, {
+      headers: {'user-agent':'MCFI-Middle-Corridor-Monitor/1.0'}
+    });
+    if (!res.ok) throw new Error('Anews listing HTTP ' + res.status);
+    const html = await res.text();
+    const candidates = [];
+    for (const m of html.matchAll(/href=["']([^"']*\/en\/ekonomika\/(\d+)\/([^"']+))["']/gi)) {
+      const href = m[1];
+      const id = Number(m[2]);
+      const slug = m[3].toLowerCase();
+      if ((slug.includes('caspian') && slug.includes('container')) || slug.includes('container-shipping-rates')) {
+        candidates.push({id,href});
+      }
+    }
+    candidates.sort((a,b)=>b.id-a.id);
+    if (candidates[0]) {
+      const href = candidates[0].href;
+      return href.startsWith('http') ? href : ('https://anews.az' + (href.startsWith('/') ? href : '/' + href));
+    }
+  } catch (err) {
+    console.warn('[PRICING] Anews discovery fallback:', err.message);
+  }
+  return ANEWS_PRICING_FALLBACK_URL;
+}
+
+async function refreshPricing() {
+  const previous = pricingCache;
+  const errors = [];
+  let assessment = previous.market.assessment;
+  let turkeyAssessment = previous.market.turkey_assessment;
+  let providerQuotes = previous.market.provider_quotes;
+  let marketOk = false;
+  let providerOk = false;
+
+  try {
+    const sourceUrl = await discoverLatestAnewsPricingUrl();
+    const res = await fetch(sourceUrl, {
+      headers: {'user-agent':'MCFI-Middle-Corridor-Monitor/1.0'}
+    });
+    if (!res.ok) throw new Error('Anews pricing HTTP ' + res.status);
+    const html = await res.text();
+    const text = decodeHtmlText(html);
+    const period = inferPeriodFromText(text) || assessment.period;
+
+    const baku = text.match(/Alat\s+or\s+Absheron[\s\S]{0,350}?\$\s*([0-9,]+)\s*[–—-]\s*\$\s*([0-9,]+)/i);
+    const turkey = text.match(/Ambarli\s+and\s+Mersin[\s\S]{0,350}?\$\s*([0-9,]+)\s*[–—-]\s*\$\s*([0-9,]+)/i);
+
+    if (!baku) throw new Error('Baku/Alat rate range not parsed');
+
+    const low = moneyInt(baku[1]);
+    const high = moneyInt(baku[2]);
+    assessment = {
+      route: "Xi'an (China) → Baku/Alat (Azerbaijan)",
+      period,
+      low_usd: low,
+      high_usd: high,
+      midpoint_usd: Math.round((low + high) / 2),
+      container: '40HC',
+      source_name: 'Argus, reported by Anews',
+      source_url: sourceUrl
+    };
+
+    if (turkey) {
+      const tLow = moneyInt(turkey[1]);
+      const tHigh = moneyInt(turkey[2]);
+      turkeyAssessment = {
+        route: "Xi'an (China) → Ambarli/Mersin (Türkiye)",
+        period,
+        low_usd: tLow,
+        high_usd: tHigh,
+        midpoint_usd: Math.round((tLow + tHigh) / 2),
+        container: '40HC',
+        source_name: 'Argus, reported by Anews',
+        source_url: sourceUrl
+      };
+    }
+
+    marketOk = true;
+  } catch (err) {
+    errors.push('Market assessment: ' + err.message);
+  }
+
+  try {
+    const res = await fetch(WIDESAFE_NEWS_URL, {
+      headers: {'user-agent':'MCFI-Middle-Corridor-Monitor/1.0'}
+    });
+    if (!res.ok) throw new Error('WideSafe HTTP ' + res.status);
+    const text = decodeHtmlText(await res.text());
+
+    const block = text.match(/FCL\s+SOC\s+40HQ\s+Rates\s+to\s+Baku[\s\S]{0,7000}/i)?.[0] || text;
+    const findRate = (label) => {
+      const re = new RegExp(label + '[\\s\\S]{0,120}?\\$\\s*([0-9][0-9,]*)','i');
+      const m = block.match(re);
+      return m ? moneyInt(m[1]) : null;
+    };
+
+    const bakuRate = findRate("Xi[’'\\-]?an(?:\\s*\\(Middle China\\))?");
+    const potiRate = findRate('Poti,?\\s*Georgia');
+    const tbilisiRate = findRate('Tbilisi,?\\s*Georgia');
+    const turkeyRate = findRate('Mersin\\s*\\/\\s*Istanbul,?\\s*Turkey');
+
+    if (!bakuRate) throw new Error('Xi\'an → Baku provider rate not parsed');
+
+    const quotes = [];
+    quotes.push({
+      route: "Xi'an (China) → Baku/Absheron (Azerbaijan)",
+      value_usd: bakuRate,
+      price_floor: false,
+      container: 'SOC 40HQ',
+      period: '2026-08',
+      source_name: 'WideSafe',
+      source_url: WIDESAFE_NEWS_URL
+    });
+    if (potiRate) quotes.push({
+      route: "Xi'an (China) → Poti (Georgia)", value_usd:potiRate, price_floor:false,
+      container:'SOC 40HQ', period:'2026-08', source_name:'WideSafe', source_url:WIDESAFE_NEWS_URL
+    });
+    if (tbilisiRate) quotes.push({
+      route: "Xi'an (China) → Tbilisi (Georgia)", value_usd:tbilisiRate, price_floor:false,
+      container:'SOC 40HQ', period:'2026-08', source_name:'WideSafe', source_url:WIDESAFE_NEWS_URL
+    });
+    if (turkeyRate) quotes.push({
+      route: "Xi'an (China) → Mersin/Istanbul (Türkiye)", value_usd:turkeyRate, price_floor:true,
+      container:'SOC 40HQ', period:'2026-08', source_name:'WideSafe', source_url:WIDESAFE_NEWS_URL
+    });
+
+    providerQuotes = quotes;
+    providerOk = true;
+  } catch (err) {
+    errors.push('Provider rates: ' + err.message);
+  }
+
+  pricingCache = {
+    status: (marketOk || providerOk) ? 'live' : (previous.checked_at ? 'stale' : 'offline'),
+    checked_at: new Date().toISOString(),
+    review_required: errors.length > 0,
+    market: {
+      assessment,
+      turkey_assessment: turkeyAssessment,
+      provider_quotes: providerQuotes
+    },
+    errors
+  };
+
+  console.log('[PRICING] ' + pricingCache.status +
+    ' · Baku=' + assessment.low_usd + '-' + assessment.high_usd +
+    ' · Turkey=' + turkeyAssessment.low_usd + '-' + turkeyAssessment.high_usd +
+    ' · provider=' + (providerQuotes[0]?.value_usd ?? 'n/a') +
+    (errors.length ? ' · ' + errors.join(' | ') : ''));
+}
+
+/* ============================================================
    MIDDLE CORRIDOR NEWS
 ============================================================ */
 
@@ -1953,6 +2198,14 @@ app.get(
 );
 
 app.get(
+  '/api/pricing',
+  (_req, res) => {
+    res.set('Cache-Control','no-store');
+    res.json(pricingCache);
+  }
+);
+
+app.get(
   '/api/news',
   (_req, res) => {
     res.set('Cache-Control','no-store');
@@ -1992,6 +2245,7 @@ app.listen(
 
     refreshOpenWatersSnapshot();
     refreshNews();
+    refreshPricing();
     refreshPortActivity();
     connectOpenWaters();
     connectAisStream();
@@ -2015,5 +2269,6 @@ setInterval(
 ).unref();
 
 setInterval(refreshNews, NEWS_REFRESH_MS).unref();
+setInterval(refreshPricing, PRICING_REFRESH_MS).unref();
 setInterval(refreshPortActivity, PORT_ACTIVITY_REFRESH_MS).unref();
 setInterval(refreshFachaSnapshot, FACHA_REFRESH_MS).unref();
