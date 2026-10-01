@@ -524,10 +524,11 @@ async function loadAktauOfficialActivity(){
     const data=await res.json();
     const aktau=data?.aktau||{};
     const s=aktau.summary||{};
-    const berthed=Array.isArray(aktau.berthed)?aktau.berthed:[];
+    const allBerthed=Array.isArray(aktau.berthed)?aktau.berthed:[];
+    const berthed=allBerthed.filter(v=>!v.facility || v.facility==='Aktau Port');
     const roadstead=[...(aktau.roadstead_dry||[]),...(aktau.roadstead_tankers||[])];
 
-    const berthedCount=Number.isFinite(Number(s.berthed_vessels))?Number(s.berthed_vessels):berthed.length;
+    const berthedCount=Number.isFinite(Number(s.main_port_berthed_vessels))?Number(s.main_port_berthed_vessels):berthed.length;
     const roadsteadCount=Number.isFinite(Number(s.roadstead_vessels))?Number(s.roadstead_vessels):roadstead.length;
     const occupiedBerths=Number.isFinite(Number(s.occupied_main_berths))?Number(s.occupied_main_berths):0;
     const berthCapacity=Number.isFinite(Number(s.berth_capacity))?Number(s.berth_capacity):11;
