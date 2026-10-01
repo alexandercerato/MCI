@@ -7,7 +7,7 @@ async function loadData(){
   const res=await fetch(`data.json?t=${Date.now()}`,{cache:'no-store'});
   DATA=await res.json();
   render();
-  refreshStatus.textContent=`Market database loaded · ${new Date().toLocaleString('en-GB')} · online sources checked every ${DATA.meta.refresh_minutes} minutes`;
+  refreshStatus.textContent=`Historical database loaded · ${new Date().toLocaleString('en-GB')} · live feeds refresh every ${DATA.meta.refresh_minutes} minutes`;
 }
 
 function render(){
@@ -226,8 +226,21 @@ async function loadPricing(){
     renderStructural(PRICING_LIVE);
     const a=PRICING_LIVE?.market?.assessment;
     if(a?.midpoint_usd){ bakuValue.textContent=fmtUSD(a.midpoint_usd); bakuMeta.textContent=`${fmtMonth(a.period)} · ${fmtUSD(a.low_usd)}–${fmtUSD(a.high_usd)}`; if(window.mapBakuPrice) mapBakuPrice.textContent=fmtUSD(a.midpoint_usd); }
+    const t=PRICING_LIVE?.market?.turkey_assessment;
+    if(t?.midpoint_usd){
+      turkeyValue.textContent=fmtUSD(t.midpoint_usd);
+      turkeyMeta.textContent=`${fmtMonth(t.period)} · ${fmtUSD(t.low_usd)}–${fmtUSD(t.high_usd)}`;
+    }
     const q=(PRICING_LIVE?.market?.provider_quotes||[]).find(x=>/Baku|Absheron/i.test(x.route||''));
-    if(q?.value_usd){ providerValue.textContent=fmtUSD(q.value_usd); providerMeta.textContent=`${q.container||'40HQ'} · provider quote`; }
+    if(q?.value_usd){ providerValue.textContent=fmtUSD(q.value_usd); providerMeta.textContent=`${fmtMonth(q.period)} · ${q.container||'40HQ'} · provider quote`; }
+    if(a?.midpoint_usd && DATA?.model?.theoretical_reference_usd){
+      const ref=Number(DATA.model.theoretical_reference_usd);
+      const liveIndex=Number(a.midpoint_usd)/ref*100;
+      if(Number.isFinite(liveIndex)){
+        mcfiValue.textContent=liveIndex.toFixed(1);
+        mcfiMeta.textContent=`${fmtMonth(a.period)} · Market ${fmtUSD(a.midpoint_usd)} · Fundamental ${fmtUSD(ref)} · ${liveIndex>=100?'+':''}${(liveIndex-100).toFixed(1)}% premium`;
+      }
+    }
   }catch(err){
     console.warn(err);
     if(window.pricingWatchStatus) pricingWatchStatus.textContent='SOURCE WATCH OFFLINE';
