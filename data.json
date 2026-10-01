@@ -1,15 +1,15 @@
 {
   "meta": {
     "title": "Middle Corridor Freight Monitor",
-    "version": "0.14.0",
-    "as_of": "2026-09-29",
+    "version": "0.15.0",
+    "as_of": "2026-10-01",
     "refresh_minutes": 5,
-    "methodology_note": "MCFI market index base: January 2026 = 100. Structural tariff benchmarks remain separate from the market index and are shown only where independently verified.",
+    "methodology_note": "MCFI Fundamental Cost v1.0: market freight is compared with a transparent modelled structural cost for one loaded SOC 40HC from Xi'an to Absheron/Alat. No calendar month is used as the index base.",
     "data_warning": "Historical coverage reflects the availability of published market assessments."
   },
   "model": {
-    "name": "MCFI-40 Core",
-    "description": "A fixed shipment definition with independently verified structural tariff benchmarks and separate market observations.",
+    "name": "MCFI-40 Fundamental",
+    "description": "A structural freight-cost index comparing observed Xi'an–Absheron/Alat 40HC market freight with a transparent theoretical route cost.",
     "shipment": {
       "container": "1 × 40’ HC / 40HQ, loaded",
       "ownership": "Market assessment; container ownership basis recorded where available",
@@ -33,41 +33,123 @@
         "purpose": "Western continuation through Azerbaijan/Georgia"
       }
     ],
-    "formula": "MCFI = monthly observed market basket ÷ January 2026 market basket × 100. Structural tariff benchmarks remain a separate analytical layer and do not determine the index.",
+    "formula": "MCFI = observed market freight ÷ modelled fundamental route cost × 100.",
     "route_quote_rule": "For each route/month, use the midpoint of the comparable market range; if multiple same-grade market assessments exist, use the median of their midpoints.",
     "source_hierarchy": [
       "Exact-route monthly market assessment",
       "Multiple comparable market observations",
       "Published carrier and forwarder tariffs for additional market reference"
     ],
-    "publication_rule": "MCFI is calculated for months with published assessments for both core routes and normalized to January 2026 = 100.",
+    "publication_rule": "Publish MCFI when a comparable Xi'an–Absheron/Alat 40HC market assessment is available and all fundamental-cost blocks have an auditable source or explicitly identified modelling rule.",
     "methodological_anchor": "Argus introduced monthly 40HC assessments for Xi’an–Absheron/Baku and Xi’an–Mersin/Ambarli in April 2026; the same two-lane structure is used retrospectively when equivalent historical market ranges are recoverable.",
     "methodology_source": "https://www1.argusmedia.com/ArgusStaticContent/Resources/data/announcements/pdf/20260424atk.pdf",
-    "theoretical_reference_usd": null,
-    "index_base": 100,
-    "index_formula": "MCFI = monthly observed market basket ÷ January 2026 market basket × 100.",
-    "reference_note": "MCFI is normalized to January 2026 = 100 using the observed two-route market basket. Structural benchmarks are shown separately and are not used as the index denominator.",
+    "theoretical_reference_usd": 4282,
+    "index_base": null,
+    "index_formula": "MCFI = P_market / C_fundamental × 100.",
+    "reference_note": "100 means observed market freight equals the modelled fundamental cost. Values above 100 indicate a market premium; values below 100 indicate market freight below the modelled structural cost.",
     "index_status": "live",
-    "index_base_period": "2026-01",
-    "index_base_market_usd": 6450
+    "theoretical_reference_as_of": "2026-10-01",
+    "theoretical_cost_model": {
+      "version": "1.0",
+      "route": "Xi'an International Port → Alashankou/Dostyk → Altynkol → Aktau → Alat/Absheron",
+      "unit": "USD per loaded SOC 40HC",
+      "exclusions": [
+        "first-mile trucking",
+        "cargo stuffing/unstuffing",
+        "cargo insurance",
+        "duties and VAT",
+        "inventory carrying cost",
+        "extraordinary storage/demurrage",
+        "dangerous-cargo surcharges"
+      ],
+      "components": [
+        {
+          "id": "china_rail",
+          "label": "China rail linehaul",
+          "route": "Xi'an → Alashankou",
+          "native_value": 10955.49,
+          "native_currency": "CNY",
+          "fx_cny_usd": 0.149148,
+          "value_usd": 1633.99,
+          "status": "modelled_from_public_tariff_formula",
+          "method": "532 CNY/container + 3.357 CNY/container-km × 3,105 km",
+          "source_name": "China Railway container tariff structure / CNR route distance",
+          "source_urls": [
+            "https://www.chinainlandport.org.cn/index.php?a=show&c=index&catid=34&id=169&m=content",
+            "https://news.cnr.cn/native/city/201311/t20131128_514265073.shtml"
+          ],
+          "note": "The 2018 national tariff formula is used as a structural modelling rule, not as a claim that it is the executable 2026 commercial quote."
+        },
+        {
+          "id": "border_transshipment",
+          "label": "Border container transshipment",
+          "route": "Alashankou border station",
+          "native_value": 225,
+          "native_currency": "CNY",
+          "fx_cny_usd": 0.149148,
+          "value_usd": 33.56,
+          "status": "modelled_from_national_standard",
+          "method": "40 ft loaded container transshipment standard",
+          "source_name": "Chinese railway border charging schedule",
+          "source_url": "https://mohe.gov.cn/mohe/c101577/202309/c13_260730.shtml"
+        },
+        {
+          "id": "china_customs_admin",
+          "label": "China border customs administration",
+          "route": "Border station",
+          "native_value": 33,
+          "native_currency": "CNY",
+          "fx_cny_usd": 0.149148,
+          "value_usd": 4.92,
+          "status": "modelled_from_public_fee_schedule",
+          "method": "Customs inspection/admin fee per container consignment",
+          "source_name": "Chinese railway ancillary-fee schedule",
+          "source_url": "https://huoche.tianqi.com/news/5213.html"
+        },
+        {
+          "id": "altynkol_absheron",
+          "label": "TITR structural block",
+          "route": "Altynkol → Aktau → Alat/Baku → Absheron",
+          "value_usd": 2610,
+          "status": "latest_published_official_anchor",
+          "valid_through": "2026-03-31",
+          "source_name": "KTZ Express",
+          "source_url": "https://www.ktze.kz/en/services/calculators?tab=1",
+          "includes": [
+            "Kazakhstan/Azerbaijan rail",
+            "Aktau port rail/track charges",
+            "Aktau and Baku port charges",
+            "Aktau–Alat sea freight",
+            "transit customs declaration",
+            "dispatching",
+            "forwarder fee"
+          ],
+          "note": "Latest public official all-in structural anchor located. It is not represented as a current executable October 2026 quotation."
+        }
+      ],
+      "total_usd": 4282,
+      "fx_note": "CNY/USD reference approximately 0.149148 on 01.10.2026.",
+      "confidence": "medium",
+      "confidence_note": "China linehaul and border items are modelled from public tariff rules; the central TITR block is official but its published validity ended 31.03.2026."
+    }
   },
   "headline": {
     "latest_mcfi_core": {
-      "period": "2026-07",
-      "value_usd": 7200,
-      "coverage": "2/2 core routes",
-      "confidence": "market basket index; January 2026 = 100",
-      "value_index": 111.6,
-      "theoretical_reference_usd": null,
-      "premium_vs_model_pct": null,
-      "index_base_period": "2026-01",
-      "index_base_market_usd": 6450
+      "period": "2026-09",
+      "value_usd": 6975,
+      "coverage": "Xi'an → Alat/Absheron 40HC market assessment",
+      "confidence": "market assessment vs fundamental cost v1.0",
+      "value_index": 162.9,
+      "theoretical_reference_usd": 4282,
+      "premium_vs_model_pct": 62.9
     },
     "latest_baku_market": {
-      "period": "2026-07",
-      "value_usd": 6850,
-      "range": "$6,600–$7,100",
-      "confidence": "medium-high"
+      "period": "2026-09",
+      "value_usd": 6975,
+      "range": "$6,750–$7,200",
+      "confidence": "medium-high; reported as Argus market assessment",
+      "source_name": "Argus, reported by regional press",
+      "source_url": "https://anews.az/en/ekonomika/527577/caspian-container-shipping-rates-rise-in-september/"
     },
     "latest_provider_snapshot": {
       "period": "2026-08",
