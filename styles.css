@@ -791,3 +791,68 @@ footer{border-top:1px solid var(--line);padding:22px 0 30px;color:var(--muted2);
   .aktau-stats-grid{grid-template-columns:1fr}
   .aktau-vessel-board-main .aktau-vessel-grid{grid-template-columns:1fr}
 }
+
+/* Aktau live berth occupancy */
+.aktau-occupancy-card{
+  display:grid;
+  grid-template-columns:220px 1fr;
+  gap:24px;
+  align-items:center;
+  padding:20px;
+  margin-bottom:10px;
+  border:1px solid var(--line);
+  background:radial-gradient(circle at 85% 50%,rgba(99,198,191,.08),transparent 32%),#0a1119
+}
+.aktau-occupancy-copy span{
+  display:block;
+  color:var(--muted2);
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:.1em;
+  text-transform:uppercase
+}
+.aktau-occupancy-copy strong{
+  display:block;
+  margin-top:5px;
+  color:#eef5f7;
+  font:800 44px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace
+}
+.aktau-occupancy-copy small{
+  display:block;
+  margin-top:7px;
+  color:#8ea0b2;
+  font-size:10px
+}
+.aktau-occupancy-track{
+  position:relative;
+  height:18px;
+  overflow:hidden;
+  border:1px solid #2b3c4d;
+  background:#071018
+}
+.aktau-occupancy-fill{
+  width:0;
+  height:100%;
+  background:linear-gradient(90deg,#48b57a,#d7a84f);
+  transition:width .45s ease
+}
+.aktau-occupancy-scale{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  margin-top:6px;
+  color:#65788a;
+  font-size:9px;
+  text-transform:uppercase;
+  letter-spacing:.05em
+}
+.aktau-occupancy-visual p{
+  margin:9px 0 0;
+  color:#718499;
+  font-size:9px;
+  line-height:1.4
+}
+@media(max-width:700px){
+  .aktau-occupancy-card{grid-template-columns:1fr;gap:14px}
+  .aktau-occupancy-copy strong{font-size:38px}
+}
