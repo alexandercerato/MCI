@@ -374,6 +374,10 @@ setInterval(loadNews,5*60*1000);
 const AIS_CFG = window.MCFM_CONFIG || {};
 const PORT_ACTIVITY_REFRESH_MS = 5 * 60 * 1000;
 
+function escapeHTML(v){
+  return String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+}
+
 function formatAge(iso){
   if(!iso) return '—';
   const sec=Math.max(0,Math.floor((Date.now()-new Date(iso).getTime())/1000));
