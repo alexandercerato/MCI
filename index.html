@@ -224,7 +224,7 @@
             var height="500";
             var latitude="43.65";
             var longitude="51.17";
-            var zoom="11";
+            var zoom="8";
             var names=true;
             var fleet_hide_old_positions=false;
             var click_to_activate=false;
@@ -232,7 +232,20 @@
           </script>
           <script type="text/javascript" src="https://www.vesselfinder.com/aismap.js"></script>
         </div>
-        <div class="vf-map-note">Focused on Aktau only · click a vessel for VesselFinder details · AIS visibility depends on public terrestrial coverage</div>
+        <div class="vf-map-note">Focused on Aktau + immediate approaches · click a vessel for VesselFinder details · AIS visibility depends on public terrestrial coverage</div>
+      </div>
+
+      <div class="aktau-traffic-strip">
+        <div class="inline-kpi"><span>Official · berthed</span><strong id="aktauOfficialBerthed">—</strong><small>Port of Aktau disposition</small></div>
+        <div class="inline-kpi"><span>Official · roadstead</span><strong id="aktauOfficialRoadstead">—</strong><small>Port of Aktau disposition</small></div>
+        <div class="inline-kpi"><span>Disposition date</span><strong id="aktauOfficialDate">—</strong><small>official source</small></div>
+      </div>
+
+      <div class="aktau-vessel-board">
+        <div class="radar-head"><span>Aktau reported vessels</span><small>official port disposition · independent from VesselFinder AIS</small></div>
+        <div class="aktau-vessel-grid" id="aktauOfficialVessels">
+          <div class="vessel-empty">Loading Aktau vessel disposition…</div>
+        </div>
       </div>
     </section>
 
