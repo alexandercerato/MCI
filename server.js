@@ -1418,7 +1418,7 @@ function publicSnapshot() {
 ============================================================ */
 
 const PRICING_REFRESH_MS = 5 * 60 * 1000;
-const ANEWS_BUSINESS_URL = 'https://anews.az/en/ekonomika/';
+const ANEWS_BUSINESS_URL = 'https://anews.az/en/all/';
 const ANEWS_PRICING_FALLBACK_URL = 'https://anews.az/en/ekonomika/527577/caspian-container-shipping-rates-rise-in-september/';
 const WIDESAFE_NEWS_URL = 'https://www.widesafe.com/news_en';
 
