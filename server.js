@@ -11,7 +11,7 @@ const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || '*';
 const DATA_DIR = path.resolve(process.env.DATA_DIR || './data');
 
 const boundsParts = String(
-  process.env.CASPIAN_BOUNDS || '36.0,46.0,47.0,55.0'
+  process.env.CASPIAN_BOUNDS || '39.0,48.0,45.2,53.0'
 )
   .split(',')
   .map(Number);
@@ -26,10 +26,10 @@ const BOUNDS =
         east: boundsParts[3]
       }
     : {
-        south: 36.0,
-        west: 46.0,
-        north: 47.0,
-        east: 55.0
+        south: 39.0,
+        west: 48.0,
+        north: 45.2,
+        east: 53.0
       };
 
 const PORTS = {
@@ -103,6 +103,7 @@ let lastMessageAt = null;
 let lastPositionAt = null;
 let reconnectTimer = null;
 let activeWs = null;
+let lastSnapshotAt = null;
 
 
 /* ============================================================
@@ -726,6 +727,84 @@ function cleanup() {
 
 
 /* ============================================================
+   OPEN WATERS HTTP SNAPSHOT
+============================================================ */
+
+function featureValue(props, ...keys) {
+  for (const key of keys) {
+    if (props && props[key] !== undefined && props[key] !== null) return props[key];
+  }
+  return null;
+}
+
+async function refreshOpenWatersSnapshot() {
+  const bbox = [BOUNDS.south, BOUNDS.west, BOUNDS.north, BOUNDS.east].join(',');
+  const url = 'https://ais.openwaters.io/v1/vessels?bbox=' + encodeURIComponent(bbox) + '&max_age=30m';
+
+  try {
+    const res = await fetch(url, {
+      headers: { 'accept': 'application/geo+json, application/json' }
+    });
+
+    if (!res.ok) {
+      throw new Error('Snapshot HTTP ' + res.status);
+    }
+
+    const geo = await res.json();
+    const features = Array.isArray(geo?.features) ? geo.features : [];
+    const nowIso = new Date().toISOString();
+
+    for (const feature of features) {
+      const props = feature?.properties || {};
+      const coords = feature?.geometry?.coordinates;
+      if (!Array.isArray(coords) || coords.length < 2) continue;
+
+      const lon = Number(coords[0]);
+      const lat = Number(coords[1]);
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+
+      const rawMmsi = featureValue(props, 'mmsi', 'MMSI', 'id') ?? feature?.id;
+      const mmsi = String(rawMmsi || '').replace(/^mmsi[:/]/i,'');
+      if (!mmsi) continue;
+
+      const old = vessels.get(mmsi) || { mmsi };
+      const sog = validSog(featureValue(props, 'sog', 'Sog', 'speed'));
+      const cog = validCog(featureValue(props, 'cog', 'Cog', 'course'));
+      const heading = validHeading(featureValue(props, 'heading', 'TrueHeading', 'true_heading'));
+      const seen = featureValue(props, 'seen', 'time', 'last_seen', 'timestamp') || nowIso;
+
+      const next = {
+        ...old,
+        mmsi,
+        name: String(featureValue(props, 'name', 'Name', 'ShipName', 'ship_name') || old.name || '').trim() || null,
+        destination: String(featureValue(props, 'destination', 'Destination') || old.destination || '').trim() || null,
+        ship_type: featureValue(props, 'ship_type', 'ShipType', 'type') ?? old.ship_type ?? null,
+        lat,
+        lon,
+        sog: sog ?? old.sog ?? null,
+        cog: cog ?? old.cog ?? null,
+        heading: heading ?? old.heading ?? null,
+        zone: zoneFor(lat, lon),
+        source: featureValue(props, 'source') || 'Open Waters snapshot',
+        last_seen: seen
+      };
+
+      next.direction = courseDirection(next.cog, next.sog);
+      next.corridor_candidate = corridorCandidate(next);
+      vessels.set(mmsi, next);
+    }
+
+    lastSnapshotAt = nowIso;
+    lastMessageAt = nowIso;
+    if (features.length || wsState !== 'live') wsState = 'live';
+    console.log('[OPENWATERS] Snapshot loaded: ' + features.length + ' vessels');
+  } catch (err) {
+    console.error('[OPENWATERS] Snapshot error:', err.message);
+  }
+}
+
+
+/* ============================================================
    RECONNECT
 ============================================================ */
 
@@ -1215,6 +1294,9 @@ app.get(
       last_position_at:
         lastPositionAt,
 
+      last_snapshot_at:
+        lastSnapshotAt,
+
       bounds:
         BOUNDS,
 
@@ -1254,6 +1336,7 @@ app.listen(
       `[OPENWATERS] Bounds: ${BOUNDS.south},${BOUNDS.west},${BOUNDS.north},${BOUNDS.east}`
     );
 
+    refreshOpenWatersSnapshot();
     connectOpenWaters();
   }
 );
@@ -1266,4 +1349,9 @@ app.listen(
 setInterval(
   cleanup,
   5 * 60 * 1000
+).unref();
+
+setInterval(
+  refreshOpenWatersSnapshot,
+  60 * 1000
 ).unref();
