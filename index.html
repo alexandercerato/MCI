@@ -209,43 +209,22 @@
     <section class="panel live-panel" id="caspian-live">
       <div class="section-head">
         <div>
-          <div class="section-kicker">Aktau AIS</div>
-          <h2>Port of Aktau · live vessel map</h2>
-          <p>A dedicated VesselFinder view centred exclusively on the Port of Aktau and its immediate approaches.</p>
+          <div class="section-kicker">Aktau operations</div>
+          <h2>Port of Aktau · vessel statistics</h2>
+          <p>Operational picture based on the Port of Aktau official vessel disposition. Vessel names are displayed in Latin characters for consistency across the MCFI interface.</p>
         </div>
-        <div class="aktau-map-badge"><span>VESSELFINDER</span><small>public terrestrial AIS</small></div>
+        <div class="aktau-map-badge"><span>OFFICIAL PORT DATA</span><small id="aktauOfficialUpdated">refresh every 5 min</small></div>
       </div>
 
-      <div class="radar-card vessel-map-card aktau-vf-card">
-        <div class="radar-head"><span>Port of Aktau</span><small>43.65° N · 51.17° E</small></div>
-        <div class="vf-map-wrap aktau-vf-map" aria-label="VesselFinder AIS map focused on the Port of Aktau">
-          <script type="text/javascript">
-            var width="100%";
-            var height="500";
-            var latitude="43.65";
-            var longitude="51.17";
-            var zoom="10";
-            var names=true;
-            var fleet_hide_old_positions=false;
-            var click_to_activate=false;
-            var default_maptype=2;
-          </script>
-          <script type="text/javascript" src="https://www.vesselfinder.com/aismap.js"></script>
-          <div class="aktau-berth-overlay" id="aktauBerthOverlay" aria-label="Official Aktau berthed vessels overlay">
-            <div class="aktau-berth-overlay-legend"><i></i>Official berthed · schematic berth placement</div>
-          </div>
-        </div>
-        <div class="vf-map-note">Focused on Aktau + immediate approaches · click a vessel for VesselFinder details · AIS visibility depends on public terrestrial coverage</div>
-      </div>
-
-      <div class="aktau-traffic-strip">
-        <div class="inline-kpi"><span>Official · berthed</span><strong id="aktauOfficialBerthed">—</strong><small>Port of Aktau disposition</small></div>
-        <div class="inline-kpi"><span>Official · roadstead</span><strong id="aktauOfficialRoadstead">—</strong><small>Port of Aktau disposition</small></div>
+      <div class="aktau-stats-grid">
+        <div class="inline-kpi"><span>Berthed vessels</span><strong id="aktauOfficialBerthed">—</strong><small>alongside</small></div>
+        <div class="inline-kpi"><span>Roadstead vessels</span><strong id="aktauOfficialRoadstead">—</strong><small>waiting / anchored</small></div>
+        <div class="inline-kpi"><span>Total operational</span><strong id="aktauOfficialTotal">—</strong><small>berthed + roadstead</small></div>
         <div class="inline-kpi"><span>Disposition date</span><strong id="aktauOfficialDate">—</strong><small>official source</small></div>
       </div>
 
-      <div class="aktau-vessel-board">
-        <div class="radar-head"><span>Aktau reported vessels</span><small>official port disposition · independent from VesselFinder AIS</small></div>
+      <div class="aktau-vessel-board aktau-vessel-board-main">
+        <div class="radar-head"><span>Aktau reported vessels</span><small>official Port of Aktau disposition</small></div>
         <div class="aktau-vessel-grid" id="aktauOfficialVessels">
           <div class="vessel-empty">Loading Aktau vessel disposition…</div>
         </div>
