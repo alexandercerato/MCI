@@ -152,14 +152,14 @@ function renderMcfiChart(){
   if(!window.mcfiChart || !DATA?.mcfi_monthly?.length) return;
   const svg=mcfiChart; while(svg.firstChild) svg.removeChild(svg.firstChild);
   const W=1200,H=430,pad={l:86,r:30,t:34,b:54}; const plotW=W-pad.l-pad.r,plotH=H-pad.t-pad.b;
-  const today=new Date(),start=new Date(2024,0,1),end=new Date(today.getFullYear(),today.getMonth(),1),totalMonths=Math.max(1,monthDiff(start,end));
+  const today=new Date(),start=new Date(2024,10,1),end=new Date(today.getFullYear(),today.getMonth(),1),totalMonths=Math.max(1,monthDiff(start,end));
   const rows=DATA.mcfi_monthly.filter(x=>x.period&&Number.isFinite(Number(x.mcfi_usd))).map(x=>({...x,value:Number(x.mcfi_usd),date:monthKeyToDate(x.period)})).filter(x=>x.date>=start&&x.date<=end).sort((a,b)=>a.date-b.date);
   if(!rows.length) return;
   const values=rows.map(x=>x.value),rawMin=Math.min(...values),rawMax=Math.max(...values); const step=500;
   const yMin=Math.floor((rawMin-250)/step)*step, yMax=Math.ceil((rawMax+250)/step)*step;
   const xOf=d=>pad.l+(monthDiff(start,d)/totalMonths)*plotW; const yOf=v=>pad.t+((yMax-v)/(yMax-yMin||1))*plotH;
   for(let v=yMin;v<=yMax;v+=step){ const y=yOf(v); svg.appendChild(svgEl('line',{x1:pad.l,y1:y,x2:W-pad.r,y2:y,class:'chart-grid'})); svg.appendChild(svgEl('text',{x:pad.l-12,y:y+4,'text-anchor':'end',class:'chart-axis-text'},`$${(v/1000).toFixed(v%1000?1:0)}k`)); }
-  for(let y=2024;y<=end.getFullYear();y++){ const yd=new Date(y,0,1); if(yd>end) break; const x=xOf(yd); svg.appendChild(svgEl('line',{x1:x,y1:pad.t,x2:x,y2:H-pad.b,class:'chart-year-line'})); svg.appendChild(svgEl('text',{x:x+6,y:H-17,class:'chart-year-text'},String(y))); [3,6,9].forEach(m=>{const d=new Date(y,m,1); if(d<=end) svg.appendChild(svgEl('text',{x:xOf(d),y:H-38,'text-anchor':'middle',class:'chart-axis-text'},d.toLocaleDateString('en-GB',{month:'short'})));}); }
+  for(let y=start.getFullYear();y<=end.getFullYear();y++){ const yd=y===start.getFullYear()?start:new Date(y,0,1); if(yd>end) break; const x=xOf(yd); svg.appendChild(svgEl('line',{x1:x,y1:pad.t,x2:x,y2:H-pad.b,class:'chart-year-line'})); svg.appendChild(svgEl('text',{x:x+6,y:H-17,class:'chart-year-text'},String(y))); [0,3,6,9].forEach(m=>{const d=new Date(y,m,1); if(d>=start&&d<=end) svg.appendChild(svgEl('text',{x:xOf(d),y:H-38,'text-anchor':'middle',class:'chart-axis-text'},d.toLocaleDateString('en-GB',{month:'short'})));}); }
   for(let i=1;i<rows.length;i++){ const a=rows[i-1],b=rows[i],cls=monthDiff(a.date,b.date)===1?'chart-path':'chart-gap'; svg.appendChild(svgEl('line',{x1:xOf(a.date),y1:yOf(a.value),x2:xOf(b.date),y2:yOf(b.value),class:cls})); }
   const currentX=xOf(end); svg.appendChild(svgEl('line',{x1:currentX,y1:pad.t,x2:currentX,y2:H-pad.b,class:'chart-current-line'})); svg.appendChild(svgEl('text',{x:Math.min(W-pad.r-2,currentX-5),y:pad.t+11,'text-anchor':'end',class:'chart-current-label'},'CURRENT MONTH'));
   rows.forEach((r,i)=>{ const c=svgEl('circle',{cx:xOf(r.date),cy:yOf(r.value),r:i===rows.length-1?5.5:4.3,class:`chart-point${i===rows.length-1?' latest':''}`}); c.addEventListener('mouseenter',ev=>showChartTooltip(ev,r)); c.addEventListener('mousemove',moveChartTooltip); c.addEventListener('mouseleave',hideChartTooltip); svg.appendChild(c); });
