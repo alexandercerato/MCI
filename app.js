@@ -423,6 +423,10 @@ function renderAIS(data){
 
   const existing=[...aisRadar.querySelectorAll('.vessel-dot')]; existing.forEach(x=>x.remove());
   const vessels=(data?.vessels||[]).filter(v=>Number.isFinite(v.lat)&&Number.isFinite(v.lon));
+  if(!vessels.length && connected){
+    setAisStatus('stale','VESSELFINDER MAP',data?.updated_at?`Open feeds checked ${formatAge(data.updated_at)}`:'External AIS map available');
+    if(window.aisWindow) aisWindow.textContent='Open feeds empty · external map active';
+  }
   aisEmpty.style.display=vessels.length?'none':'flex';
   aisEmpty.textContent=connected?'No AIS positions are available from the connected providers for this Caspian sector.':'AIS backend unavailable.';
 
@@ -438,7 +442,7 @@ function renderAIS(data){
   vesselList.innerHTML=vessels.length?vessels.slice(0,18).map(v=>`<div class="vessel-row${v.stale?' stale':''}">
     <div><div class="vessel-name">${escapeHTML(v.name||`MMSI ${v.mmsi}`)}</div><div class="vessel-meta"><span>${escapeHTML(v.direction||'AIS')}</span>${v.zone?`<span>${escapeHTML(v.zone)}</span>`:''}${v.destination?`<span>${escapeHTML(v.destination)}</span>`:''}${v.stale?`<span>${mode==='archive'?'ARCHIVE':'LAST KNOWN'}</span>`:''}</div></div>
     <div class="vessel-speed">${Number(v.sog||0).toFixed(1)} kn<span class="vessel-time">${formatAge(v.last_seen)}</span></div>
-  </div>`).join(''):'<div class="vessel-empty">No AIS positions available from the connected providers.</div>';
+  </div>`).join(''):'<div class="vessel-empty">Open AIS feeds currently have no Caspian positions. Use the VesselFinder map on the left for vessel traffic.</div>';
 
   const c=data?.crossings||{};
   aisCrossings.textContent=`Crossings recorded: ${c.count ?? '—'}`;
