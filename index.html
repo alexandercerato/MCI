@@ -142,6 +142,46 @@
       <div class="kpi-grid" id="aktauKpis"></div>
     </section>
 
+    <section class="panel live-panel" id="caspian-live">
+      <div class="section-head">
+        <div>
+          <div class="section-kicker">Aktau operations</div>
+          <h2>Port of Aktau · vessel statistics</h2>
+          <p>Operational picture based on the Port of Aktau official vessel disposition. Vessel names are displayed in Latin characters for consistency across the MCFI interface.</p>
+        </div>
+        <div class="aktau-map-badge"><span>OFFICIAL PORT DATA</span><small id="aktauOfficialUpdated">refresh every 5 min</small></div>
+      </div>
+
+      <div class="aktau-occupancy-card">
+        <div class="aktau-occupancy-copy">
+          <span>Live berth occupancy</span>
+          <strong id="aktauOccupancyPct">—%</strong>
+          <small id="aktauOccupancyMeta">Calculating occupied berths…</small>
+        </div>
+        <div class="aktau-occupancy-visual">
+          <div class="aktau-occupancy-track" aria-label="Aktau berth occupancy">
+            <div class="aktau-occupancy-fill" id="aktauOccupancyFill"></div>
+          </div>
+          <div class="aktau-occupancy-scale"><span>0%</span><span>11 official berths</span><span>100%</span></div>
+          <p>Main Port only · excludes AMST and roadstead vessels. Occupancy = unique occupied berths ÷ 11 official berths.</p>
+        </div>
+      </div>
+
+      <div class="aktau-stats-grid">
+        <div class="inline-kpi"><span>Berthed vessels</span><strong id="aktauOfficialBerthed">—</strong><small>alongside</small></div>
+        <div class="inline-kpi"><span>Roadstead vessels</span><strong id="aktauOfficialRoadstead">—</strong><small>waiting / anchored</small></div>
+        <div class="inline-kpi"><span>Total operational</span><strong id="aktauOfficialTotal">—</strong><small>berthed + roadstead</small></div>
+        <div class="inline-kpi"><span>Disposition date</span><strong id="aktauOfficialDate">—</strong><small>official source</small></div>
+      </div>
+
+      <div class="aktau-vessel-board aktau-vessel-board-main">
+        <div class="radar-head"><span>Aktau reported vessels</span><small>official Port of Aktau disposition</small></div>
+        <div class="aktau-vessel-grid" id="aktauOfficialVessels">
+          <div class="vessel-empty">Loading Aktau vessel disposition…</div>
+        </div>
+      </div>
+    </section>
+
     <section class="panel news-panel" id="news">
       <div class="section-head">
         <div>
@@ -206,45 +246,7 @@
       <div class="structural-grid structural-grid-3" id="livePricingCards"></div>
     </section>
 
-    <section class="panel live-panel" id="caspian-live">
-      <div class="section-head">
-        <div>
-          <div class="section-kicker">Aktau operations</div>
-          <h2>Port of Aktau · vessel statistics</h2>
-          <p>Operational picture based on the Port of Aktau official vessel disposition. Vessel names are displayed in Latin characters for consistency across the MCFI interface.</p>
-        </div>
-        <div class="aktau-map-badge"><span>OFFICIAL PORT DATA</span><small id="aktauOfficialUpdated">refresh every 5 min</small></div>
-      </div>
-
-      <div class="aktau-occupancy-card">
-        <div class="aktau-occupancy-copy">
-          <span>Live berth occupancy</span>
-          <strong id="aktauOccupancyPct">—%</strong>
-          <small id="aktauOccupancyMeta">Calculating occupied berths…</small>
-        </div>
-        <div class="aktau-occupancy-visual">
-          <div class="aktau-occupancy-track" aria-label="Aktau berth occupancy">
-            <div class="aktau-occupancy-fill" id="aktauOccupancyFill"></div>
-          </div>
-          <div class="aktau-occupancy-scale"><span>0%</span><span>11 official berths</span><span>100%</span></div>
-          <p>Main Port only · excludes AMST and roadstead vessels. Occupancy = unique occupied berths ÷ 11 official berths.</p>
-        </div>
-      </div>
-
-      <div class="aktau-stats-grid">
-        <div class="inline-kpi"><span>Berthed vessels</span><strong id="aktauOfficialBerthed">—</strong><small>alongside</small></div>
-        <div class="inline-kpi"><span>Roadstead vessels</span><strong id="aktauOfficialRoadstead">—</strong><small>waiting / anchored</small></div>
-        <div class="inline-kpi"><span>Total operational</span><strong id="aktauOfficialTotal">—</strong><small>berthed + roadstead</small></div>
-        <div class="inline-kpi"><span>Disposition date</span><strong id="aktauOfficialDate">—</strong><small>official source</small></div>
-      </div>
-
-      <div class="aktau-vessel-board aktau-vessel-board-main">
-        <div class="radar-head"><span>Aktau reported vessels</span><small>official Port of Aktau disposition</small></div>
-        <div class="aktau-vessel-grid" id="aktauOfficialVessels">
-          <div class="vessel-empty">Loading Aktau vessel disposition…</div>
-        </div>
-      </div>
-    </section>
+    
 
     <section class="panel pricing-panel" id="pricing">
       <div class="section-head">
