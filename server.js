@@ -876,9 +876,11 @@ function connectAisStream() {
 
 const FACHA_REFRESH_MS = 5 * 60 * 1000;
 const FACHA_AREAS = [
-  { name:'Aktau', lat:43.64, lon:51.17, radiusKm:120 },
-  { name:'Baku-Alat', lat:40.15, lon:49.65, radiusKm:120 },
-  { name:'Central Caspian', lat:41.85, lon:50.55, radiusKm:220 }
+  { name:'Aktau', lat:43.64, lon:51.17, radiusKm:50 },
+  { name:'East Caspian', lat:42.85, lon:51.00, radiusKm:50 },
+  { name:'Central Caspian', lat:41.95, lon:50.55, radiusKm:50 },
+  { name:'West Caspian', lat:41.05, lon:50.10, radiusKm:50 },
+  { name:'Baku-Alat', lat:40.15, lon:49.65, radiusKm:50 }
 ];
 
 async function refreshFachaSnapshot() {
