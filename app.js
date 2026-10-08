@@ -23,7 +23,7 @@ function render(){
     const currentIndex=Number(h.latest_mcfi_core.value_usd/ref*100);
     mcfiValue.textContent=currentIndex.toFixed(1);
     if(window.mcfiUnit) mcfiUnit.textContent='Index points · fundamental cost = 100';
-    mcfiMeta.textContent=`${fmtMonth(h.latest_mcfi_core.period)} · Market ${fmtUSD(h.latest_mcfi_core.value_usd)} · Fundamental ${fmtUSD(ref)} · ${(currentIndex-100)>=0?'+':''}${(currentIndex-100).toFixed(1)}% premium`;
+    mcfiMeta.textContent=`${fmtMonth(h.latest_mcfi_core.period)} · 50/50 Baku–Türkiye basket ${fmtUSD(h.latest_mcfi_core.value_usd)} · Baku cost reference ${fmtUSD(ref)} · ${(currentIndex-100)>=0?'+':''}${(currentIndex-100).toFixed(1)}% premium`;
   }
 
   bakuValue.textContent=fmtUSD(h.latest_baku_market.value_usd);
@@ -233,12 +233,13 @@ async function loadPricing(){
     }
     const q=(PRICING_LIVE?.market?.provider_quotes||[]).find(x=>/Baku|Absheron/i.test(x.route||''));
     if(q?.value_usd){ providerValue.textContent=fmtUSD(q.value_usd); providerMeta.textContent=`${fmtMonth(q.period)} · ${q.container||'40HQ'} · provider quote`; }
-    if(a?.midpoint_usd && DATA?.model?.theoretical_reference_usd){
+    if(a?.midpoint_usd && t?.midpoint_usd && a.period===t.period && DATA?.model?.theoretical_reference_usd && a.period>=DATA.headline.latest_mcfi_core.period){
       const ref=Number(DATA.model.theoretical_reference_usd);
-      const liveIndex=Number(a.midpoint_usd)/ref*100;
+      const basket=Math.round((Number(a.midpoint_usd)+Number(t.midpoint_usd))/2);
+      const liveIndex=basket/ref*100;
       if(Number.isFinite(liveIndex)){
         mcfiValue.textContent=liveIndex.toFixed(1);
-        mcfiMeta.textContent=`${fmtMonth(a.period)} · Market ${fmtUSD(a.midpoint_usd)} · Fundamental ${fmtUSD(ref)} · ${liveIndex>=100?'+':''}${(liveIndex-100).toFixed(1)}% premium`;
+        mcfiMeta.textContent=`${fmtMonth(a.period)} · 50/50 Baku–Türkiye basket ${fmtUSD(basket)} · Baku cost reference ${fmtUSD(ref)} · ${liveIndex>=100?'+':''}${(liveIndex-100).toFixed(1)}% premium`;
       }
     }
   }catch(err){

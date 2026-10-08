@@ -8,6 +8,7 @@ create empty commits every five minutes.
 """
 from pathlib import Path
 import copy
+import csv
 import json
 import re
 import sys
@@ -151,11 +152,6 @@ def refresh_market(data):
         "source_name": "Argus, reported by Anews",
         "source_url": source_url,
     })
-    data["headline"]["latest_mcfi_core"].update({
-        "period": period,
-        "value_usd": b_mid,
-        "value_index": round(b_mid / float(data["model"]["theoretical_reference_usd"]) * 100, 1),
-    })
     data["structural_benchmarks"]["market_defaults"]["latest_comparable_assessment"] = {
         "route": "Xi’an (China) → Baku/Alat (Azerbaijan)",
         "period": period,
@@ -184,6 +180,14 @@ def refresh_market(data):
     fundamental = float(data["model"]["theoretical_reference_usd"])
     if t_mid is not None:
         basket = round((b_mid + t_mid) / 2)
+        data["headline"]["latest_mcfi_core"].update({
+            "period": period,
+            "value_usd": basket,
+            "value_index": round(basket / fundamental * 100, 1),
+            "premium_vs_model_pct": round((basket / fundamental - 1) * 100, 1),
+            "theoretical_reference_usd": fundamental,
+            "coverage": "50/50 Xi'an–Baku and Xi'an–Türkiye 40HC market basket",
+        })
         upsert_month(data, {
             "period": period,
             "mcfi_usd": basket,
@@ -246,6 +250,14 @@ def refresh_provider(data):
     })
 
 
+def write_history_csv(data):
+    fields = ["period", "mcfi_index", "premium_vs_model_pct", "mcfi_usd", "fundamental_cost_usd", "baku_midpoint_usd", "turkey_midpoint_usd", "type", "observed_routes", "confidence", "basis", "source_url"]
+    with (ROOT / "mcfi_history.csv").open("w", encoding="utf-8-sig", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore", lineterminator="\n")
+        writer.writeheader()
+        writer.writerows(data["mcfi_monthly"])
+
+
 def main():
     data = json.loads(DATA.read_text(encoding="utf-8"))
     original = copy.deepcopy(data)
@@ -266,6 +278,8 @@ def main():
         print("Updated data.json from current public sources.")
     else:
         print("No market-data changes detected.")
+
+    write_history_csv(data)
 
     for err in errors:
         print(err, file=sys.stderr)
