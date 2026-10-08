@@ -526,6 +526,7 @@ async function loadAktauOfficialActivity(){
     const res=await fetch(`${base}/api/port-activity?t=${Date.now()}`,{cache:'no-store'});
     if(!res.ok) throw new Error(`Aktau activity HTTP ${res.status}`);
     const data=await res.json();
+    renderPortTicker(data);
     const aktau=data?.aktau||{};
     const s=aktau.summary||{};
     const allBerthed=Array.isArray(aktau.berthed)?aktau.berthed:[];
@@ -576,6 +577,7 @@ async function loadAktauOfficialActivity(){
       <small>${escapeHTML(v.detail||'')}</small>
     </div>`).join(''):'<div class="vessel-empty">No vessels currently listed in the official Aktau disposition.</div>';
   }catch(err){
+    renderPortTicker(null);
     occupancyPctEl.textContent='—%';
     occupancyMetaEl.textContent='occupancy data unavailable';
     occupancyFillEl.style.width='0%';
@@ -636,4 +638,29 @@ function renderPriceTicker(live){
     const price=q.low_usd&&q.high_usd?`${fmtUSD(q.low_usd)}–${fmtUSD(q.high_usd)}`:q.display_range||fmtUSD(q.value_usd||q.midpoint_usd);
     return `<a class="ticker-item" href="${safeTickerURL(q.source_url)}" target="_blank" rel="noopener"><small>${escapeHTML(fmtMonth(q.period))}</small><strong>${escapeHTML(q.route)} · ${escapeHTML(price)}</strong> <small> / ${escapeHTML(q.container||q.container_basis||'40HC')} · ${escapeHTML(q.source_name||'Market assessment')}</small></a>`;
   }), 'No dated price assessments in the last 45 days.');
+}
+
+
+function renderPortTicker(data){
+  const updated=new Date(data?.updated_at).getTime();
+  const fresh=Number.isFinite(updated)&&Date.now()-updated<=15*60000;
+  const errors=data?.errors||[];
+  const count=value=>value!==null&&value!==undefined&&Number.isFinite(Number(value))?String(Number(value)):'—';
+  const available=key=>fresh&&data?.[key]&&!errors.some(e=>String(e).toLowerCase().startsWith(key+':'));
+  const a=data?.aktau?.summary||{};
+  const k=data?.kuryk?.summary||{};
+  const b=data?.baku?.summary||{};
+  const occupancy=s=>s.berth_occupancy_pct!==null&&s.berth_occupancy_pct!==undefined&&Number.isFinite(Number(s.berth_occupancy_pct))?`${Number(s.berth_occupancy_pct).toFixed(1)}% berth occupancy`:'Berth occupancy unavailable';
+  const stamp=Number.isFinite(updated)?new Date(updated).toLocaleTimeString('en-GB',{timeZone:'Europe/Rome',hour:'2-digit',minute:'2-digit',hour12:false}):null;
+  const date=key=>data?.[key]?.traffic_date?` · disposition ${escapeHTML(data[key].traffic_date)}`:'';
+  const checked=stamp?` · checked ${escapeHTML(stamp)} Rome`:'';
+  const item=(label,value,url)=>`<a class="ticker-item" href="${safeTickerURL(url)}" target="_blank" rel="noopener"><strong>${escapeHTML(label)} · ${value}</strong></a>`;
+  const aktau=available('aktau')?`${occupancy(a)} · ${count(a.occupied_main_berths)}/${count(a.berth_capacity)} main-port berths · ${count(a.roadstead_vessels)} in roadstead${date('aktau')}${checked}`:'Official activity temporarily unavailable';
+  const kuryk=available('kuryk')?`${count(k.berthed_vessels)} berthed · ${count(k.approaching_vessels)} approaching${date('kuryk')}${checked}`:'Official activity temporarily unavailable';
+  const baku=available('baku')?`${occupancy(b)}${date('baku')}${checked}`:'Live berth occupancy unavailable';
+  setTicker('portTicker',[
+    item('Aktau (Kazakhstan)',aktau,data?.aktau?.source_url||'https://www.portaktau.kz/'),
+    item('Kuryk (Kazakhstan)',kuryk,data?.kuryk?.source_url||'https://portkuryk.kz/en/dispoziciya-sudov'),
+    item('Baku / Alat (Azerbaijan)',baku,data?.baku?.source_url||'https://portofbaku.com/en')
+  ],'Official port activity temporarily unavailable');
 }

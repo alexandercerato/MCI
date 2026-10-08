@@ -865,3 +865,6 @@ footer{border-top:1px solid var(--line);padding:22px 0 30px;color:var(--muted2);
 @keyframes ticker-slide{to{transform:translateX(-50%)}}
 @media(max-width:640px){.market-tickers .wrap{padding:0 14px}.compact-ticker{gap:8px;font-size:10px}.ticker-label{flex-basis:74px}}
 @media(prefers-reduced-motion:reduce){.ticker-track.is-scrolling{animation:none}.ticker-viewport{overflow-x:auto}.ticker-group[aria-hidden]{display:none}}
+
+.port-ticker .ticker-label{color:var(--green)}
+.port-ticker .ticker-item strong{font-variant-numeric:tabular-nums}
