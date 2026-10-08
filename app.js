@@ -594,6 +594,18 @@ loadAktauOfficialActivity();
 setInterval(loadAktauOfficialActivity,5*60*1000);
 
 
+document.querySelectorAll('.ticker-toggle').forEach(button=>{
+  button.addEventListener('click',()=>{
+    const track=document.getElementById(button.dataset.ticker);
+    if(!track) return;
+    const paused=track.classList.toggle('is-paused');
+    button.setAttribute('aria-pressed',String(paused));
+    const label=button.dataset.ticker==='newsTicker'?'news':button.dataset.ticker==='portTicker'?'port activity':'prices';
+    button.setAttribute('aria-label',`${paused?'Play':'Pause'} ${label} ticker`);
+    button.textContent=paused?'▶':'❚❚';
+  });
+});
+
 function setTicker(id, items, emptyText){
   const el=document.getElementById(id);
   if(!el) return;

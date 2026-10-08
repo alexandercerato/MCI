@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#080c11" />
   <title>Middle Corridor Freight Monitor</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
-  <link rel="stylesheet" href="styles.css?v=20261008-ports" />
+  <link rel="stylesheet" href="styles.css?v=20261008-autoplay" />
 </head>
 <body>
   <nav class="topbar">
@@ -29,9 +29,9 @@
 
   <aside class="market-tickers" aria-label="Latest corridor updates">
     <div class="wrap">
-      <div class="compact-ticker"><span class="ticker-label">NEWS <small>ROME TIME</small></span><div class="ticker-viewport" tabindex="0"><div class="ticker-track" id="newsTicker">Loading latest news…</div></div></div>
-      <div class="compact-ticker port-ticker"><span class="ticker-label">PORTS <small>CASPIAN ACTIVITY</small></span><div class="ticker-viewport" tabindex="0"><div class="ticker-track" id="portTicker">Loading official port activity…</div></div></div>
-      <div class="compact-ticker price-ticker"><span class="ticker-label">PRICES <small>LAST 45 DAYS</small></span><div class="ticker-viewport" tabindex="0"><div class="ticker-track" id="priceTicker">Loading recent assessments…</div></div></div>
+      <div class="compact-ticker"><span class="ticker-label">NEWS <small>ROME TIME</small></span><div class="ticker-viewport"><div class="ticker-track" id="newsTicker">Loading latest news…</div></div><button class="ticker-toggle" type="button" data-ticker="newsTicker" aria-label="Pause news ticker" aria-pressed="false">❚❚</button></div>
+      <div class="compact-ticker port-ticker"><span class="ticker-label">PORTS <small>CASPIAN ACTIVITY</small></span><div class="ticker-viewport"><div class="ticker-track" id="portTicker">Loading official port activity…</div></div><button class="ticker-toggle" type="button" data-ticker="portTicker" aria-label="Pause port activity ticker" aria-pressed="false">❚❚</button></div>
+      <div class="compact-ticker price-ticker"><span class="ticker-label">PRICES <small>LAST 45 DAYS</small></span><div class="ticker-viewport"><div class="ticker-track" id="priceTicker">Loading recent assessments…</div></div><button class="ticker-toggle" type="button" data-ticker="priceTicker" aria-label="Pause prices ticker" aria-pressed="false">❚❚</button></div>
     </div>
   </aside>
 
@@ -307,6 +307,6 @@
   </footer>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="runtime-config.js"></script>
-  <script src="app.js?v=20261008-ports"></script>
+  <script src="app.js?v=20261008-autoplay"></script>
 </body>
 </html>
