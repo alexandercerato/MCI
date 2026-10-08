@@ -1340,6 +1340,10 @@ function publicSnapshot() {
   const day = all.filter(v => new Date(v.last_seen).getTime() >= fallbackCutoff);
   const displayMode = recent.length ? 'live' : (day.length ? 'last_known' : (all.length ? 'archive' : 'empty'));
   const displayRows = recent.length ? recent : (day.length ? day : all);
+  // A working provider connection is not evidence of current AIS coverage.
+  const connectionStatus = (wsState === 'live' || aisStreamState === 'live' || fachaState === 'live') ? 'live' :
+    ((wsState === 'connecting' || wsState === 'subscribing' || aisStreamState === 'connecting') ? 'connecting' : 'offline');
+  const dataStatus = recent.length ? 'live' : (connectionStatus === 'live' ? 'degraded' : connectionStatus);
   const display = displayRows
     .map(v => {
       const ageSeconds = Math.max(0, Math.floor((now - new Date(v.last_seen).getTime()) / 1000));
@@ -1375,8 +1379,10 @@ function publicSnapshot() {
   const crossings7d = crossings.filter(c => new Date(c.arrived_at).getTime() >= cutoff7);
 
   return {
-    status: (wsState === 'live' || aisStreamState === 'live') ? 'live' :
-      ((wsState === 'connecting' || wsState === 'subscribing' || aisStreamState === 'connecting') ? 'connecting' : 'offline'),
+    status: dataStatus,
+    connection_status: connectionStatus,
+    coverage_verified: recent.length > 0,
+    data_warning: recent.length ? null : 'No recent AIS positions available. Zero counts do not establish absence of vessel traffic; consult official port activity.',
     provider: AISSTREAM_API_KEY ? 'Open Waters + AISStream + facha.dev' : 'Open Waters + facha.dev',
     display_mode: displayMode,
     display_window: displayMode === 'live' ? '30m' : (displayMode === 'last_known' ? '24h' : (displayMode === 'archive' ? 'archive' : null)),
@@ -2146,12 +2152,14 @@ app.get(
 app.get(
   '/api/health',
   (_req, res) => {
+    const ais = publicSnapshot();
     res.json({
       ok: true,
 
-      status:
-        (wsState === 'live' || aisStreamState === 'live') ? 'live' :
-          ((wsState === 'connecting' || wsState === 'subscribing' || aisStreamState === 'connecting') ? 'connecting' : 'offline'),
+      status: ais.status,
+      connection_status: ais.connection_status,
+      coverage_verified: ais.coverage_verified,
+      data_warning: ais.data_warning,
 
       provider:
         AISSTREAM_API_KEY ? 'Open Waters + AISStream + facha.dev' : 'Open Waters + facha.dev',
