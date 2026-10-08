@@ -958,3 +958,16 @@ footer{margin-top:auto}
   .ticker-toggle{height:30px;width:30px;flex-basis:30px}
   .compact-ticker{min-height:38px}
 }
+@media(max-width:700px){
+  .route-map-toolbar{position:relative;top:auto;left:auto;right:auto;padding:8px;max-width:none;background:#091018}
+  .route-map-note{position:static;margin:8px;max-width:none}
+}
+@media(max-width:620px){
+  .pricing-panel td:nth-child(1)::before{content:'Month'}
+  .pricing-panel td:nth-child(2)::before{content:'MCFI'}
+  .pricing-panel td:nth-child(3)::before{content:'Market basket'}
+  .pricing-panel td:nth-child(4)::before{content:'Fundamental cost'}
+  .pricing-panel td:nth-child(5)::before{content:"Xi’an → Baku"}
+  .pricing-panel td:nth-child(6)::before{content:"Xi’an → Türkiye"}
+  .pricing-panel td:nth-child(7)::before{content:'Source'}
+}
