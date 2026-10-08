@@ -856,3 +856,12 @@ footer{border-top:1px solid var(--line);padding:22px 0 30px;color:var(--muted2);
   .aktau-occupancy-card{grid-template-columns:1fr;gap:14px}
   .aktau-occupancy-copy strong{font-size:38px}
 }
+
+/* Compact market headlines; hover or focus pauses the tape. */
+.market-tickers{background:#0b1118;border-bottom:1px solid var(--line)}
+.compact-ticker{display:flex;align-items:center;gap:14px;min-height:34px;font-size:11px;border-bottom:1px solid rgba(255,255,255,.04)}
+.compact-ticker:last-child{border-bottom:0}.ticker-label{flex:0 0 92px;color:var(--cyan);font-size:9px;font-weight:800;letter-spacing:.1em}.ticker-label small{display:block;font-size:8px;color:var(--muted2);letter-spacing:.04em}.price-ticker .ticker-label{color:var(--gold)}
+.ticker-viewport{overflow:hidden;min-width:0;flex:1}.ticker-track{display:flex;align-items:center;width:max-content;gap:0;color:var(--muted);padding:7px 0}.ticker-group{display:flex;align-items:center;gap:30px;padding-right:30px}.ticker-item{white-space:nowrap}.ticker-item time,.ticker-item small{color:var(--muted2);margin-right:8px}.ticker-item strong{color:var(--text);font-weight:600}.ticker-track.is-scrolling{animation:ticker-slide var(--ticker-duration,90s) linear infinite}.ticker-viewport:hover .ticker-track,.ticker-viewport:focus-within .ticker-track{animation-play-state:paused}
+@keyframes ticker-slide{to{transform:translateX(-50%)}}
+@media(max-width:640px){.market-tickers .wrap{padding:0 14px}.compact-ticker{gap:8px;font-size:10px}.ticker-label{flex-basis:74px}}
+@media(prefers-reduced-motion:reduce){.ticker-track.is-scrolling{animation:none}.ticker-viewport{overflow-x:auto}.ticker-group[aria-hidden]{display:none}}

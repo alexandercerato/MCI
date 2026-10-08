@@ -55,6 +55,7 @@ function render(){
     <div class="inline-kpi"><span>${x.year}</span><strong>${fmtUSD(x.average_usd)}</strong><small>${x.complete_months} observed months · range ${fmtUSD(x.low_usd)}–${fmtUSD(x.high_usd)}</small></div>`).join('');
 
   renderStructural(PRICING_LIVE);
+  renderPriceTicker(PRICING_LIVE);
   buildYearFilters();
   renderMcfiTable();
   renderMcfiChart();
@@ -224,6 +225,7 @@ async function loadPricing(){
     if(!res.ok) throw new Error(`Pricing HTTP ${res.status}`);
     PRICING_LIVE=await res.json();
     renderStructural(PRICING_LIVE);
+    renderPriceTicker(PRICING_LIVE);
     const a=PRICING_LIVE?.market?.assessment;
     if(a?.midpoint_usd){ bakuValue.textContent=fmtUSD(a.midpoint_usd); bakuMeta.textContent=`${fmtMonth(a.period)} · ${fmtUSD(a.low_usd)}–${fmtUSD(a.high_usd)}`; if(window.mapBakuPrice) mapBakuPrice.textContent=fmtUSD(a.midpoint_usd); }
     const t=PRICING_LIVE?.market?.turkey_assessment;
@@ -433,6 +435,7 @@ let NEWS_DATA=null;
 
 function renderNews(data){
   NEWS_DATA=data;
+  renderNewsTicker(data);
   if(!window.newsGrid) return;
   const items=data?.items||[];
   newsStatus.textContent=data?.status==='live'?'LIVE':'OFFLINE';
@@ -587,3 +590,50 @@ async function loadAktauOfficialActivity(){
 
 loadAktauOfficialActivity();
 setInterval(loadAktauOfficialActivity,5*60*1000);
+
+
+function setTicker(id, items, emptyText){
+  const el=document.getElementById(id);
+  if(!el) return;
+  const markup=items.length?`<div class="ticker-group">${items.join('')}</div><div class="ticker-group" aria-hidden="true">${items.join('')}</div>`:escapeHTML(emptyText);
+  if(el.innerHTML===markup) return;
+  el.innerHTML=markup;
+  el.classList.toggle('is-scrolling',items.length>0);
+  el.style.setProperty('--ticker-duration',`${Math.max(45,items.reduce((n,x)=>n+x.replace(/<[^>]*>/g,'').length,0)/5)}s`);
+}
+
+function safeTickerURL(value){
+  try{const url=new URL(value);return /^https?:$/.test(url.protocol)?escapeHTML(url.href):'#';}catch{return '#';}
+}
+
+function renderNewsTicker(data){
+  const now=Date.now();
+  const items=(data?.items||[]).filter(n=>{
+    const date=new Date(n.published_at).getTime();
+    return Number.isFinite(date)&&date<=now&&now-date<=7*86400000;
+  }).sort((a,b)=>new Date(b.published_at)-new Date(a.published_at)).slice(0,12);
+  setTicker('newsTicker',items.map(n=>{
+    const date=new Date(n.published_at);
+    const stamp=date.toLocaleString('en-GB',{timeZone:'Europe/Rome',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:false});
+    return `<a class="ticker-item" href="${safeTickerURL(n.url)}" target="_blank" rel="noopener"><time datetime="${escapeHTML(date.toISOString())}">${escapeHTML(stamp)}</time><strong>${escapeHTML(n.title)}</strong> <small>· ${escapeHTML(n.source||'News')}</small></a>`;
+  }), 'No news published in the last 7 days.');
+}
+
+function renderPriceTicker(live){
+  if(!DATA) return;
+  const now=Date.now();
+  const h=DATA.headline;
+  const fallback=(quote,route)=>({...quote,route,midpoint_usd:quote.value_usd,container:'40HC',display_range:quote.range});
+  const rows=[live?.market?.assessment||fallback(h.latest_baku_market,"Xi’an → Baku/Alat"),live?.market?.turkey_assessment||fallback(h.latest_turkey_market,"Xi’an → Ambarli/Mersin"),...(live?.market?.provider_quotes||[h.latest_provider_snapshot])];
+  const recent=rows.filter(q=>{
+    // Use the earliest possible date for month-only assessments to avoid promoting old quotes.
+    // display only the actual known month, never invent a publication time.
+    let date;
+    if(/^\d{4}-\d{2}$/.test(q.period||'')){const [y,m]=q.period.split('-').map(Number);date=Date.UTC(y,m-1,1);}else{date=new Date(q.published_at||q.date||q.period).getTime();}
+    return Number.isFinite(date)&&date<=now&&now-date<=45*86400000;
+  });
+  setTicker('priceTicker',recent.map(q=>{
+    const price=q.low_usd&&q.high_usd?`${fmtUSD(q.low_usd)}–${fmtUSD(q.high_usd)}`:q.display_range||fmtUSD(q.value_usd||q.midpoint_usd);
+    return `<a class="ticker-item" href="${safeTickerURL(q.source_url)}" target="_blank" rel="noopener"><small>${escapeHTML(fmtMonth(q.period))}</small><strong>${escapeHTML(q.route)} · ${escapeHTML(price)}</strong> <small> / ${escapeHTML(q.container||q.container_basis||'40HC')} · ${escapeHTML(q.source_name||'Market assessment')}</small></a>`;
+  }), 'No dated price assessments in the last 45 days.');
+}
