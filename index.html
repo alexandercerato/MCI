@@ -6,21 +6,22 @@
   <meta name="theme-color" content="#080c11" />
   <title>Middle Corridor Freight Monitor</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
-  <link rel="stylesheet" href="styles.css?v=20261008-autoplay" />
+  <link rel="stylesheet" href="styles.css?v=20261008-views" />
 </head>
 <body>
-  <nav class="topbar">
+  <nav class="topbar" aria-label="Main navigation">
     <div class="wrap nav-inner">
       <a class="brand" href="#overview">MCFM</a>
-      <div class="nav-links">
+      <button class="nav-toggle" id="navToggle" type="button" aria-controls="sectionNav" aria-expanded="false">Menu <span aria-hidden="true">☰</span></button>
+      <div class="nav-links" id="sectionNav">
         <a href="#overview">Overview</a>
-        <a href="#tracks">What MCFI tracks</a>
-        <a href="#index-chart">Index chart</a>
+        <a href="#tracks">Methodology</a>
+        <a href="#index-chart">Chart</a>
         <a href="#route">Route</a>
-        <a href="#news">Latest news</a>
-        <a href="#structural">Structural benchmarks</a>
-        <a href="#caspian-live">Caspian Live</a>
-        <a href="#pricing">Pricing terminal</a>
+        <a href="#news">News</a>
+        <a href="#structural">Benchmarks</a>
+        <a href="#caspian-live">Port activity</a>
+        <a href="#pricing">Prices</a>
         <a href="#history">History</a>
       </div>
       <span class="live-dot">LIVE</span>
@@ -35,7 +36,7 @@
     </div>
   </aside>
 
-  <header class="hero" id="overview">
+  <header class="hero site-view" id="overview" tabindex="-1">
     <div class="wrap">
       <div class="hero-topline">
         <div>
@@ -71,12 +72,14 @@
           </div>
         </div>
       </div>
+      <div class="overview-shortcuts" aria-label="Explore the monitor"><a href="#index-chart">View index chart <span aria-hidden="true">↗</span></a><a href="#route">Explore route <span aria-hidden="true">↗</span></a><a href="#pricing">Compare prices <span aria-hidden="true">↗</span></a></div>
       <div class="ticker" id="refreshStatus">Loading market data…</div>
     </div>
   </header>
 
-  <main class="wrap">
-    <section class="panel intro-panel" id="tracks">
+  <main class="wrap" id="detailViews" hidden>
+    <div class="view-toolbar"><a href="#overview">← Overview</a><span id="viewLabel"></span></div>
+    <section class="panel intro-panel site-view" id="tracks" tabindex="-1" hidden>
       <div class="section-kicker">Index methodology</div>
       <div class="two-col">
         <div>
@@ -91,7 +94,7 @@
       <div class="spec-row" id="modelSpecs"></div>
     </section>
 
-    <section class="panel index-chart-panel" id="index-chart">
+    <section class="panel index-chart-panel site-view" id="index-chart" tabindex="-1" hidden>
       <div class="section-head chart-head">
         <div>
           <div class="section-kicker">MCFI history</div>
@@ -114,7 +117,7 @@
       </div>
     </section>
 
-    <section class="panel route-panel" id="route">
+    <section class="panel route-panel site-view" id="route" tabindex="-1" hidden>
       <div class="section-head">
         <div>
           <div class="section-kicker">Route geography</div>
@@ -149,7 +152,7 @@
       <div class="kpi-grid" id="aktauKpis"></div>
     </section>
 
-    <section class="panel live-panel" id="caspian-live">
+    <section class="panel live-panel site-view" id="caspian-live" tabindex="-1" hidden>
       <div class="section-head">
         <div>
           <div class="section-kicker">Aktau operations</div>
@@ -188,7 +191,7 @@
       </div>
     </section>
 
-    <section class="panel news-panel" id="news">
+    <section class="panel news-panel site-view" id="news" tabindex="-1" hidden>
       <div class="section-head">
         <div>
           <div class="section-kicker">Live corridor intelligence</div>
@@ -202,7 +205,7 @@
       </div>
     </section>
 
-    <section class="panel structural-panel" id="structural">
+    <section class="panel structural-panel site-view" id="structural" tabindex="-1" hidden>
       <div class="section-head">
         <div>
           <div class="section-kicker">Verified cost model</div>
@@ -254,7 +257,7 @@
 
     
 
-    <section class="panel pricing-panel" id="pricing">
+    <section class="panel pricing-panel site-view" id="pricing" tabindex="-1" hidden>
       <div class="section-head">
         <div>
           <div class="section-kicker">Market monitor</div>
@@ -271,7 +274,7 @@
       </div>
     </section>
 
-    <section class="panel history-panel" id="history">
+    <section class="panel history-panel site-view" id="history" tabindex="-1" hidden>
       <div class="section-head">
         <div>
           <div class="section-kicker">Historical database</div>
@@ -307,6 +310,6 @@
   </footer>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="runtime-config.js"></script>
-  <script src="app.js?v=20261008-autoplay"></script>
+  <script src="app.js?v=20261008-views"></script>
 </body>
 </html>

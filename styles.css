@@ -868,3 +868,93 @@ footer{border-top:1px solid var(--line);padding:22px 0 30px;color:var(--muted2);
 
 .port-ticker .ticker-label{color:var(--green)}
 .port-ticker .ticker-item strong{font-variant-numeric:tabular-nums}
+
+/* Separate, responsive views: wide workspace on desktop, stacked on phones. */
+[hidden]{display:none!important}
+.site-view:focus{outline:none}
+.wrap{max-width:1600px;width:100%;padding-left:32px;padding-right:32px}
+body{min-height:100vh;display:flex;flex-direction:column}
+footer{margin-top:auto}
+.nav-inner{gap:24px}
+.nav-links{gap:clamp(10px,1.8vw,26px);min-width:0}
+.nav-links a{white-space:nowrap;padding:8px 0;border-bottom:2px solid transparent}
+.nav-links a[aria-current="page"]{color:var(--cyan);border-bottom-color:var(--cyan)}
+.nav-toggle{display:none}
+.hero{padding:42px 0 32px}
+.overview-shortcuts{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap}
+.overview-shortcuts a{border:1px solid var(--line);background:var(--panel);padding:11px 15px;font-size:12px;display:flex;gap:25px;justify-content:space-between}
+.overview-shortcuts a:hover{border-color:var(--cyan)}
+.view-toolbar{display:flex;align-items:center;justify-content:space-between;margin:0 0 15px;color:var(--muted);font-size:11px}
+.view-toolbar a{padding:8px 0;color:var(--cyan)}
+.view-toolbar span{text-transform:uppercase;letter-spacing:.1em}
+.panel{min-width:0}
+.hero .wrap>*{min-width:0}
+@media(min-width:1101px){
+  .hero .wrap{display:grid;grid-template-columns:minmax(260px,.75fr) minmax(0,2fr);gap:20px 36px;align-items:center}
+  .hero-topline{display:block}
+  .hero h1{font-size:clamp(48px,4.3vw,72px);margin:14px 0 18px}
+  .lead{font-size:15px;line-height:1.65}
+  .asof{display:block;text-align:left;margin-top:24px;padding-left:12px}
+  .headline-grid{margin-top:0;grid-template-columns:minmax(0,1fr) minmax(0,1.12fr);gap:16px}
+  .index-panel{min-height:280px;padding:26px}
+  .index-value{font-size:clamp(64px,5.5vw,86px);margin:30px 0 14px}
+  .market-cell{grid-template-columns:1fr auto;padding:18px;gap:8px 12px}
+  .market-cell span{font-size:10px;letter-spacing:.04em}
+  .market-cell strong{font-size:clamp(22px,2vw,29px)}
+  .overview-shortcuts{grid-column:2;margin:0}
+  .hero .ticker{grid-column:1/-1;margin:0}
+  .route-leaflet{height:clamp(360px,52vh,580px)}
+  .news-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .aktau-vessel-board-main .aktau-vessel-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .table-wrap.compact{max-height:60vh}
+}
+@media(max-width:1100px){
+  .wrap{padding-left:20px;padding-right:20px}
+  .topbar{height:auto}
+  .nav-inner{height:auto;min-height:58px;flex-wrap:wrap;gap:12px;padding-top:10px;padding-bottom:10px}
+  .nav-toggle{display:flex;align-items:center;gap:10px;margin-left:auto;background:var(--panel);border:1px solid var(--line);color:var(--text);padding:9px 12px;font:inherit;font-size:12px;cursor:pointer}
+  .live-dot{margin-left:0}
+  .nav-links{display:none;order:4;flex:0 0 100%;overflow:visible;padding:8px 0 0;gap:8px}
+  .nav-links.is-open{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+  .nav-links a{padding:12px;border:1px solid var(--line);font-size:12px;white-space:normal;background:var(--panel)}
+  .nav-links a[aria-current="page"]{border-color:var(--cyan)}
+  .hero{padding:26px 0}
+  .hero-topline{align-items:start}
+  .hero h1{font-size:54px}
+  .headline-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .overview-shortcuts{margin-top:18px}
+}
+@media(max-width:700px){
+  .wrap{padding-left:16px;padding-right:16px}
+  main.wrap{padding:16px 16px 28px!important}
+  .nav-links.is-open{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .nav-links a{min-height:44px;display:flex;align-items:center}
+  .hero-topline{display:block}
+  .hero h1{font-size:48px;margin:10px 0 12px}
+  .lead{font-size:14px;line-height:1.6}
+  .asof{display:block;border:0;padding:0;margin-top:14px;text-align:left}
+  .asof span,.asof strong{display:inline;font-size:10px;margin-right:8px}
+  .headline-grid{grid-template-columns:1fr;gap:12px;margin-top:22px}
+  .index-panel{padding:22px;min-height:0}
+  .index-value{font-size:64px;margin:20px 0 10px}
+  .market-cell{padding:16px;grid-template-columns:minmax(0,1fr) auto;gap:8px 12px}
+  .market-cell strong{font-size:24px}
+  .market-cell small{overflow-wrap:anywhere}
+  .overview-shortcuts{display:grid;grid-template-columns:1fr;gap:8px}
+  .overview-shortcuts a{min-height:44px;align-items:center}
+  .ticker{margin-top:16px;line-height:1.6}
+  .section-head,.two-col{display:flex;flex-direction:column;gap:14px}
+  .panel{padding:18px}
+  .panel h2{font-size:22px;line-height:1.3;overflow-wrap:anywhere}
+  .spec-row,.kpi-grid,.year-stats,.structural-grid,.structural-grid-3,.news-grid{grid-template-columns:1fr}
+  .route-leaflet{height:460px}
+  .route-map-toolbar{display:grid;grid-template-columns:1fr 1fr}
+  .route-map-toolbar button{min-height:44px;font-size:10px}
+  .aktau-vessel-board-main .aktau-vessel-grid{grid-template-columns:1fr}
+  .mcfi-chart{min-width:0;min-height:0;width:100%;height:auto}
+  .chart-shell{overflow:hidden}
+  .chart-y-label{position:static;margin:0 0 6px}
+  .chart-head p{font-size:12px}
+  .ticker-toggle{height:30px;width:30px;flex-basis:30px}
+  .compact-ticker{min-height:38px}
+}

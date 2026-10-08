@@ -147,7 +147,9 @@ function svgEl(tag,attrs={},textValue=null){ const el=document.createElementNS('
 function renderMcfiChart(){
   if(!window.mcfiChart || !DATA?.mcfi_monthly?.length) return;
   const svg=mcfiChart; while(svg.firstChild) svg.removeChild(svg.firstChild);
-  const W=1200,H=430,pad={l:70,r:30,t:34,b:54}; const plotW=W-pad.l-pad.r,plotH=H-pad.t-pad.b;
+  const narrow=window.matchMedia('(max-width:700px)').matches;
+  const W=narrow?480:1200,H=narrow?440:430,pad={l:narrow?48:70,r:narrow?18:30,t:34,b:54}; const plotW=W-pad.l-pad.r,plotH=H-pad.t-pad.b;
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
   const today=new Date(),start=new Date(2024,10,1),end=new Date(today.getFullYear(),today.getMonth(),1),totalMonths=Math.max(1,monthDiff(start,end));
   const rows=DATA.mcfi_monthly
     .filter(x=>x.period&&Number.isFinite(Number(x.mcfi_index)))
@@ -172,7 +174,7 @@ function renderMcfiChart(){
     const x=xOf(yd);
     svg.appendChild(svgEl('line',{x1:x,y1:pad.t,x2:x,y2:H-pad.b,class:'chart-year-line'}));
     svg.appendChild(svgEl('text',{x:x+6,y:H-17,class:'chart-year-text'},String(y)));
-    [0,3,6,9].forEach(m=>{
+    (narrow?[0,6]:[0,3,6,9]).forEach(m=>{
       const dd=new Date(y,m,1);
       if(dd>=start&&dd<=end) svg.appendChild(svgEl('text',{x:xOf(dd),y:H-38,'text-anchor':'middle',class:'chart-axis-text'},dd.toLocaleDateString('en-GB',{month:'short'})));
     });
@@ -189,6 +191,7 @@ function renderMcfiChart(){
 
   rows.forEach((r,i)=>{
     const c=svgEl('circle',{cx:xOf(r.date),cy:yOf(r.value),r:i===rows.length-1?5.5:4.3,class:`chart-point${i===rows.length-1?' latest':''}`});
+    c.addEventListener('click',ev=>showChartTooltip(ev,r));
     c.addEventListener('mouseenter',ev=>showChartTooltip(ev,r));
     c.addEventListener('mousemove',moveChartTooltip);
     c.addEventListener('mouseleave',hideChartTooltip);
@@ -257,7 +260,7 @@ setInterval(()=>loadPricing().catch(()=>{}),5*60*1000);
 // --- Interactive Middle Corridor map ---
 
 function initRouteMap(){
-  if(!window.L || !document.getElementById('routeInteractiveMap')) return;
+  if(!window.L || !document.getElementById('routeInteractiveMap') || ROUTE_MAP) return;
 
   const palette={
     china:'#35a7d8',
@@ -281,6 +284,7 @@ function initRouteMap(){
     minZoom:2
   }).setView([43,61],3);
 
+  ROUTE_MAP=map;
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
     maxZoom:12,
     attribution:'&copy; OpenStreetMap contributors'
@@ -416,6 +420,7 @@ function initRouteMap(){
   };
 
   const setView=(key)=>{
+    map.invalidateSize();
     const b=bounds[key]||bounds.full;
     map.fitBounds(b,{padding:[28,28],maxZoom:key==='full'?4:6});
     document.querySelectorAll('[data-route-view]').forEach(btn=>{
@@ -428,6 +433,7 @@ function initRouteMap(){
     btn.addEventListener('click',()=>setView(btn.dataset.routeView));
   });
 
+  ROUTE_REFRESH=()=>setView(document.querySelector('[data-route-view].active')?.dataset.routeView||'full');
   setView('full');
   map.on('click',()=>map.scrollWheelZoom.enable());
 }
@@ -461,7 +467,7 @@ async function loadNews(){
   }
 }
 
-document.addEventListener('DOMContentLoaded',initRouteMap);
+
 loadNews();
 setInterval(loadNews,5*60*1000);
 
@@ -676,3 +682,52 @@ function renderPortTicker(data){
     item('Baku / Alat (Azerbaijan)',baku,data?.baku?.source_url||'https://portofbaku.com/en')
   ],'Official port activity temporarily unavailable');
 }
+
+// One section at a time, with bookmarkable URLs and browser history.
+let ROUTE_MAP=null;
+let ROUTE_REFRESH=null;
+const siteViews=Array.from(document.querySelectorAll('.site-view'));
+const sectionLinks=Array.from(document.querySelectorAll('#sectionNav a'));
+const navToggle=document.getElementById('navToggle');
+const sectionNav=document.getElementById('sectionNav');
+function closeSectionMenu(){
+  sectionNav.classList.remove('is-open');
+  navToggle.setAttribute('aria-expanded','false');
+}
+function showSiteView(moveFocus=false){
+  const requested=location.hash.slice(1)||'overview';
+  const selected=siteViews.find(view=>view.id===requested)||document.getElementById('overview');
+  siteViews.forEach(view=>{view.hidden=view!==selected;});
+  document.getElementById('detailViews').hidden=selected.id==='overview';
+  sectionLinks.forEach(link=>{
+    if(link.hash===`#${selected.id}`) link.setAttribute('aria-current','page');
+    else link.removeAttribute('aria-current');
+  });
+  document.getElementById('viewLabel').textContent=sectionLinks.find(link=>link.hash===`#${selected.id}`)?.textContent||'Overview';
+  document.title=selected.id==='overview'?'Middle Corridor Freight Monitor':`${document.getElementById('viewLabel').textContent} · MCFM`;
+  closeSectionMenu();
+  hideChartTooltip();
+  if(selected.id==='route'){
+    initRouteMap();
+    requestAnimationFrame(()=>ROUTE_REFRESH?.());
+  }
+  if(moveFocus){selected.focus({preventScroll:true});window.scrollTo({top:0,behavior:'instant'});}
+}
+navToggle.addEventListener('click',()=>{
+  const open=sectionNav.classList.toggle('is-open');
+  navToggle.setAttribute('aria-expanded',String(open));
+});
+document.addEventListener('keydown',event=>{
+  if(event.key==='Escape'&&sectionNav.classList.contains('is-open')){closeSectionMenu();navToggle.focus();}
+});
+document.querySelectorAll('a[href^="#"]').forEach(link=>{
+  link.addEventListener('click',()=>{
+    if(link.hash===location.hash||(link.hash==='#overview'&&!location.hash)) showSiteView(true);
+  });
+});
+window.addEventListener('hashchange',()=>showSiteView(true));
+window.addEventListener('resize',()=>{
+  if(typeof DATA!=='undefined'&&DATA) renderMcfiChart();
+  if(!document.getElementById('route').hidden) ROUTE_REFRESH?.();
+});
+showSiteView();
