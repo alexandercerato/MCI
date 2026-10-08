@@ -1,8 +1,8 @@
 {
   "meta": {
     "title": "Middle Corridor Freight Monitor",
-    "version": "0.16.0",
-    "as_of": "2026-10-01",
+    "version": "0.16.1",
+    "as_of": "2026-10-08",
     "refresh_minutes": 5,
     "methodology_note": "MCFI Fundamental Cost v1.0: market freight is compared with a transparent modelled structural cost for one loaded SOC 40HC from Xi'an to Absheron/Alat. No calendar month is used as the index base.",
     "data_warning": "Historical coverage reflects the availability of published market assessments.",
@@ -49,7 +49,7 @@
     "index_formula": "MCFI = P_market / C_fundamental × 100.",
     "reference_note": "100 means observed market freight equals the modelled fundamental cost. Values above 100 indicate a market premium; values below 100 indicate market freight below the modelled structural cost.",
     "index_status": "live",
-    "theoretical_reference_as_of": "2026-10-01",
+    "theoretical_reference_as_of": "2026-10-08",
     "theoretical_cost_model": {
       "version": "1.0",
       "route": "Xi’an International Port → Horgos/Khorgos (China) → Altynkol / Khorgos Gateway (Kazakhstan) → Aktau Port → Port of Baku (Alat) → Absheron/Baku area",
