@@ -5,5 +5,10 @@
   "year_on_year_growth_percent": 30,
   "status": "preliminary",
   "source": "https://anews.az/en/ekonomika/528216/baku-port-container-throughput-rises-30-in-januaryndashseptember/",
-  "note": "Not a live berth occupancy reading"
+  "note": "Not a live berth occupancy reading",
+  "current_annual_container_capacity_teu": 150000,
+  "planned_capacity_teu": 260000,
+  "phase_two_capacity_target_teu": 500000,
+  "capacity_source": "https://anews.az/en/read/528208/",
+  "capacity_status": "Current annual capacity 150,000 TEU; 260,000 TEU and 500,000 TEU are future targets, not operational capacity"
 }
