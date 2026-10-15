@@ -182,7 +182,7 @@
     },
     "latest_baku_market": {
       "period": "2026-09",
-      "value_usd": 6975,
+      "value_usd": 6975.0,
       "range": "$6,750–$7,200",
       "confidence": "medium-high; reported as Argus market assessment",
       "source_name": "Argus, reported by Anews",
@@ -199,7 +199,7 @@
     },
     "latest_turkey_market": {
       "period": "2026-09",
-      "value_usd": 7600,
+      "value_usd": 7600.0,
       "range": "$7,200–$8,000",
       "confidence": "medium-high; reported as Argus market assessment",
       "source_name": "Argus, reported by Anews",
@@ -1650,13 +1650,13 @@
       "ownership": "unspecified",
       "low_usd": 6750,
       "high_usd": 7200,
-      "midpoint_usd": 6975,
-      "scope": "Core market assessment",
+      "midpoint_usd": 6975.0,
+      "scope": "Partial-route market assessment",
       "primary_eligible": false,
       "grade": "A-",
       "source_name": "Argus / market participants",
       "source_url": "https://anews.az/en/ekonomika/527577/caspian-container-shipping-rates-rise-in-september/",
-      "notes": "Latest public market assessment.",
+      "notes": "Partial-route comparison only.",
       "evidence_type": "market assessment"
     },
     {
@@ -1670,13 +1670,13 @@
       "ownership": "unspecified",
       "low_usd": 7200,
       "high_usd": 8000,
-      "midpoint_usd": 7600,
-      "scope": "Core market assessment",
+      "midpoint_usd": 7600.0,
+      "scope": "Full-corridor market assessment",
       "primary_eligible": true,
       "grade": "A-",
       "source_name": "Argus / market participants",
       "source_url": "https://anews.az/en/ekonomika/527577/caspian-container-shipping-rates-rise-in-september/",
-      "notes": "Latest public market assessment.",
+      "notes": "Full Xi’an–Türkiye assessment; not added to Baku freight.",
       "evidence_type": "market assessment"
     }
   ],
@@ -1870,11 +1870,11 @@
         "period": "2026-09",
         "low_usd": 6750,
         "high_usd": 7200,
-        "midpoint_usd": 6975,
+        "midpoint_usd": 6975.0,
         "container": "40HC",
         "source_name": "Argus, reported by Anews",
         "source_url": "https://anews.az/en/ekonomika/527577/caspian-container-shipping-rates-rise-in-september/",
-        "note": "Latest publicly located market assessment."
+        "note": "Partial-route market reference, outside the headline index."
       },
       "provider_quotes": [
         {
