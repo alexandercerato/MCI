@@ -290,18 +290,18 @@ function initRouteMap(){
   if(!window.L || !document.getElementById('routeInteractiveMap') || ROUTE_MAP) return;
 
   const palette={
-    china:'#35a7d8',
-    kazakh:'#28b7d8',
-    sea:'#f0a43c',
-    west:'#48b57a',
-    blackSea:'#8c74d8',
-    branch:'#d5a45c',
-    origin:'#4aa3ff',
-    gateway:'#35c4c7',
-    port:'#f0a43c',
-    destination:'#56c58a',
-    blackSeaNode:'#9b83e6',
-    outline:'#081018'
+    china:'#287ca0',
+    kazakh:'#267f91',
+    sea:'#a56c23',
+    west:'#39795a',
+    blackSea:'#7355a6',
+    branch:'#8a6a40',
+    origin:'#3271b3',
+    gateway:'#2b7a7d',
+    port:'#a56c23',
+    destination:'#39795a',
+    blackSeaNode:'#7355a6',
+    outline:'#ffffff'
   };
 
   const map=L.map('routeInteractiveMap',{
@@ -397,7 +397,7 @@ function initRouteMap(){
     if(p.kind==='destination') return palette.destination;
     if(p.kind==='blackSeaNode') return palette.blackSeaNode;
     if(p.kind==='gateway') return palette.gateway;
-    return '#8fa7bb';
+    return '#6b7e70';
   };
 
   const visibleNodes=[
