@@ -28,7 +28,7 @@
   <meta name="twitter:image" content="https://alexandercerato.github.io/MCI/assets/mci-social-logo-square.png" />
   <meta name="twitter:image:alt" content="MCI — Middle Corridor Freight Monitor" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
-  <link rel="stylesheet" href="styles.css?v=20261015-freight" />
+  <link rel="stylesheet" href="styles.css?v=20261015-estimator" />
 </head>
 <body>
   <nav class="topbar" aria-label="Main navigation">
@@ -44,6 +44,7 @@
         <a href="#structural">Benchmarks</a>
         <a href="#caspian-live">Port activity</a>
         <a href="#pricing">Prices</a>
+        <a href="#cost-estimator">Estimator</a>
         <a href="#history">History</a>
       </div>
       <span class="live-dot">LIVE</span>
@@ -295,6 +296,30 @@
       </div>
     </section>
 
+
+    <section class="panel estimator-panel site-view" id="cost-estimator" tabindex="-1" hidden>
+      <div class="section-head">
+        <div><div class="section-kicker">Shipment planning</div><h2>Route Cost Estimator</h2><p>Explore indicative 40HC freight costs between corridor cities. Published market ranges are distinguished from modelled estimates.</p></div>
+        <span class="estimate-feed" id="estimateFeedStatus">Loading shared pricing references…</span>
+      </div>
+      <div class="estimator-layout">
+        <div class="estimate-controls">
+          <form id="estimateForm">
+            <label>Origin<select name="origin" aria-label="Shipment origin"></select></label>
+            <button id="estimateSwap" class="estimate-swap" type="button" aria-label="Swap origin and destination">⇅ Swap route</button>
+            <label>Destination<select name="destination" aria-label="Shipment destination"></select></label>
+            <label>Cargo<select name="cargo"><option value="general">General dry cargo</option><option value="machinery">Machinery · standard dimensions</option><option value="textiles">Textiles</option><option value="food">Dry food · no temperature control</option><option value="electronics">Electronics · no dangerous goods</option><option value="reefer">Refrigerated / temperature controlled</option><option value="dangerous">Dangerous goods</option><option value="oversize">Out-of-gauge / oversized</option></select></label>
+            <div class="estimate-input-row"><label>Equipment<select name="equipment"><option value="40HC">1 × 40HC</option></select></label><label>Cargo weight · tonnes<input type="number" name="weight" value="20" min="0.1" max="100" step="0.1" inputmode="decimal" required /></label></div>
+            <p class="estimate-hint">Standard dry model: up to 24 tonnes. No arbitrary surcharge by commodity. Special cargo requires an operator quote.</p>
+            <button class="estimate-submit" type="submit">Calculate estimate</button>
+          </form>
+          <div class="estimate-presets"><span>Try a route</span><button type="button" data-estimate-preset="xian:istanbul">Xi’an → Türkiye</button><button type="button" data-estimate-preset="aktau:tbilisi">Aktau → Tbilisi</button><button type="button" data-estimate-preset="altynkol:alat">Altynkol → Baku</button><button type="button" data-estimate-preset="poti:constanta">Poti → Constanța</button></div>
+        </div>
+        <div id="estimateResult" class="estimate-result" role="status" aria-live="polite" aria-atomic="true"><div class="estimate-empty">Loading the shared market dataset…</div></div>
+      </div>
+      <p class="estimate-footnote">Planning tool · not a freight offer. Calculations refresh instantly; source tariffs refresh with the site every five minutes. The market assessment month remains visible. This estimator does not change MCFI-40.</p>
+    </section>
+
     <section class="panel history-panel site-view" id="history" tabindex="-1" hidden>
       <div class="section-head">
         <div>
@@ -331,6 +356,8 @@
   </footer>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="runtime-config.js"></script>
-  <script src="app.js?v=20261015-freight"></script>
+  <script src="estimator.js?v=20261015-estimator"></script>
+  <script src="estimator-ui.js?v=20261015-estimator"></script>
+  <script src="app.js?v=20261015-estimator"></script>
 </body>
 </html>

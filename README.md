@@ -12,6 +12,20 @@ This replaces the previous market/cost ratio (168.3 points). The new dollar valu
 
 Validation: `python -m unittest discover -s tests -v` and `node --check app.js`.
 
+## Route Cost Estimator
+
+The Estimator view covers 25 locations on the main corridor and the Black Sea branch, with 40HC equipment and standard non-hazardous dry cargo up to a model limit of 24 tonnes. This limit is not a legal or physical container loading limit.
+
+- Exact Xi’an–Baku and Xi’an–Ambarli/Mersin market ranges are shown as dated published assessments. The source groups the two Turkish destinations; no unsupported port differential is added.
+- Other routes are explicitly low-confidence modelled scenarios. The graph finds a connected illustrative path using positive rail/sea cost weights. Railway geometry is great-circle distance × 1.25. Regional weights use existing historical rail, ferry and integrated-tariff references; those integrated tariffs are not added to overlapping component tariffs.
+- Each scenario is calibrated to one available westbound market assessment, prioritising edge overlap, recency and proximity of scope. The midpoint is allocated across disjoint path segments. The normal ±35% scenario allowance is widened for reverse movements, Black Sea extrapolation, weak route overlap and market anchors over 90 days old. These are explicit modelling assumptions, not statistical confidence intervals.
+- Commodity selection does not introduce unsupported markups. Refrigerated, dangerous and out-of-gauge cargo, heavy loads and unsuitable local transfers require an operator quote.
+- Source scope, container provision, exclusions and assumptions remain visible. The estimator does not alter `data.json`, MCFI-40, its chart or CSV.
+
+`estimator.js` contains the pure engine; `estimator-ui.js` preserves the form state and recalculates from the same `data.json` and successful `/api/pricing` updates used by the website every five minutes. Reviewed, unavailable or older live assessments do not replace newer stored references. A refresh timestamp is distinct from the assessment month.
+
+Run `node tests/test-estimator.cjs` to check all 600 ordered city pairs, allocations, special-cargo guards, live price updates, stale-source fallback and isolation of the index.
+
 ## Market-data refresh
 
 The browser reloads `data.json` every five minutes. The included GitHub Action runs `update_data.py` on the same cadence and refreshes supported public provider snapshots. Provider snapshots do not overwrite the MCFI-40 series.

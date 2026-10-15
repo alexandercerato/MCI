@@ -982,3 +982,45 @@ footer{margin-top:auto}
   .pricing-panel td:nth-child(4)::before{content:'Unit'}
   .pricing-panel td:nth-child(5)::before{content:'Source'}
 }
+/* Shared-data route cost estimator. */
+.nav-links{gap:clamp(8px,1.25vw,20px)}
+.estimator-layout{display:grid;grid-template-columns:minmax(260px,.65fr) minmax(0,1.6fr);gap:24px;align-items:start}
+.estimate-controls{border:1px solid var(--line);background:#091018;padding:20px}
+.estimate-controls label{display:flex;flex-direction:column;gap:7px;color:var(--muted);font-size:11px;margin-bottom:16px}
+.estimate-controls select,.estimate-controls input{display:block;width:100%;min-width:0;background:#101923;color:var(--text);border:1px solid #2a3b4c;border-radius:3px;padding:12px;font:inherit;font-size:13px;line-height:1.4;min-height:44px}
+.estimate-controls input:focus,.estimate-controls select:focus{outline:2px solid var(--cyan);outline-offset:2px}
+.estimate-input-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.estimate-swap{display:block;margin:-5px 0 12px auto;padding:7px 10px;background:transparent;color:var(--cyan);border:1px solid var(--line);cursor:pointer;font:inherit;font-size:11px}
+.estimate-hint,.estimate-footnote{color:var(--muted);font-size:11px;line-height:1.7}
+.estimate-submit{width:100%;min-height:44px;padding:12px;background:var(--cyan);color:#081018;border:0;border-radius:3px;font:inherit;font-weight:700;font-size:12px;cursor:pointer}
+.estimate-submit:hover{background:#8bd9d3}
+.estimate-presets{display:flex;flex-wrap:wrap;gap:7px;margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}
+.estimate-presets>span{flex-basis:100%;color:var(--muted2);font-size:10px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px}
+.estimate-presets button{border:1px solid #2a3b4c;background:#101923;color:var(--muted);padding:8px;font:inherit;font-size:10px;cursor:pointer}
+.estimate-presets button:hover{color:var(--cyan);border-color:var(--cyan)}
+.estimate-result{min-width:0;border:1px solid #2a3b4c;background:linear-gradient(145deg,#101923,#0a1119);padding:26px}
+.estimate-result-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.estimate-badge{display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;border:1px solid #486070;padding:6px 9px;color:var(--muted)}
+.estimate-badge.observed{color:var(--cyan);border-color:#356e6d}
+.estimate-badge.modelled{color:var(--gold);border-color:#695631}
+.estimate-period,.estimate-feed{font-size:10px;color:var(--muted);line-height:1.6}
+.panel h3.estimate-price{font:700 clamp(25px,3vw,46px)/1.3 ui-monospace,SFMono-Regular,Menlo,monospace;margin:24px 0 5px;letter-spacing:-.04em}
+.estimate-price span{color:var(--muted2)}
+.estimate-unit{margin:0;color:var(--cyan);font-size:11px}
+.estimate-explanation{color:var(--muted);font-size:12px;line-height:1.7;margin:18px 0}
+.estimate-route{display:flex;flex-wrap:wrap;align-items:center;gap:9px;padding:16px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.estimate-route>span{font-size:11px;color:var(--text)}
+.estimate-route small{display:block;font-size:9px;color:var(--muted2)}
+.estimate-route i{color:var(--cyan);font-style:normal;font-size:11px}
+.estimate-allocation{margin-top:22px}.estimate-allocation h4,.estimate-details h4{font-size:12px;margin:12px 0 7px}
+.estimate-allocation p,.estimate-note{font-size:11px;line-height:1.7;color:var(--muted)}
+.estimate-allocation dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0}
+.estimate-allocation dl div{display:flex;justify-content:space-between;gap:10px;border:1px solid var(--line);padding:10px;font-size:11px}
+.estimate-allocation dt{color:var(--muted)}.estimate-allocation dd{margin:0;color:var(--text);font-family:ui-monospace,monospace}
+.estimate-details{margin-top:20px;border-top:1px solid var(--line);padding-top:16px;color:var(--muted);font-size:11px;line-height:1.8}
+.estimate-details summary{cursor:pointer;color:var(--cyan);padding:4px 0}.estimate-details ul{padding-left:18px}.estimate-details li{margin:7px 0}
+.estimate-sources a{color:var(--cyan)}.estimate-sources small{display:block;color:var(--muted2)}
+.estimate-empty h3{line-height:1.6;margin-top:18px}.estimate-empty p{color:var(--muted);font-size:12px}
+.estimate-footnote{margin:20px 0 0;padding-top:14px;border-top:1px solid var(--line)}
+@media(max-width:900px){.estimator-layout{grid-template-columns:1fr}.estimate-controls{padding:18px}.estimate-result{padding:20px}}
+@media(max-width:620px){.estimate-input-row{grid-template-columns:1fr}.estimate-allocation dl{grid-template-columns:1fr}.estimate-result-head{align-items:start}.estimate-result{padding:16px}.panel h3.estimate-price{font-size:clamp(22px,6.5vw,34px)}.estimate-presets button{min-height:40px}.estimate-controls select,.estimate-controls input{font-size:16px}}

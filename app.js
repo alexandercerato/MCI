@@ -91,6 +91,7 @@ function render(){
   renderMcfiTable();
   renderMcfiChart();
   renderHistoryTable();
+  window.MCI_ESTIMATOR_UI?.update(DATA,PRICING_LIVE);
 }
 
 function renderStructural(live){
@@ -270,9 +271,11 @@ async function loadPricing(){
     renderMcfiTable();
     renderMcfiChart();
     renderYearSummary();
+    window.MCI_ESTIMATOR_UI?.update(DATA,PRICING_LIVE,{checked_at:PRICING_LIVE.checked_at,feedState:PRICING_LIVE.status==='live'&&!PRICING_LIVE.review_required?'live':'offline'});
   }catch(err){
     console.warn(err);
     if(window.pricingWatchStatus) pricingWatchStatus.textContent='SOURCE WATCH OFFLINE';
+    window.MCI_ESTIMATOR_UI?.update(DATA,PRICING_LIVE,{feedState:'offline'});
   }
 }
 
