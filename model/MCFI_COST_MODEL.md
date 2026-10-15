@@ -1,6 +1,6 @@
 # MCFI Theoretical Cost Model — v0.1
 
-Status: research draft (not yet used by the public website)
+Status: archived cost-relative methodology. Since 15 October 2026 the public MCFI-40 is the full Xi’an–Ambarli/Mersin freight price in USD/40HC. The model and ratio below are retained as contextual research and do not determine the current index.
 As of: 2026-10-01
 
 ## 1. Core lane

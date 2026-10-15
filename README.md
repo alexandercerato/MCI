@@ -1,19 +1,20 @@
-# Middle Corridor Freight Monitor v0.11.1
+# Middle Corridor Freight Monitor v0.17.0
 
-This release keeps the compact dark finance-terminal design of v0.10 and adds two operational features without changing the MCFI methodology:
+## MCFI-40 · full-corridor freight rate
 
-1. **MCFI historical chart (2024 → present)** — monthly MCFI-40 values rendered from `data.json`. Consecutive observed months are connected normally; gaps remain visible and are connected with a dashed segment rather than interpolated. The current calendar month is marked separately. The chart redraws whenever the market dataset refreshes.
-2. **Caspian Live** — optional live AIS layer for the Aktau–Kuryk–Alat/Baku sector using AISStream through a private backend. No vessels are simulated when the backend is not connected.
+Since 15 October 2026, MCFI-40 is the latest published market freight assessment in **USD per loaded 40HC container**, from Xi’an (China) to Ambarli/Mersin (Türkiye), across Kazakhstan, the Caspian Sea, Azerbaijan and Georgia.
 
-## MCFI-40
+For each observed month, the benchmark uses the midpoint of the full-route market range, or the median of midpoints where multiple comparable assessments exist. Partial Xi’an–Baku rates, provider-specific SOC tariffs and the structural cost model do not enter this calculation. No segment rates are added together.
 
-The standard shipment remains one loaded 40' HC, general dry cargo, westbound from Xi'an through Altynkol, Aktau and Alat/Baku. The index is a fixed 50/50 basket of Xi'an→Baku and Xi'an→Mersin/Ambarli monthly market assessments.
+The historical chart, annual summaries, table and CSV use this same basis. Missing months remain gaps. The assessment month is distinct from the time a feed is checked. The latest available observation is September 2026: **USD 7,600/40HC**, within a reported USD 7,200–8,000 range.
 
-The chart does **not** interpolate missing MCFI months. A value is plotted only when the fixed two-route basket can be calculated from the underlying market observations.
+This replaces the previous market/cost ratio (168.3 points). The new dollar values must not be compared numerically with the old point scale. The theoretical Xi’an–Baku cost model remains contextual research only.
+
+Validation: `python -m unittest discover -s tests -v` and `node --check app.js`.
 
 ## Market-data refresh
 
-The browser reloads `data.json` every five minutes. The included GitHub Action runs `scripts/update_data.py` on the same cadence and refreshes supported public provider snapshots. Provider snapshots do not overwrite the MCFI-40 series.
+The browser reloads `data.json` every five minutes. The included GitHub Action runs `update_data.py` on the same cadence and refreshes supported public provider snapshots. Provider snapshots do not overwrite the MCFI-40 series.
 
 ## Caspian Live setup
 
@@ -79,4 +80,4 @@ After the backend is live, set only its public URL in `runtime-config.js`; that 
 - `raw_observations.csv` — wider historical evidence database
 - `runtime-config.js` — public runtime endpoint configuration only; never place secrets here
 - `backend/` — private AISStream collector/API
-- `scripts/update_data.py` — public-provider market refresh
+- `update_data.py` — public-provider market refresh

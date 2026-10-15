@@ -971,3 +971,14 @@ footer{margin-top:auto}
   .pricing-panel td:nth-child(6)::before{content:"Xi’an → Türkiye"}
   .pricing-panel td:nth-child(7)::before{content:'Source'}
 }
+
+/* Full-route freight rate: currency values and matching mobile table labels. */
+.index-value{font-size:clamp(48px,5vw,76px)}
+@media(max-width:700px){.index-value{font-size:clamp(44px,13vw,64px)}}
+@media(max-width:620px){
+  .pricing-panel td:nth-child(1)::before{content:'Month'}
+  .pricing-panel td:nth-child(2)::before{content:'MCFI-40 · USD'}
+  .pricing-panel td:nth-child(3)::before{content:'Assessed range'}
+  .pricing-panel td:nth-child(4)::before{content:'Unit'}
+  .pricing-panel td:nth-child(5)::before{content:'Source'}
+}

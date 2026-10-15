@@ -10,21 +10,53 @@ async function loadData(){
   refreshStatus.textContent=`Historical database loaded · ${new Date().toLocaleString('en-GB')} · live feeds refresh every ${DATA.meta.refresh_minutes} minutes`;
 }
 
+
+function validFreightAssessment(candidate){
+  if(!candidate || !/^20\d{2}-(0[1-9]|1[0-2])$/.test(candidate.period||'')) return null;
+  const low=Number(candidate.low_usd),high=Number(candidate.high_usd);
+  if(!Number.isFinite(low)||!Number.isFinite(high)||low<=0||high<low) return null;
+  const value=candidate.value_usd==null?(low+high)/2:Number(candidate.value_usd);
+  if(!Number.isFinite(value)||value<low||value>high) return null;
+  return {...candidate,low_usd:low,high_usd:high,value_usd:value};
+}
+function mergeLiveFreightAssessment(){
+  if(!DATA || PRICING_LIVE?.review_required) return;
+  const quote=PRICING_LIVE?.market?.turkey_assessment;
+  if(quote?.container && quote.container!=='40HC') return;
+  const live=validFreightAssessment(quote);
+  const current=DATA.headline.latest_mcfi_core;
+  if(!live || live.period<(current.period||'')) return;
+  if(live.period===current.period && DATA.mcfi_monthly.find(x=>x.period===live.period)?.assessment_count>1) return;
+  // This endpoint is the Xi’an–Mersin/Ambarli assessment, including the Caspian crossing.
+  DATA.headline.latest_mcfi_core={...live,unit:'USD per 40HC',coverage:'Xi’an (China) → Mersin/Ambarli (Türkiye)'};
+  const row={period:live.period,mcfi_usd:live.value_usd,low_usd:live.low_usd,high_usd:live.high_usd,
+    route:'Xi’an (China) → Mersin/Ambarli (Türkiye)',unit:'USD per 40HC',container:'40HC',
+    type:'observed',source_url:live.source_url||current.source_url};
+  const pos=DATA.mcfi_monthly.findIndex(x=>x.period===row.period);
+  if(pos<0) DATA.mcfi_monthly.push(row); else DATA.mcfi_monthly[pos]={...DATA.mcfi_monthly[pos],...row};
+  DATA.mcfi_monthly.sort((a,b)=>a.period.localeCompare(b.period));
+  buildYearFilters();
+}
+function renderFreightHeadline(){
+  const quote=validFreightAssessment(DATA.headline.latest_mcfi_core);
+  mcfiValue.textContent=quote?fmtUSD(quote.value_usd):'—';
+  mcfiUnit.textContent='USD per 40HC · full corridor';
+  mcfiMeta.textContent=quote?`${fmtMonth(quote.period)} · Xi’an → Ambarli/Mersin · ${fmtUSD(quote.low_usd)}–${fmtUSD(quote.high_usd)} · latest published assessment`:'No comparable full-route assessment available';
+}
+function renderYearSummary(){
+  const years=[...new Set(DATA.mcfi_monthly.map(x=>x.period.slice(0,4)))].sort();
+  yearKpis.innerHTML=years.map(year=>{
+    const values=DATA.mcfi_monthly.filter(x=>x.period.startsWith(year)).map(x=>Number(x.mcfi_usd));
+    return `<div class="inline-kpi"><span>${year}</span><strong>${fmtUSD(values.reduce((a,b)=>a+b,0)/values.length)}</strong><small>${values.length} observed months · ${fmtUSD(Math.min(...values))}–${fmtUSD(Math.max(...values))} / 40HC</small></div>`;
+  }).join('');
+}
+
 function render(){
+  mergeLiveFreightAssessment();
   const h=DATA.headline;
   asOfDate.textContent=new Date(DATA.meta.as_of+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
 
-  const ref=Number(DATA.model.theoretical_reference_usd);
-  if(DATA.model.index_status!=='live' || !Number.isFinite(ref) || ref<=0){
-    mcfiValue.textContent='—';
-    if(window.mcfiUnit) mcfiUnit.textContent='Fundamental model unavailable';
-    mcfiMeta.textContent=`Latest observed market ${fmtUSD(h.latest_mcfi_core.value_usd)} / 40HC · ${fmtMonth(h.latest_mcfi_core.period)}`;
-  }else{
-    const currentIndex=Number(h.latest_mcfi_core.value_usd/ref*100);
-    mcfiValue.textContent=currentIndex.toFixed(1);
-    if(window.mcfiUnit) mcfiUnit.textContent='Index points · fundamental cost = 100';
-    mcfiMeta.textContent=`${fmtMonth(h.latest_mcfi_core.period)} · 50/50 Baku–Türkiye basket ${fmtUSD(h.latest_mcfi_core.value_usd)} · Baku cost reference ${fmtUSD(ref)} · ${(currentIndex-100)>=0?'+':''}${(currentIndex-100).toFixed(1)}% premium`;
-  }
+  renderFreightHeadline();
 
   bakuValue.textContent=fmtUSD(h.latest_baku_market.value_usd);
   bakuMeta.textContent=`${fmtMonth(h.latest_baku_market.period)} · ${h.latest_baku_market.range}`;
@@ -51,8 +83,7 @@ function render(){
     <div class="inline-kpi"><span>Container hub</span><strong>${DATA.aktau.container_hub_teu.toLocaleString()} TEU/y</strong><small>Annual capacity</small></div>
     <div class="inline-kpi"><span>Verified KZ rail benchmark</span><strong>${fmtUSD(east?.value_usd)}</strong><small>Dostyk → Aktau · 40' loaded</small></div>`;
 
-  yearKpis.innerHTML=DATA.year_summary.map(x=>`
-    <div class="inline-kpi"><span>${x.year}</span><strong>${fmtUSD(x.average_usd)}</strong><small>${x.complete_months} observed months · range ${fmtUSD(x.low_usd)}–${fmtUSD(x.high_usd)}</small></div>`).join('');
+  renderYearSummary();
 
   renderStructural(PRICING_LIVE);
   renderPriceTicker(PRICING_LIVE);
@@ -115,7 +146,7 @@ function renderStructural(live){
 function coverageLabel(x){
   if(x.period==='2025-07') return 'Baku assessment available';
   if(x.period==='2026-08') return 'Provider rates available';
-  if(x.period==='2026-09') return 'No new comparable monthly assessment published in database';
+  if(x.period==='2026-09') return 'Full-route assessment available';
   return 'Partial historical coverage';
 }
 
@@ -131,12 +162,10 @@ function renderMcfiTable(){
   const rows=DATA.mcfi_monthly.filter(x=>y==='all'||x.period.startsWith(y)).slice().reverse();
   mcfiTable.innerHTML=rows.map(x=>`<tr>
     <td>${fmtMonth(x.period)}</td>
-    <td class="price">${Number.isFinite(Number(x.mcfi_index))?Number(x.mcfi_index).toFixed(1):'—'}</td>
-    <td>${fmtUSD(x.mcfi_usd)}</td>
-    <td>${fmtUSD(x.fundamental_cost_usd)}</td>
-    <td>${fmtUSD(x.baku_midpoint_usd)}</td>
-    <td>${fmtUSD(x.turkey_midpoint_usd)}</td>
-    <td><a href="${x.source_url}" target="_blank" rel="noopener">View ↗</a></td>
+    <td class="price">${fmtUSD(x.mcfi_usd)}</td>
+    <td>${fmtUSD(x.low_usd)}–${fmtUSD(x.high_usd)}</td>
+    <td>USD / 40HC</td>
+    <td><a href="${safeTickerURL(x.source_url)}" target="_blank" rel="noopener">View ↗</a></td>
   </tr>`).join('');
 }
 
@@ -152,21 +181,20 @@ function renderMcfiChart(){
   svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
   const today=new Date(),start=new Date(2024,10,1),end=new Date(today.getFullYear(),today.getMonth(),1),totalMonths=Math.max(1,monthDiff(start,end));
   const rows=DATA.mcfi_monthly
-    .filter(x=>x.period&&Number.isFinite(Number(x.mcfi_index)))
-    .map(x=>({...x,value:Number(x.mcfi_index),date:monthKeyToDate(x.period)}))
+    .filter(x=>x.period&&Number(x.mcfi_usd)>0)
+    .map(x=>({...x,value:Number(x.mcfi_usd),date:monthKeyToDate(x.period)}))
     .filter(x=>x.date>=start&&x.date<=end).sort((a,b)=>a.date-b.date);
   if(!rows.length) return;
-  const values=rows.map(x=>x.value),rawMin=Math.min(100,...values),rawMax=Math.max(100,...values),step=20;
-  const yMin=Math.max(0,Math.floor((rawMin-10)/step)*step),yMax=Math.ceil((rawMax+10)/step)*step;
+  const values=rows.map(x=>x.value),rawMin=Math.min(...values),rawMax=Math.max(...values),step=500;
+  const yMin=Math.max(0,Math.floor((rawMin-250)/step)*step),yMax=Math.ceil((rawMax+250)/step)*step;
   const xOf=d=>pad.l+(monthDiff(start,d)/totalMonths)*plotW;
   const yOf=v=>pad.t+((yMax-v)/(yMax-yMin||1))*plotH;
 
   for(let v=yMin;v<=yMax;v+=step){
     const y=yOf(v);
-    svg.appendChild(svgEl('line',{x1:pad.l,y1:y,x2:W-pad.r,y2:y,class:v===100?'chart-baseline-line':'chart-grid'}));
+    svg.appendChild(svgEl('line',{x1:pad.l,y1:y,x2:W-pad.r,y2:y,class:'chart-grid'}));
     svg.appendChild(svgEl('text',{x:pad.l-12,y:y+4,'text-anchor':'end',class:'chart-axis-text'},String(v)));
   }
-  svg.appendChild(svgEl('text',{x:pad.l+8,y:yOf(100)-8,class:'chart-baseline-label'},'FUNDAMENTAL COST = 100'));
 
   for(let y=start.getFullYear();y<=end.getFullYear();y++){
     const yd=y===start.getFullYear()?start:new Date(y,0,1);
@@ -200,20 +228,19 @@ function renderMcfiChart(){
 
   const latest=rows[rows.length-1],prev=rows.length>1?rows[rows.length-2]:null;
   const change=prev?(latest.value-prev.value):null;
-  chartSummary.innerHTML=`MCFI ${latest.value.toFixed(1)}<small>${fmtMonth(latest.period)} · fundamental ${fmtUSD(latest.fundamental_cost_usd)}${change===null?'':` · ${change>=0?'+':''}${change.toFixed(1)} pts`}</small>`;
-  if(window.chartYLabel) chartYLabel.textContent='MCFI points';
+  chartSummary.innerHTML=`MCFI-40 ${fmtUSD(latest.value)}<small>${fmtMonth(latest.period)} · USD / 40HC${change===null?'':` · ${change>=0?'+':'−'}${fmtUSD(Math.abs(change))} vs previous observation`}</small>`;
+  if(window.chartYLabel) chartYLabel.textContent='USD / 40HC';
 }
 function showChartTooltip(ev,row){
   if(!window.chartTooltip) return;
-  const status=row.fundamental_anchor_status==='carry_forward'?'carry-forward anchor':'official-period anchor';
-  chartTooltip.innerHTML=`<strong>MCFI ${Number(row.mcfi_index).toFixed(1)}</strong>${fmtMonth(row.period)}<span>Market ${fmtUSD(row.mcfi_usd)} · Fundamental ${fmtUSD(row.fundamental_cost_usd)}</span><span>${status}</span>`;
+  chartTooltip.innerHTML=`<strong>${fmtUSD(row.mcfi_usd)} / 40HC</strong>${fmtMonth(row.period)}<span>Range ${fmtUSD(row.low_usd)}–${fmtUSD(row.high_usd)}</span><span>Xi’an → Ambarli/Mersin · market assessment</span>`;
   chartTooltip.hidden=false;
   moveChartTooltip(ev);
 }
 function moveChartTooltip(ev){ if(!window.chartTooltip||chartTooltip.hidden)return; const box=chartTooltip.parentElement.getBoundingClientRect(); let left=ev.clientX-box.left+14,top=ev.clientY-box.top-18; left=Math.max(8,Math.min(box.width-chartTooltip.offsetWidth-8,left)); top=Math.max(8,Math.min(box.height-chartTooltip.offsetHeight-8,top)); chartTooltip.style.left=`${left}px`; chartTooltip.style.top=`${top}px`; }
 function hideChartTooltip(){ if(window.chartTooltip) chartTooltip.hidden=true; }
 
-function displayType(x){ if(x.primary_eligible)return'Market assessment'; if((x.evidence_type||'').includes('provider'))return'Provider tariff'; if((x.evidence_type||'').includes('fixed'))return'Published tariff'; return'Reference price'; }
+function displayType(x){ if(x.evidence_type==='market assessment')return'Market assessment'; if((x.evidence_type||'').includes('provider'))return'Provider tariff'; if((x.evidence_type||'').includes('fixed'))return'Published tariff'; return'Reference price'; }
 function renderHistoryTable(){ const y=yearFilter.value||'all',e=eligibilityFilter.value||'all'; const rows=DATA.historical_observations.filter(x=>(y==='all'||x.period.startsWith(y))&&(e==='all'||(e==='primary'?x.primary_eligible:!x.primary_eligible))).slice().reverse(); historyTable.innerHTML=rows.map(x=>{ const price=x.low_usd===x.high_usd?fmtUSD(x.midpoint_usd):`${fmtUSD(x.low_usd)}–${fmtUSD(x.high_usd)}`; return `<tr><td>${x.period.length===7?fmtMonth(x.period):x.date}</td><td><b>${x.route}</b><br><small>${x.container} · ${x.ownership}</small></td><td class="price">${price}</td><td>${displayType(x)}</td><td><a href="${x.source_url}" target="_blank" rel="noopener">${x.source_name} ↗</a></td></tr>`; }).join(''); }
 
 yearFilter?.addEventListener('change',renderHistoryTable);
@@ -238,15 +265,11 @@ async function loadPricing(){
     }
     const q=(PRICING_LIVE?.market?.provider_quotes||[]).find(x=>/Baku|Absheron/i.test(x.route||''));
     if(q?.value_usd){ providerValue.textContent=fmtUSD(q.value_usd); providerMeta.textContent=`${fmtMonth(q.period)} · ${q.container||'40HQ'} · provider quote`; }
-    if(a?.midpoint_usd && t?.midpoint_usd && a.period===t.period && DATA?.model?.theoretical_reference_usd && a.period>=DATA.headline.latest_mcfi_core.period){
-      const ref=Number(DATA.model.theoretical_reference_usd);
-      const basket=Math.round((Number(a.midpoint_usd)+Number(t.midpoint_usd))/2);
-      const liveIndex=basket/ref*100;
-      if(Number.isFinite(liveIndex)){
-        mcfiValue.textContent=liveIndex.toFixed(1);
-        mcfiMeta.textContent=`${fmtMonth(a.period)} · 50/50 Baku–Türkiye basket ${fmtUSD(basket)} · Baku cost reference ${fmtUSD(ref)} · ${liveIndex>=100?'+':''}${(liveIndex-100).toFixed(1)}% premium`;
-      }
-    }
+    mergeLiveFreightAssessment();
+    renderFreightHeadline();
+    renderMcfiTable();
+    renderMcfiChart();
+    renderYearSummary();
   }catch(err){
     console.warn(err);
     if(window.pricingWatchStatus) pricingWatchStatus.textContent='SOURCE WATCH OFFLINE';

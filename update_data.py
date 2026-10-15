@@ -11,6 +11,7 @@ import copy
 import csv
 import json
 import re
+from statistics import median
 import sys
 from urllib.parse import urljoin
 
@@ -76,17 +77,6 @@ def discover_anews_pricing_url() -> str:
     return ANEWS_FALLBACK
 
 
-def upsert_month(data, row):
-    rows = data.setdefault("mcfi_monthly", [])
-    for i, current in enumerate(rows):
-        if current.get("period") == row["period"]:
-            rows[i] = {**current, **row}
-            break
-    else:
-        rows.append(row)
-    rows.sort(key=lambda x: x.get("period", ""))
-
-
 def upsert_observation(data, row):
     rows = data.setdefault("historical_observations", [])
     for i, current in enumerate(rows):
@@ -100,25 +90,6 @@ def upsert_observation(data, row):
     else:
         rows.append(row)
     rows.sort(key=lambda x: str(x.get("period") or x.get("date") or ""))
-
-
-def recompute_year_summary(data, year: str):
-    vals = [
-        float(x["mcfi_usd"])
-        for x in data.get("mcfi_monthly", [])
-        if str(x.get("period", "")).startswith(year + "-")
-        and isinstance(x.get("mcfi_usd"), (int, float))
-    ]
-    if not vals:
-        return
-    for row in data.get("year_summary", []):
-        if str(row.get("year")) == year:
-            row["complete_months"] = len(vals)
-            row["months_elapsed"] = max(row.get("months_elapsed", 0), len(vals))
-            row["average_usd"] = round(sum(vals) / len(vals))
-            row["low_usd"] = round(min(vals))
-            row["high_usd"] = round(max(vals))
-            return
 
 
 def refresh_market(data):
@@ -138,98 +109,114 @@ def refresh_market(data):
         article,
         re.I | re.S,
     )
-    if not baku:
-        raise ValueError("Baku/Alat market range not found")
+    if not baku and not turkey:
+        raise ValueError("No comparable route market range found")
 
-    b_low, b_high = money(baku.group(1)), money(baku.group(2))
-    b_mid = round((b_low + b_high) / 2)
+    if baku:
+        b_low, b_high = money(baku.group(1)), money(baku.group(2))
+        if not 0 < b_low <= b_high:
+            raise ValueError("Invalid Baku range")
+        b_mid = (b_low + b_high) / 2
+        if period >= data["headline"]["latest_baku_market"]["period"]:
+            data["headline"]["latest_baku_market"].update({
+                "period": period, "value_usd": b_mid,
+                "range": f"${b_low:,}–${b_high:,}",
+                "source_name": "Argus, reported by Anews", "source_url": source_url,
+            })
+            data["structural_benchmarks"]["market_defaults"]["latest_comparable_assessment"] = {
+                "route": "Xi’an (China) → Baku/Alat (Azerbaijan)", "period": period,
+                "low_usd": b_low, "high_usd": b_high, "midpoint_usd": b_mid,
+                "container": "40HC", "source_name": "Argus, reported by Anews",
+                "source_url": source_url, "note": "Partial-route market reference, outside the headline index.",
+            }
+        upsert_observation(data, {
+            "date": period, "period": period, "route": "Xi’an → Alat/Absheron (Baku)",
+            "origin": "Xi’an", "destination": "Baku", "mode": "Middle Corridor multimodal",
+            "container": "40HC", "ownership": "unspecified", "low_usd": b_low,
+            "high_usd": b_high, "midpoint_usd": b_mid, "scope": "Partial-route market assessment",
+            "primary_eligible": False, "grade": "A-", "source_name": "Argus / market participants",
+            "source_url": source_url, "notes": "Partial-route comparison only.",
+            "evidence_type": "market assessment",
+        })
 
-    data["headline"]["latest_baku_market"].update({
-        "period": period,
-        "value_usd": b_mid,
-        "range": f"${b_low:,}–${b_high:,}",
-        "confidence": "medium-high; reported as Argus market assessment",
-        "source_name": "Argus, reported by Anews",
-        "source_url": source_url,
-    })
-    data["structural_benchmarks"]["market_defaults"]["latest_comparable_assessment"] = {
-        "route": "Xi’an (China) → Baku/Alat (Azerbaijan)",
-        "period": period,
-        "low_usd": b_low,
-        "high_usd": b_high,
-        "midpoint_usd": b_mid,
-        "container": "40HC",
-        "source_name": "Argus, reported by Anews",
-        "source_url": source_url,
-        "note": "Latest publicly located market assessment.",
-    }
-
-    t_low = t_high = t_mid = None
     if turkey:
         t_low, t_high = money(turkey.group(1)), money(turkey.group(2))
-        t_mid = round((t_low + t_high) / 2)
-        data["headline"]["latest_turkey_market"].update({
-            "period": period,
-            "value_usd": t_mid,
-            "range": f"${t_low:,}–${t_high:,}",
-            "confidence": "medium-high; reported as Argus market assessment",
-            "source_name": "Argus, reported by Anews",
-            "source_url": source_url,
-        })
-
-    fundamental = float(data["model"]["theoretical_reference_usd"])
-    if t_mid is not None:
-        basket = round((b_mid + t_mid) / 2)
-        data["headline"]["latest_mcfi_core"].update({
-            "period": period,
-            "value_usd": basket,
-            "value_index": round(basket / fundamental * 100, 1),
-            "premium_vs_model_pct": round((basket / fundamental - 1) * 100, 1),
-            "theoretical_reference_usd": fundamental,
-            "coverage": "50/50 Xi'an–Baku and Xi'an–Türkiye 40HC market basket",
-        })
-        upsert_month(data, {
-            "period": period,
-            "mcfi_usd": basket,
-            "baku_midpoint_usd": b_mid,
-            "turkey_midpoint_usd": t_mid,
-            "type": "observed",
-            "observed_routes": 2,
-            "confidence": "medium-high",
-            "basis": "Latest public market update reports both core route ranges.",
-            "source_url": source_url,
-            "premium_vs_model_pct": round((basket / fundamental - 1) * 100, 1),
-            "mcfi_index": round(basket / fundamental * 100, 1),
-            "fundamental_cost_usd": round(fundamental),
-            "fundamental_anchor_status": "carry_forward",
-        })
-
-    upsert_observation(data, {
-        "date": period, "period": period,
-        "route": "Xi’an → Alat/Absheron (Baku)",
-        "origin": "Xi’an", "destination": "Baku",
-        "mode": "Middle Corridor multimodal", "container": "40HC",
-        "ownership": "unspecified", "low_usd": b_low, "high_usd": b_high,
-        "midpoint_usd": b_mid, "scope": "Core market assessment",
-        "primary_eligible": True, "grade": "A-",
-        "source_name": "Argus / market participants", "source_url": source_url,
-        "notes": "Latest public market assessment.", "evidence_type": "market assessment",
-    })
-
-    if t_mid is not None:
+        if not 0 < t_low <= t_high:
+            raise ValueError("Invalid Türkiye range")
+        t_mid = (t_low + t_high) / 2
+        if period >= data["headline"]["latest_turkey_market"]["period"]:
+            data["headline"]["latest_turkey_market"].update({
+                "period": period, "value_usd": t_mid,
+                "range": f"${t_low:,}–${t_high:,}",
+                "source_name": "Argus, reported by Anews", "source_url": source_url,
+            })
         upsert_observation(data, {
-            "date": period, "period": period,
-            "route": "Xi’an → Mersin/Ambarli",
-            "origin": "Xi’an", "destination": "Turkey",
-            "mode": "Middle Corridor multimodal", "container": "40HC",
-            "ownership": "unspecified", "low_usd": t_low, "high_usd": t_high,
-            "midpoint_usd": t_mid, "scope": "Core market assessment",
-            "primary_eligible": True, "grade": "A-",
-            "source_name": "Argus / market participants", "source_url": source_url,
-            "notes": "Latest public market assessment.", "evidence_type": "market assessment",
+            "date": period, "period": period, "route": "Xi’an → Mersin/Ambarli",
+            "origin": "Xi’an", "destination": "Turkey", "mode": "Middle Corridor multimodal",
+            "container": "40HC", "ownership": "unspecified", "low_usd": t_low,
+            "high_usd": t_high, "midpoint_usd": t_mid, "scope": "Full-corridor market assessment",
+            "primary_eligible": True, "grade": "A-", "source_name": "Argus / market participants",
+            "source_url": source_url, "notes": "Full Xi’an–Türkiye assessment; not added to Baku freight.",
+            "evidence_type": "market assessment",
         })
 
-    recompute_year_summary(data, period[:4])
+
+def is_full_route_assessment(row):
+    origin = str(row.get("origin", "")).replace("’", "'").lower()
+    return (
+        origin == "xi'an"
+        and row.get("destination") in ("Turkey", "Türkiye")
+        and row.get("container") == "40HC"
+        and row.get("evidence_type") == "market assessment"
+        and re.fullmatch(r"20\d{2}-\d{2}", str(row.get("period", ""))) is not None
+        and isinstance(row.get("low_usd"), (int, float))
+        and isinstance(row.get("high_usd"), (int, float))
+        and 0 < row["low_usd"] <= row["high_usd"]
+    )
+
+
+def rebuild_freight_series(data):
+    """Derive every published value from full-route assessments, never segment sums."""
+    groups = {}
+    for row in data.get("historical_observations", []):
+        eligible = is_full_route_assessment(row)
+        row["primary_eligible"] = eligible
+        if eligible:
+            groups.setdefault(row["period"], []).append(row)
+    rows = []
+    for period, observations in sorted(groups.items()):
+        # Deduplicate repeated records from the same publication.
+        unique = {(r.get("source_url"), r["low_usd"], r["high_usd"]): r for r in observations}
+        obs = list(unique.values())
+        value = median((r["low_usd"] + r["high_usd"]) / 2 for r in obs)
+        rows.append({
+            "period": period, "mcfi_usd": value,
+            "low_usd": min(r["low_usd"] for r in obs),
+            "high_usd": max(r["high_usd"] for r in obs),
+            "route": "Xi’an (China) → Mersin/Ambarli (Türkiye)",
+            "container": "40HC", "unit": "USD per 40HC", "type": "observed",
+            "assessment_count": len(obs), "observed_routes": 1,
+            "confidence": "Published market assessments; not executable quotes",
+            "basis": "Median of full-route assessment midpoints; no partial-route averaging or cost-model division.",
+            "source_url": obs[-1]["source_url"],
+            "source_urls": list(dict.fromkeys(r["source_url"] for r in obs)),
+        })
+    data["mcfi_monthly"] = rows
+    if rows:
+        latest = rows[-1]
+        data["headline"]["latest_mcfi_core"] = {
+            "period": latest["period"], "value_usd": latest["mcfi_usd"],
+            "low_usd": latest["low_usd"], "high_usd": latest["high_usd"],
+            "unit": "USD per 40HC", "coverage": latest["route"],
+            "confidence": latest["confidence"], "source_url": latest["source_url"],
+        }
+    else:
+        data["headline"]["latest_mcfi_core"] = {"period": None, "value_usd": None}
+    data["year_summary"] = []
+    for year in sorted({r["period"][:4] for r in rows}):
+        vals = [r["mcfi_usd"] for r in rows if r["period"].startswith(year)]
+        data["year_summary"].append({"year": int(year), "complete_months": len(vals),
+            "average_usd": round(sum(vals) / len(vals)), "low_usd": min(vals), "high_usd": max(vals)})
 
 
 def refresh_provider(data):
@@ -251,11 +238,19 @@ def refresh_provider(data):
 
 
 def write_history_csv(data):
-    fields = ["period", "mcfi_index", "premium_vs_model_pct", "mcfi_usd", "fundamental_cost_usd", "baku_midpoint_usd", "turkey_midpoint_usd", "type", "observed_routes", "confidence", "basis", "source_url"]
+    fields = ["period", "mcfi_usd", "low_usd", "high_usd", "route", "container", "unit", "type", "assessment_count", "confidence", "basis", "source_url"]
     with (ROOT / "mcfi_history.csv").open("w", encoding="utf-8-sig", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore", lineterminator="\n")
         writer.writeheader()
         writer.writerows(data["mcfi_monthly"])
+
+
+def write_raw_csv(data):
+    fields = ["date", "period", "route", "origin", "destination", "container", "ownership", "low_usd", "high_usd", "midpoint_usd", "scope", "primary_eligible", "grade", "evidence_type", "source_name", "source_url", "notes"]
+    with (ROOT / "raw_observations.csv").open("w", encoding="utf-8-sig", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore", lineterminator="\n")
+        writer.writeheader()
+        writer.writerows(data.get("historical_observations", []))
 
 
 def main():
@@ -273,6 +268,8 @@ def main():
     except Exception as exc:
         errors.append(f"provider refresh skipped: {exc}")
 
+    rebuild_freight_series(data)
+
     if data != original:
         DATA.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         print("Updated data.json from current public sources.")
@@ -280,6 +277,7 @@ def main():
         print("No market-data changes detected.")
 
     write_history_csv(data)
+    write_raw_csv(data)
 
     for err in errors:
         print(err, file=sys.stderr)

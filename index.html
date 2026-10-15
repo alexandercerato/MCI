@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#080c11" />
   <title>Middle Corridor Freight Monitor</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
-  <link rel="stylesheet" href="styles.css?v=20261008-views" />
+  <link rel="stylesheet" href="styles.css?v=20261015-freight" />
 </head>
 <body>
   <nav class="topbar" aria-label="Main navigation">
@@ -42,16 +42,16 @@
         <div>
           <div class="eyebrow">Middle Corridor Freight Monitor</div>
           <h1>MCFI-40</h1>
-          <p class="lead">A 50/50 freight basket for 40' HC shipments from Xi'an to Baku and onward to Türkiye, measured against the modelled Xi'an–Baku structural cost reference.</p>
+          <p class="lead">The latest published freight rate for one loaded 40’ high-cube container from Xi’an (China) to Ambarli/Mersin (Türkiye), across the full Middle Corridor.</p>
         </div>
         <div class="asof"><span>Data status</span><strong id="asOfDate">—</strong></div>
       </div>
 
       <div class="headline-grid">
         <div class="index-panel">
-          <div class="index-label">Middle Corridor Freight Index</div>
+          <div class="index-label">Middle Corridor Freight Index · full route</div>
           <div class="index-value" id="mcfiValue">—</div>
-          <div class="index-unit" id="mcfiUnit">Structural model calibration</div>
+          <div class="index-unit" id="mcfiUnit">USD per 40HC · full corridor</div>
           <div class="index-period" id="mcfiMeta">—</div>
         </div>
         <div class="market-strip">
@@ -84,10 +84,10 @@
       <div class="two-col">
         <div>
           <h2>What the MCFI tracks</h2>
-          <p class="section-copy">The MCFI combines Xi’an–Baku and Xi’an–Mersin/Ambarli market assessments with equal 50% weights. Both routes must refer to the same month. The denominator is the documented Xi’an–Baku structural cost reference; it does not yet include a separately verified Türkiye continuation cost.</p>
+          <p class="section-copy">MCFI-40 is a freight-rate benchmark in USD per loaded 40HC container for the complete Xi’an–Ambarli/Mersin route, via Kazakhstan, the Caspian Sea, Azerbaijan and Georgia. It uses the midpoint of the published full-route market range; where several comparable assessments exist for a month, it uses the median of their midpoints. Baku-only prices, provider tariffs and structural cost estimates remain separate reference data. The assessment month is always shown; refreshing the site does not create a new quote.</p>
         </div>
         <div class="formula-card">
-          <span>MCFI-40 structural formula</span>
+          <span>MCFI-40 freight-rate formula</span>
           <strong id="formulaText">—</strong>
         </div>
       </div>
@@ -98,20 +98,19 @@
       <div class="section-head chart-head">
         <div>
           <div class="section-kicker">MCFI history</div>
-          <h2>MCFI · historical fundamental-cost series</h2>
-          <p>The same 50/50 Baku–Türkiye market basket divided by the period-specific Baku structural cost reference. Official TITR anchors are used when available; post-March 2026 values carry forward the last published official anchor and are flagged accordingly.</p>
+          <h2>MCFI-40 · full-route freight history</h2>
+          <p>Monthly Xi’an–Ambarli/Mersin market assessments in USD per 40HC, recalculated on the same full-route basis throughout. Missing months are shown as gaps. This price series replaces the earlier cost-relative index; the two scales are not comparable.</p>
         </div>
         <div class="chart-summary" id="chartSummary">—</div>
       </div>
 
       <div class="chart-shell">
-        <div class="chart-y-label" id="chartYLabel">MCFI points</div>
-        <svg id="mcfiChart" class="mcfi-chart" viewBox="0 0 1200 430" role="img" aria-label="Historical Middle Corridor Freight Index"></svg>
+        <div class="chart-y-label" id="chartYLabel">USD / 40HC</div>
+        <svg id="mcfiChart" class="mcfi-chart" viewBox="0 0 1200 430" role="img" aria-label="Historical full-route freight rate in US dollars per 40HC"></svg>
         <div class="chart-tooltip" id="chartTooltip" hidden></div>
       </div>
       <div class="chart-legend">
         <span><i class="legend-line"></i>MCFI</span>
-        <span><i class="legend-base"></i>Fundamental cost = 100</span>
         <span><i class="legend-dot"></i>Observed month</span>
         <span><i class="legend-today"></i>Current month</span>
       </div>
@@ -268,7 +267,7 @@
       <div class="year-stats" id="yearKpis"></div>
       <div class="table-wrap terminal-table">
         <table>
-          <thead><tr><th>Month</th><th>MCFI</th><th>Market basket</th><th>Fundamental cost</th><th>Xi'an → Baku</th><th>Xi'an → Türkiye</th><th>Sources</th></tr></thead>
+          <thead><tr><th>Month</th><th>MCFI-40 · USD</th><th>Assessed range</th><th>Unit</th><th>Sources</th></tr></thead>
           <tbody id="mcfiTable"></tbody>
         </table>
       </div>
@@ -310,6 +309,6 @@
   </footer>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="runtime-config.js"></script>
-  <script src="app.js?v=20261008-views"></script>
+  <script src="app.js?v=20261015-freight"></script>
 </body>
 </html>
