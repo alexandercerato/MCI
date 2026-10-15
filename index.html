@@ -28,12 +28,12 @@
   <meta name="twitter:image" content="https://alexandercerato.github.io/MCI/assets/mci-social-logo-square.png" />
   <meta name="twitter:image:alt" content="MCI — Middle Corridor Freight Monitor" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
-  <link rel="stylesheet" href="styles.css?v=20261015-estimator" />
+  <link rel="stylesheet" href="styles.css?v=20261015-overview" />
 </head>
 <body>
   <nav class="topbar" aria-label="Main navigation">
     <div class="wrap nav-inner">
-      <a class="brand" href="#overview">MCFM</a>
+      <a class="brand" href="#overview"><img src="assets/mci-logo.svg" width="32" height="32" alt="" />MCFM</a>
       <button class="nav-toggle" id="navToggle" type="button" aria-controls="sectionNav" aria-expanded="false">Menu <span aria-hidden="true">☰</span></button>
       <div class="nav-links" id="sectionNav">
         <a href="#overview">Overview</a>
@@ -59,46 +59,42 @@
     </div>
   </aside>
 
-  <header class="hero site-view" id="overview" tabindex="-1">
+  <section class="market-overview site-view" id="overview" tabindex="-1" aria-labelledby="overviewTitle">
     <div class="wrap">
-      <div class="hero-topline">
-        <div>
-          <div class="eyebrow">Middle Corridor Freight Monitor</div>
-          <h1>MCFI-40</h1>
-          <p class="lead">The latest published freight rate for one loaded 40’ high-cube container from Xi’an (China) to Ambarli/Mersin (Türkiye), across the full Middle Corridor.</p>
-        </div>
-        <div class="asof"><span>Data status</span><strong id="asOfDate">—</strong></div>
+      <div class="instrument-breadcrumb">Indices <span>/</span> Middle Corridor <span>/</span> MCFI-40</div>
+      <div class="instrument-heading">
+        <div><div class="instrument-title-row"><h1 id="overviewTitle">Middle Corridor Freight Index</h1><span class="instrument-symbol">MCFI-40</span></div><p class="instrument-route">Xi’an, China → Ambarli / Mersin, Türkiye · 1 loaded 40HC · USD</p></div>
+        <div class="instrument-actions"><a href="#tracks">Methodology</a><a href="mcfi_history.csv" download>Download CSV</a></div>
       </div>
-
-      <div class="headline-grid">
-        <div class="index-panel">
-          <div class="index-label">Middle Corridor Freight Index · full route</div>
-          <div class="index-value" id="mcfiValue">—</div>
+      <div class="instrument-quote">
+        <div class="instrument-primary">
+          <div class="instrument-price-row"><div class="index-value" id="mcfiValue">—</div><button class="index-motion-toggle" id="indexMotionToggle" type="button" aria-label="Pause index animation" aria-pressed="false" title="Pause index animation">Ⅱ</button><div class="instrument-change"><strong id="overviewChange">—</strong><small id="overviewChangeMeta">Waiting for the latest assessment</small></div></div>
+          <div class="instrument-period" id="overviewPeriod">Latest published assessment</div>
           <div class="index-unit" id="mcfiUnit">USD per 40HC · full corridor</div>
-          <div class="index-period" id="mcfiMeta">—</div>
+          <div class="index-period" id="mcfiMeta">Loading the full-route market assessment…</div>
         </div>
-        <div class="market-strip">
-          <div class="market-cell">
-            <span>Xi'an (China) → Baku/Alat (Azerbaijan)</span>
-            <strong id="bakuValue">—</strong>
-            <small id="bakuMeta">—</small>
-          </div>
-          <div class="market-cell">
-            <span>Xi'an (China) → Türkiye</span>
-            <strong id="turkeyValue">—</strong>
-            <small id="turkeyMeta">—</small>
-          </div>
-          <div class="market-cell">
-            <span>Latest provider quote · Xi'an → Baku</span>
-            <strong id="providerValue">—</strong>
-            <small id="providerMeta">—</small>
-          </div>
-        </div>
+        <div class="instrument-range"><span>Published market range</span><strong id="overviewRange">—</strong><div class="instrument-range-track" aria-hidden="true"><i></i></div><div class="instrument-range-scale"><small id="overviewRangeLow">Low</small><small id="overviewRangeHigh">High</small></div></div>
       </div>
-      <div class="overview-shortcuts" aria-label="Explore the monitor"><a href="#index-chart">View index chart <span aria-hidden="true">↗</span></a><a href="#route">Explore route <span aria-hidden="true">↗</span></a><a href="#pricing">Compare prices <span aria-hidden="true">↗</span></a></div>
-      <div class="ticker" id="refreshStatus">Loading market data…</div>
+      <nav class="instrument-tabs" aria-label="Index details"><a href="#overview" aria-current="page">Overview</a><a href="#index-chart">Chart</a><a href="#history">Historical data</a><a href="#structural">Sources</a></nav>
+      <div class="overview-workspace">
+        <section class="overview-chart-card" aria-labelledby="overviewChartTitle">
+          <div class="overview-chart-head"><div><h2 id="overviewChartTitle">MCFI-40 historical chart</h2><p>Monthly observations · USD per 40HC</p></div><div class="overview-chart-ranges" role="group" aria-label="Chart period"><button type="button" data-overview-range="3m" aria-pressed="false">3M</button><button type="button" data-overview-range="6m" aria-pressed="false">6M</button><button type="button" data-overview-range="1y" aria-pressed="false">1Y</button><button type="button" data-overview-range="year" aria-pressed="false">This year</button><button class="active" type="button" data-overview-range="all" aria-pressed="true">ALL</button></div></div>
+          <div class="overview-chart-shell"><svg id="overviewChart" viewBox="0 0 1000 290" role="img" aria-label="Monthly full-route MCFI-40 market assessments"></svg><div class="chart-tooltip" id="overviewTooltip" hidden></div><p class="overview-chart-empty" id="overviewChartEmpty" hidden>No observations in this period.</p></div>
+          <div class="overview-chart-legend"><span><i></i>Observed assessment</span><span>Missing months remain gaps</span></div>
+        </section>
+        <aside class="overview-sidebar" aria-label="Market snapshot and shipment planning">
+          <section class="overview-card snapshot-card"><h2>Market snapshot</h2><dl><div><dt id="overviewPreviousLabel">Previous observation</dt><dd id="overviewPrevious">—</dd></div><div><dt>Change YTD</dt><dd id="overviewYtd">—</dd></div><div><dt>Change YoY</dt><dd id="overviewYoy">—</dd></div><div><dt>Assessment period</dt><dd id="overviewSnapshotPeriod">—</dd></div></dl></section>
+          <section class="overview-card overview-estimator"><h2>Plan a different shipment</h2><p>25 corridor cities · indicative route estimates</p><a href="#cost-estimator">Open Route Cost Estimator <span aria-hidden="true">→</span></a></section>
+          <section class="overview-card overview-about"><h2>About this benchmark</h2><p>The midpoint of the published full-route range for one loaded 40HC. A market reference, not a booking quote.</p><a href="#tracks">View methodology →</a></section>
+        </aside>
+      </div>
+      <div class="overview-secondary">
+        <section class="overview-card overview-news-card"><div class="overview-card-heading"><h2>Latest corridor news</h2><a href="#news">All news →</a></div><div id="overviewNews"><p class="overview-placeholder">Loading recent reporting…</p></div></section>
+        <section class="overview-card overview-references"><div class="overview-card-heading"><h2>Price references</h2><a href="#pricing">All prices →</a></div><div class="market-reference-list"><div><span>Xi’an → Baku / Alat</span><strong id="bakuValue">—</strong><small id="bakuMeta">—</small></div><div><span>Xi’an → Türkiye</span><strong id="turkeyValue">—</strong><small id="turkeyMeta">—</small></div><div><span>Provider tariff · Xi’an → Baku</span><strong id="providerValue">—</strong><small id="providerMeta">—</small></div></div></section>
+      </div>
+      <div class="overview-data-status"><span id="refreshStatus">Loading market data…</span><span>Dataset dated <strong id="asOfDate">—</strong></span></div>
     </div>
-  </header>
+  </section>
 
   <main class="wrap" id="detailViews" hidden>
     <div class="view-toolbar"><a href="#overview">← Overview</a><span id="viewLabel"></span></div>
@@ -180,7 +176,7 @@
           <div class="section-kicker">Aktau operations</div>
           <h2>Port of Aktau · vessel statistics</h2>
         </div>
-        <div class="aktau-map-badge"><span>OFFICIAL PORT DATA</span><small id="aktauOfficialUpdated">refresh every 5 min</small></div>
+        <div class="aktau-map-badge"><span>OFFICIAL PORT DATA</span><small id="aktauOfficialUpdated">Awaiting official update</small></div>
       </div>
 
       <div class="aktau-occupancy-card">
@@ -218,7 +214,7 @@
         <div>
           <div class="section-kicker">Live corridor intelligence</div>
           <h2>Latest Middle Corridor news</h2>
-          <p>Recent public reporting on the Trans-Caspian International Transport Route, refreshed every five minutes.</p>
+          <p>Recent public reporting on the Trans-Caspian International Transport Route.</p>
         </div>
         <div class="news-status"><span id="newsStatus">CONNECTING</span><small id="newsUpdated">—</small></div>
       </div>
@@ -317,7 +313,7 @@
         </div>
         <div id="estimateResult" class="estimate-result" role="status" aria-live="polite" aria-atomic="true"><div class="estimate-empty">Loading the shared market dataset…</div></div>
       </div>
-      <p class="estimate-footnote">Planning tool · not a freight offer. Calculations refresh instantly; source tariffs refresh with the site every five minutes. The market assessment month remains visible. This estimator does not change MCFI-40.</p>
+      <p class="estimate-footnote">Planning tool · not a freight offer. Calculations use the shared site dataset and the latest available pricing references. The market assessment month remains visible. This estimator does not change MCFI-40.</p>
     </section>
 
     <section class="panel history-panel site-view" id="history" tabindex="-1" hidden>
@@ -351,13 +347,14 @@
   <footer>
     <div class="wrap footer-inner">
       <span>Middle Corridor Freight Monitor</span>
-      <span>Data refresh: every 5 minutes</span>
+      <span>Independent corridor market intelligence</span>
     </div>
   </footer>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="runtime-config.js"></script>
-  <script src="estimator.js?v=20261015-estimator"></script>
-  <script src="estimator-ui.js?v=20261015-estimator"></script>
-  <script src="app.js?v=20261015-estimator"></script>
+  <script src="estimator.js?v=20261015-overview"></script>
+  <script src="estimator-ui.js?v=20261015-overview"></script>
+  <script src="overview.js?v=20261015-overview"></script>
+  <script src="app.js?v=20261015-overview"></script>
 </body>
 </html>

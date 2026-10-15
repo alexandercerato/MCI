@@ -7,7 +7,7 @@ async function loadData(){
   const res=await fetch(`data.json?t=${Date.now()}`,{cache:'no-store'});
   DATA=await res.json();
   render();
-  refreshStatus.textContent=`Historical database loaded · ${new Date().toLocaleString('en-GB')} · live feeds refresh every ${DATA.meta.refresh_minutes} minutes`;
+  refreshStatus.textContent=`Market dataset checked ${new Date().toLocaleString('en-GB',{timeZone:'Europe/Rome'})} Rome`;
 }
 
 
@@ -42,6 +42,7 @@ function renderFreightHeadline(){
   mcfiValue.textContent=quote?fmtUSD(quote.value_usd):'—';
   mcfiUnit.textContent='USD per 40HC · full corridor';
   mcfiMeta.textContent=quote?`${fmtMonth(quote.period)} · Xi’an → Ambarli/Mersin · ${fmtUSD(quote.low_usd)}–${fmtUSD(quote.high_usd)} · latest published assessment`:'No comparable full-route assessment available';
+  window.MCI_OVERVIEW?.update(DATA);
 }
 function renderYearSummary(){
   const years=[...new Set(DATA.mcfi_monthly.map(x=>x.period.slice(0,4)))].sort();
@@ -468,6 +469,7 @@ let NEWS_DATA=null;
 function renderNews(data){
   NEWS_DATA=data;
   renderNewsTicker(data);
+  window.MCI_OVERVIEW?.updateNews(data);
   if(!window.newsGrid) return;
   const items=data?.items||[];
   newsStatus.textContent=data?.status==='live'?'LIVE':'OFFLINE';
@@ -581,7 +583,7 @@ async function loadAktauOfficialActivity(){
     roadsteadEl.textContent=String(roadsteadCount);
     totalEl.textContent=String(berthedCount+roadsteadCount);
     dateEl.textContent=aktau.traffic_date||'—';
-    if(updatedEl) updatedEl.textContent=data?.updated_at?`Updated ${formatAge(data.updated_at)}`:'refresh every 5 min';
+    if(updatedEl) updatedEl.textContent=data?.updated_at?`Updated ${formatAge(data.updated_at)}`:'Awaiting official update';
 
     const rows=[
       ...berthed.map(v=>({
