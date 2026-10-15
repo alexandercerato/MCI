@@ -1043,9 +1043,6 @@ footer{margin-top:auto}
 .instrument-price-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .market-overview .index-value{margin:0;font-size:clamp(50px,5.6vw,78px);line-height:1.05;letter-spacing:-.055em;font-variant-numeric:tabular-nums;animation:mcfi-value-pulse 6s ease-in-out infinite}
 @keyframes mcfi-value-pulse{0%,100%{opacity:1;text-shadow:0 0 0 rgba(99,198,191,0)}50%{opacity:.64;text-shadow:0 0 16px rgba(99,198,191,.18)}}
-.market-overview .index-value.index-motion-paused{animation:none}
-.index-motion-toggle{border:1px solid var(--line);border-radius:3px;background:transparent;color:var(--muted2);width:27px;height:29px;cursor:pointer;font-size:11px}
-.index-motion-toggle:hover,.index-motion-toggle:focus-visible{border-color:var(--cyan);color:var(--cyan)}
 .instrument-change{margin-left:8px;display:flex;flex-direction:column;gap:5px}
 .instrument-change strong{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:clamp(15px,1.45vw,21px);color:var(--gold)}
 .instrument-change small{font-size:10px;color:var(--muted2)}
@@ -1169,5 +1166,4 @@ footer{margin-top:auto}
 }
 @media(prefers-reduced-motion:reduce){
  .market-overview .index-value{animation:none}
- .index-motion-toggle{display:none}
 }

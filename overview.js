@@ -149,14 +149,6 @@
     document.querySelectorAll('[data-overview-range]').forEach(b=>{const active=b===button;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));});
     drawChart();
   }));
-  $('indexMotionToggle')?.addEventListener('click',()=>{
-    const value=$('mcfiValue'),button=$('indexMotionToggle');if(!value||!button)return;
-    const paused=value.classList.toggle('index-motion-paused');
-    button.setAttribute('aria-pressed',String(paused));
-    button.setAttribute('aria-label',paused?'Resume index animation':'Pause index animation');
-    button.title=paused?'Resume index animation':'Pause index animation';
-    button.textContent=paused?'▶':'Ⅱ';
-  });
   let resizeFrame=0;
   window.addEventListener('resize',()=>{cancelAnimationFrame(resizeFrame);resizeFrame=requestAnimationFrame(drawChart);});
   window.MCI_OVERVIEW={update,updateNews};
