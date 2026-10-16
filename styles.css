@@ -1031,7 +1031,7 @@ footer{margin-top:auto}
 @media(max-width:620px){.estimate-input-row{grid-template-columns:1fr}.estimate-allocation dl{grid-template-columns:1fr}.estimate-result-head{align-items:start}.estimate-result{padding:16px}.panel h3.estimate-price{font-size:clamp(22px,6.5vw,34px)}.estimate-presets button{min-height:40px}.estimate-controls select,.estimate-controls input{font-size:16px}}
 
 /* Market overview: approved desktop and mobile composition. */
-.brand{display:inline-flex;align-items:center;gap:10px}.brand img{display:block;flex:0 0 32px}
+.brand{display:inline-flex;align-items:center;gap:10px}.brand img{display:block;width:88px;height:54px;flex:0 0 88px;object-fit:contain}
 .market-overview{padding:28px 0 30px}
 .instrument-breadcrumb{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted2);margin-bottom:18px}
 .instrument-breadcrumb span{padding:0 10px;color:var(--line)}
