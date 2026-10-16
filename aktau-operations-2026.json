@@ -1,0 +1,16 @@
+{
+  "as_of": "2026-10-16",
+  "port": "Aktau",
+  "period": "2026-09",
+  "throughput_teu": 10186,
+  "year_on_year_growth_percent": 80,
+  "capacity_operational_teu_per_year": 140000,
+  "capacity_planned_teu_per_year": 240000,
+  "capacity_note": "140,000 TEU/year is reported first-phase operational capacity; 240,000 is a future target, not installed capacity.",
+  "sources": {
+    "ktz": "https://t.me/s/PR_KTZh",
+    "throughput": "https://portnews.ru/news/398081/",
+    "capacity": "https://portnews.ru/news/398081/",
+    "planned": "https://kaz.inform.kz/news/aktau-portinda-zhuk-tasimaldaytin-8-keme-salinadi-c040f4aa/"
+  }
+}
