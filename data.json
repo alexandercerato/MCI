@@ -1780,12 +1780,12 @@
       "url": "https://widesafe.com/news_en"
     },
     {
-      "name": "TITR / Middle Corridor — Dostyk–Aktau tariff sheet",
-      "url": "https://middlecorridor.com/images/tariffs/6.pdf"
+      "name": "TITR 2026 Dostyk–Aktau published rail tariff",
+      "url": "https://middlecorridor.com/images/tariffs/2026/2-en.pdf"
     },
     {
-      "name": "TITR / Middle Corridor — integrated feeder tariff sheet",
-      "url": "https://middlecorridor.com/images/tariffs/1.pdf"
+      "name": "TITR 2026 Altynkol–Alat feeder schedule; maritime validity requires confirmation",
+      "url": "https://middlecorridor.com/images/tariffs/2026/3-en.pdf"
     },
     {
       "name": "ASCO — Kuryk/Alat ferry tariff",
@@ -1808,10 +1808,10 @@
         "scope": "Kazakhstan rail segment",
         "distance_km": 3095,
         "delivery_hours": 114,
-        "status": "verified",
+        "status": "published 2026 reference; booking terms require confirmation",
         "source_type": "Official TITR tariff sheet",
         "source_name": "TITR / Middle Corridor",
-        "source_url": "https://middlecorridor.com/images/tariffs/6.pdf",
+        "source_url": "https://middlecorridor.com/images/tariffs/2026/2-en.pdf",
         "note": "Published tariff includes rolling-stock use for containers from China across Kazakhstan; TITR traffic via Dostyk uses conditions agreed for Altynkol."
       },
       {
@@ -1851,28 +1851,29 @@
       }
     ],
     "integrated_official_reference": {
-      "effective_period": "2025 official integrated feeder tariff sheet",
-      "source_name": "TITR / Middle Corridor",
-      "source_url": "https://middlecorridor.com/images/tariffs/1.pdf",
-      "note": "Standalone all-in corridor tariff references from Altynkol. They overlap with the segment tariffs above and must not be added to them.",
+      "effective_period": "2026 published schedule · maritime validity requires reconfirmation",
+      "source_name": "TITR / Middle Corridor · 2026 feeder schedule",
+      "source_url": "https://middlecorridor.com/images/tariffs/2026/3-en.pdf",
+      "note": "Partial-corridor references from Altynkol, not Xi’an. Group-shipment and exclusion conditions apply. The sheet states 2026 validity, but ASCO rates are stated valid only through 31 March 2026; current maritime pricing requires confirmation. These overlapping schedules must not be added to segment tariffs or the headline assessment.",
+      "maritime_component_valid_until": "2026-03-31",
       "routes": [
         {
           "route": "Altynkol (Kazakhstan) → Baku/Alat (Azerbaijan)",
-          "value_usd": 2348,
+          "value_usd": 2498,
           "container": "40 ft loaded",
           "distance_km": 3654,
           "delivery_days": 5
         },
         {
           "route": "Altynkol (Kazakhstan) → Batumi/Poti (Georgia)",
-          "value_usd": 2848,
+          "value_usd": 2998,
           "container": "40 ft loaded",
           "distance_km": 4479,
           "delivery_days": 7
         },
         {
           "route": "Altynkol (Kazakhstan) → Istanbul (Türkiye)",
-          "value_usd": 3681,
+          "value_usd": 3861,
           "container": "40 ft loaded",
           "distance_km": 6180,
           "delivery_days": 10

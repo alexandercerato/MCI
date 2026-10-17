@@ -278,6 +278,20 @@ def refresh_baku(data):
     })
 
 
+def refresh_tariff_references(data):
+    snapshot = json.loads((ROOT / "tariff-reference-2026.json").read_text(encoding="utf-8"))
+    sb = data["structural_benchmarks"]
+    segment = next(row for row in sb["segments"] if row["id"] == "dostyk_aktau")
+    segment.update({k: snapshot["dostyk_aktau"][k] for k in ("source_url", "value_usd", "distance_km", "delivery_hours")})
+    segment["status"] = "published 2026 reference; booking terms require confirmation"
+    sb["integrated_official_reference"] = snapshot["integrated_feeder"]
+    for source in data.get("sources", []):
+        if source["url"] == "https://middlecorridor.com/images/tariffs/6.pdf":
+            source.update(name="TITR 2026 Dostyk–Aktau published rail tariff",url=snapshot["dostyk_aktau"]["source_url"])
+        elif source["url"] == "https://middlecorridor.com/images/tariffs/1.pdf":
+            source.update(name="TITR 2026 Altynkol–Alat feeder schedule; maritime validity requires confirmation",url=snapshot["integrated_feeder"]["source_url"])
+
+
 def refresh_provider(data):
     text = text_of(get(WIDESAFE_NEWS).text)
     snapshot = data["headline"]["latest_provider_snapshot"]
@@ -333,6 +347,7 @@ def main():
 
     refresh_aktau(data)
     refresh_baku(data)
+    refresh_tariff_references(data)
     rebuild_freight_series(data)
 
     if data != original:

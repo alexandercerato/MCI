@@ -111,7 +111,7 @@ function renderStructural(live){
   const liveEast=live?.structural?.dostyk_aktau || east;
   const liveCasp=live?.structural?.kuryk_alat || casp;
   eastBenchmark.textContent=fmtUSD(liveEast.value_usd);
-  eastBenchmarkMeta.textContent=`40' loaded · ${east.distance_km.toLocaleString()} km · ${east.delivery_hours} h · official tariff`;
+  eastBenchmarkMeta.textContent=`40' loaded · ${east.distance_km.toLocaleString()} km · ${east.delivery_hours} h · published 2026 reference`;
   xianAktauBenchmark.textContent=xianAktau.value_usd?fmtUSD(xianAktau.value_usd):'N/A';
   xianAktauMeta.textContent=xianAktau.note;
   caspianBenchmark.textContent=fmtUSD(liveCasp.value_usd);
@@ -119,10 +119,11 @@ function renderStructural(live){
   aktauBakuBenchmark.textContent=aktauBaku.value_usd?fmtUSD(aktauBaku.value_usd):'N/A';
   aktauBakuMeta.textContent=aktauBaku.note;
 
-  corridorBenchmarks.innerHTML=sb.integrated_official_reference.routes.map(r=>`<article class="structural-card compact-card">
+  corridorBenchmarks.innerHTML=`<p class="estimate-note">${escapeHTML(sb.integrated_official_reference.note)}</p>`+sb.integrated_official_reference.routes.map(r=>`<article class="structural-card compact-card">
     <span class="structural-route">${escapeHTML(r.route)}</span>
     <strong>${fmtUSD(r.value_usd)}</strong>
     <small>${escapeHTML(r.container)} · ${r.distance_km.toLocaleString()} km · ${r.delivery_days} days · ${escapeHTML(sb.integrated_official_reference.effective_period)}</small>
+    <a class="source-link" href="${safeTickerURL(sb.integrated_official_reference.source_url)}" target="_blank" rel="noopener">2026 schedule ↗</a>
   </article>`).join('');
 
   const assessment=live?.market?.assessment || sb.market_defaults.latest_comparable_assessment;

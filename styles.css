@@ -1191,3 +1191,5 @@ body{background:var(--bg)}
 a:focus-visible,button:focus-visible,summary:focus-visible{
   outline:2px solid var(--cyan);outline-offset:3px
 }
+
+#corridorBenchmarks > .estimate-note{grid-column:1/-1;margin:0 0 6px;line-height:1.5}

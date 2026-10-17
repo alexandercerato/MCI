@@ -43,4 +43,13 @@ class RefreshTests(unittest.TestCase):
         self.assertIn('approximately',self.data['baku']['throughput_status'])
         self.assertIn('not live berth occupancy',self.data['baku']['note'])
 
+    def test_2026_tariff_references_do_not_move_the_full_route_index(self):
+        before=copy.deepcopy(self.data['headline']['latest_mcfi_core'])
+        updater.refresh_tariff_references(self.data)
+        sb=self.data['structural_benchmarks']
+        self.assertEqual([r['value_usd'] for r in sb['integrated_official_reference']['routes']],[2498,2998,3861])
+        self.assertIn('2026/2-en.pdf',sb['segments'][0]['source_url'])
+        self.assertEqual(sb['integrated_official_reference']['maritime_component_valid_until'],'2026-03-31')
+        self.assertEqual(before,self.data['headline']['latest_mcfi_core'])
+
 if __name__=='__main__':unittest.main()
