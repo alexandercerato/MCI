@@ -193,9 +193,10 @@
       "value_usd": 5000,
       "route": "Xi’an (China) → Baku/Absheron (Azerbaijan)",
       "container_basis": "SOC 40HQ",
-      "status": "published provider tariff",
+      "status": "historical tariff; no current public price card",
       "source_name": "WideSafe",
-      "source_url": "https://www.widesafe.com/news_en"
+      "source_url": "https://www.widesafe.com/news_en",
+      "source_status": "not_published"
     },
     "latest_turkey_market": {
       "period": "2026-09",
@@ -1727,9 +1728,16 @@
   },
   "aktau": {
     "capacity_mtpa": 11.8,
-    "container_hub_teu": 240000,
+    "container_hub_teu": 140000,
     "historical_2024_proposed_handling_40ft_usd": 80,
-    "note": "Port capacity and new container hub values are contextual operating statistics, not direct components of the monthly MCFI unless they appear in a comparable all-in quote."
+    "note": "Port capacity and new container hub values are contextual operating statistics, not direct components of the monthly MCFI unless they appear in a comparable all-in quote.",
+    "container_hub_planned_teu": 240000,
+    "capacity_note": "140,000 TEU/year is reported first-phase operational capacity; 240,000 is a future target, not installed capacity.",
+    "capacity_source_url": "https://portnews.ru/news/398081/",
+    "throughput_period": "2026-09",
+    "throughput_teu": 10186,
+    "throughput_yoy_pct": 80,
+    "throughput_source_url": "https://t.me/PR_KTZh/5754"
   },
   "sources": [
     {

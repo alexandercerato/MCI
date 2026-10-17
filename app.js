@@ -64,7 +64,7 @@ function render(){
   turkeyValue.textContent=fmtUSD(h.latest_turkey_market.value_usd);
   turkeyMeta.textContent=`${fmtMonth(h.latest_turkey_market.period)} · ${h.latest_turkey_market.range}`;
   providerValue.textContent=fmtUSD(h.latest_provider_snapshot.value_usd);
-  providerMeta.textContent=`${fmtMonth(h.latest_provider_snapshot.period)} · ${h.latest_provider_snapshot.route}`;
+  providerMeta.textContent=`${fmtMonth(h.latest_provider_snapshot.period)} · historical tariff · validity not confirmed`;
 
   const structural=DATA.structural_benchmarks;
   const east=structural.segments.find(x=>x.id==='dostyk_aktau');
@@ -81,7 +81,8 @@ function render(){
 
   aktauKpis.innerHTML=`
     <div class="inline-kpi"><span>Port capacity</span><strong>${DATA.aktau.capacity_mtpa} Mt/y</strong><small>Aktau (Kazakhstan)</small></div>
-    <div class="inline-kpi"><span>Container hub</span><strong>${DATA.aktau.container_hub_teu.toLocaleString()} TEU/y</strong><small>Annual capacity</small></div>
+    <div class="inline-kpi"><span>Container hub · operational</span><strong>${DATA.aktau.container_hub_teu.toLocaleString()} TEU/y</strong><small>Annual capacity · planned expansion ${DATA.aktau.container_hub_planned_teu.toLocaleString()} TEU/y</small></div>
+    <div class="inline-kpi"><span>Container throughput · ${fmtMonth(DATA.aktau.throughput_period)}</span><strong>${DATA.aktau.throughput_teu.toLocaleString()} TEU</strong><small>+${DATA.aktau.throughput_yoy_pct}% year on year · <a href="${safeTickerURL(DATA.aktau.throughput_source_url)}" target="_blank" rel="noopener">KTZ source ↗</a></small></div>
     <div class="inline-kpi"><span>Verified KZ rail benchmark</span><strong>${fmtUSD(east?.value_usd)}</strong><small>Dostyk → Aktau · 40' loaded</small></div>`;
 
   renderYearSummary();
@@ -125,7 +126,7 @@ function renderStructural(live){
   const quotes=live?.market?.provider_quotes?.length ? live.market.provider_quotes : sb.market_defaults.provider_quotes;
   const marketCards=[
     {route:assessment.route, value:`${fmtUSD(assessment.low_usd)}–${fmtUSD(assessment.high_usd)}`, meta:`${fmtMonth(assessment.period)} · midpoint ${fmtUSD(assessment.midpoint_usd)} · market assessment`, url:assessment.source_url},
-    ...quotes.map(q=>({route:q.route,value:`${q.price_floor?'from ':''}${fmtUSD(q.value_usd)}`,meta:`${q.container} · provider quote`,url:q.source_url}))
+    ...quotes.map(q=>({route:q.route,value:`${q.price_floor?'from ':''}${fmtUSD(q.value_usd)}`,meta:`${fmtMonth(q.period)} · ${q.container} · historical reference; validity not confirmed`,url:q.source_url}))
   ];
   livePricingCards.innerHTML=marketCards.slice(0,4).map(x=>`<article class="structural-card compact-card">
     <span class="structural-route">${escapeHTML(x.route)}</span>
@@ -138,7 +139,8 @@ function renderStructural(live){
     pricingWatchStatus.textContent=live.status==='live'?'SOURCE WATCH LIVE':'SOURCE WATCH';
     pricingWatchStatus.className=live.review_required?'review':'live';
     pricingLastChecked.textContent=live.checked_at?`Checked ${formatAge(live.checked_at)}`:'—';
-    if(live.review_required) pricingLastChecked.textContent='Source changed · review required';
+    if(live.provider_status==='not_published') pricingLastChecked.textContent+=' · WideSafe: no current public tariff; historical references retained';
+    if(live.review_required) pricingLastChecked.textContent+=' · Source review required';
   }else{
     pricingWatchStatus.textContent='SOURCE WATCH';
     pricingLastChecked.textContent='Waiting for backend';
@@ -266,7 +268,7 @@ async function loadPricing(){
       turkeyMeta.textContent=`${fmtMonth(t.period)} · ${fmtUSD(t.low_usd)}–${fmtUSD(t.high_usd)}`;
     }
     const q=(PRICING_LIVE?.market?.provider_quotes||[]).find(x=>/Baku|Absheron/i.test(x.route||''));
-    if(q?.value_usd){ providerValue.textContent=fmtUSD(q.value_usd); providerMeta.textContent=`${fmtMonth(q.period)} · ${q.container||'40HQ'} · provider quote`; }
+    if(q?.value_usd){ providerValue.textContent=fmtUSD(q.value_usd); providerMeta.textContent=`${fmtMonth(q.period)} · ${q.container||'40HQ'} · historical reference; validity not confirmed`; }
     mergeLiveFreightAssessment();
     renderFreightHeadline();
     renderMcfiTable();
@@ -702,7 +704,7 @@ function renderPortTicker(data){
   const checked=stamp?` · checked ${escapeHTML(stamp)} Rome`:'';
   const item=(label,value,url)=>`<a class="ticker-item" href="${safeTickerURL(url)}" target="_blank" rel="noopener"><strong>${escapeHTML(label)} · ${value}</strong></a>`;
   const aktau=available('aktau')?`${occupancy(a)} · ${count(a.occupied_main_berths)}/${count(a.berth_capacity)} main-port berths · ${count(a.roadstead_vessels)} in roadstead${date('aktau')}${checked}`:'Official activity temporarily unavailable';
-  const kuryk=available('kuryk')?`${count(k.berthed_vessels)} berthed · ${count(k.approaching_vessels)} approaching${date('kuryk')}${checked}`:'Official activity temporarily unavailable';
+  const kuryk=available('kuryk')?`${count(k.berthed_vessels)} berthed · ${count(k.anchored_vessels)} at anchorage · ${count(k.approaching_vessels)} approaching${date('kuryk')}${checked}`:'Official activity temporarily unavailable';
   const baku=available('baku')?`${occupancy(b)}${date('baku')}${checked}`:'Live berth occupancy unavailable';
   setTicker('portTicker',[
     item('Aktau (Kazakhstan)',aktau,data?.aktau?.source_url||'https://www.portaktau.kz/'),

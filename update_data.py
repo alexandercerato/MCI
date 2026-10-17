@@ -219,22 +219,41 @@ def rebuild_freight_series(data):
             "average_usd": round(sum(vals) / len(vals)), "low_usd": min(vals), "high_usd": max(vals)})
 
 
+def refresh_aktau(data):
+    """Apply the checked structural snapshot on every scheduled refresh."""
+    snapshot = json.loads((ROOT / "aktau-operations-2026.json").read_text(encoding="utf-8"))
+    data["aktau"].update({
+        "container_hub_teu": snapshot["capacity_operational_teu_per_year"],
+        "container_hub_planned_teu": snapshot["capacity_planned_teu_per_year"],
+        "capacity_note": snapshot["capacity_note"],
+        "capacity_source_url": snapshot["sources"]["capacity"],
+        "throughput_period": snapshot["period"],
+        "throughput_teu": snapshot["throughput_teu"],
+        "throughput_yoy_pct": snapshot["year_on_year_growth_percent"],
+        "throughput_source_url": "https://t.me/PR_KTZh/5754",
+    })
+
+
 def refresh_provider(data):
     text = text_of(get(WIDESAFE_NEWS).text)
-    block_match = re.search(r"FCL\s+SOC\s+40HQ\s+Rates\s+to\s+Baku.{0,7000}", text, re.I | re.S)
-    block = block_match.group(0) if block_match else text
-    m = re.search(r"Xi[’'\-]?an(?:\s*\(Middle China\))?.{0,120}?\$\s*([0-9][0-9,]*)", block, re.I | re.S)
-    if not m:
-        raise ValueError("WideSafe Xi'an → Baku SOC 40HQ rate not found")
-    price = money(m.group(1))
-    data["headline"]["latest_provider_snapshot"].update({
-        "value_usd": price,
+    snapshot = data["headline"]["latest_provider_snapshot"]
+    # The redesigned news listing is not a price card. Never associate a price
+    # or publication date from another article with the historic route quote.
+    block = re.search(r"FCL\s+SOC\s+40HQ\s+Rates\s+to\s+Baku.{0,7000}", text, re.I | re.S)
+    if not block:
+        snapshot["status"] = "historical tariff; no current public price card"
+        snapshot["source_status"] = "not_published"
+        return
+    period = period_from_text(block.group(0))
+    m = re.search(r"Xi[’'\-]?an(?:\s*\(Middle China\))?.{0,120}?\$\s*([0-9][0-9,]*)", block.group(0), re.I | re.S)
+    if not m or not period:
+        raise ValueError("WideSafe price card requires a route price and explicit assessment month")
+    if period < snapshot.get("period", ""):
+        return
+    snapshot.update({"value_usd": money(m.group(1)), "period": period,
+        "source_status": "dated_card", "status": "dated provider tariff; validity not confirmed",
         "route": "Xi’an (China) → Baku/Absheron (Azerbaijan)",
-        "container_basis": "SOC 40HQ",
-        "status": "published provider tariff",
-        "source_name": "WideSafe",
-        "source_url": WIDESAFE_NEWS,
-    })
+        "container_basis": "SOC 40HQ", "source_name": "WideSafe", "source_url": WIDESAFE_NEWS})
 
 
 def write_history_csv(data):
@@ -268,6 +287,7 @@ def main():
     except Exception as exc:
         errors.append(f"provider refresh skipped: {exc}")
 
+    refresh_aktau(data)
     rebuild_freight_series(data)
 
     if data != original:

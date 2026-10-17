@@ -1,3 +1,4 @@
+import {parseKurykText, wideSafeCard} from './source-parsers.js';
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
@@ -1546,6 +1547,7 @@ async function refreshPricing() {
   let providerQuotes = previous.market.provider_quotes;
   let marketOk = false;
   let providerOk = false;
+  let providerStatus = 'unavailable';
 
   try {
     const sourceUrl = await discoverLatestAnewsPricingUrl();
@@ -1602,45 +1604,51 @@ async function refreshPricing() {
     if (!res.ok) throw new Error('WideSafe HTTP ' + res.status);
     const text = decodeHtmlText(await res.text());
 
-    const block = text.match(/FCL\s+SOC\s+40HQ\s+Rates\s+to\s+Baku[\s\S]{0,7000}/i)?.[0] || text;
-    const findRate = (label) => {
-      const re = new RegExp(label + '[\\s\\S]{0,120}?\\$\\s*([0-9][0-9,]*)','i');
-      const m = block.match(re);
-      return m ? moneyInt(m[1]) : null;
-    };
+    const card = wideSafeCard(text,inferPeriodFromText);
+    if (!card) {
+      providerStatus = 'not_published';
+    } else {
+      const {block,period} = card;
+      const findRate = (label) => {
+        const re = new RegExp(label + '[\\s\\S]{0,120}?\\$\\s*([0-9][0-9,]*)','i');
+        const m = block.match(re);
+        return m ? moneyInt(m[1]) : null;
+      };
 
-    const bakuRate = findRate("Xi[’'\\-]?an(?:\\s*\\(Middle China\\))?");
-    const potiRate = findRate('Poti,?\\s*Georgia');
-    const tbilisiRate = findRate('Tbilisi,?\\s*Georgia');
-    const turkeyRate = findRate('Mersin\\s*\\/\\s*Istanbul,?\\s*Turkey');
+      const bakuRate = findRate("Xi[’'\\-]?an(?:\\s*\\(Middle China\\))?");
+      const potiRate = findRate('Poti,?\\s*Georgia');
+      const tbilisiRate = findRate('Tbilisi,?\\s*Georgia');
+      const turkeyRate = findRate('Mersin\\s*\\/\\s*Istanbul,?\\s*Turkey');
 
-    if (!bakuRate) throw new Error('Xi\'an → Baku provider rate not parsed');
+      if (!bakuRate) throw new Error('Xi\'an → Baku provider rate not parsed');
 
-    const quotes = [];
-    quotes.push({
-      route: "Xi'an (China) → Baku/Absheron (Azerbaijan)",
-      value_usd: bakuRate,
-      price_floor: false,
-      container: 'SOC 40HQ',
-      period: '2026-08',
-      source_name: 'WideSafe',
-      source_url: WIDESAFE_NEWS_URL
-    });
-    if (potiRate) quotes.push({
-      route: "Xi'an (China) → Poti (Georgia)", value_usd:potiRate, price_floor:false,
-      container:'SOC 40HQ', period:'2026-08', source_name:'WideSafe', source_url:WIDESAFE_NEWS_URL
-    });
-    if (tbilisiRate) quotes.push({
-      route: "Xi'an (China) → Tbilisi (Georgia)", value_usd:tbilisiRate, price_floor:false,
-      container:'SOC 40HQ', period:'2026-08', source_name:'WideSafe', source_url:WIDESAFE_NEWS_URL
-    });
-    if (turkeyRate) quotes.push({
-      route: "Xi'an (China) → Mersin/Istanbul (Türkiye)", value_usd:turkeyRate, price_floor:true,
-      container:'SOC 40HQ', period:'2026-08', source_name:'WideSafe', source_url:WIDESAFE_NEWS_URL
-    });
+      const quotes = [];
+      quotes.push({
+        route: "Xi'an (China) → Baku/Absheron (Azerbaijan)",
+        value_usd: bakuRate,
+        price_floor: false,
+        container: 'SOC 40HQ',
+        period,
+        source_name: 'WideSafe',
+        source_url: WIDESAFE_NEWS_URL
+      });
+      if (potiRate) quotes.push({
+        route: "Xi'an (China) → Poti (Georgia)", value_usd:potiRate, price_floor:false,
+        container:'SOC 40HQ', period, source_name:'WideSafe', source_url:WIDESAFE_NEWS_URL
+      });
+      if (tbilisiRate) quotes.push({
+        route: "Xi'an (China) → Tbilisi (Georgia)", value_usd:tbilisiRate, price_floor:false,
+        container:'SOC 40HQ', period, source_name:'WideSafe', source_url:WIDESAFE_NEWS_URL
+      });
+      if (turkeyRate) quotes.push({
+        route: "Xi'an (China) → Mersin/Istanbul (Türkiye)", value_usd:turkeyRate, price_floor:true,
+        container:'SOC 40HQ', period, source_name:'WideSafe', source_url:WIDESAFE_NEWS_URL
+      });
 
-    providerQuotes = quotes;
-    providerOk = true;
+      if (period >= (providerQuotes[0]?.period || '')) providerQuotes = quotes;
+      providerOk = true;
+      providerStatus = 'dated_card';
+    }
   } catch (err) {
     errors.push('Provider rates: ' + err.message);
   }
@@ -1649,10 +1657,11 @@ async function refreshPricing() {
     status: (marketOk || providerOk) ? 'live' : (previous.checked_at ? 'stale' : 'offline'),
     checked_at: new Date().toISOString(),
     review_required: errors.length > 0,
+    provider_status: providerStatus,
     market: {
       assessment,
       turkey_assessment: turkeyAssessment,
-      provider_quotes: providerQuotes
+      provider_quotes: providerQuotes.map(q=>({...q,status:providerStatus==='dated_card'?'dated reference; validity not confirmed':'historical; not reconfirmed'}))
     },
     errors
   };
@@ -1915,36 +1924,7 @@ async function fetchKurykActivity() {
   if (!res.ok) throw new Error('Port Kuryk HTTP ' + res.status);
 
   const text = decodeHtmlText(await res.text());
-  const dateMatch = text.match(/Vessel traffic as of\s+([0-9.]+)/i);
-  const traffic_date = dateMatch ? dateMatch[1] : null;
-
-  const approachIndex = text.search(/Approaching vessels/i);
-  const berthedText = approachIndex >= 0 ? text.slice(0,approachIndex) : text;
-  const approachText = approachIndex >= 0 ? text.slice(approachIndex) : '';
-
-  const berthed = [];
-  const berthRe = /Berth No\.\s+(.+?)\s+Vessel name\s+(.+?)\s+Berthing time\s+([0-9.]+\s*\/\s*[0-9:]+)\s+Operation type\s+(.+?)(?=Berth No\.|Approaching vessels|$)/gi;
-  for (const m of berthedText.matchAll(berthRe)) {
-    berthed.push({
-      berth: m[1].trim(),
-      vessel_names: splitVesselNames(m[2]),
-      berthing_time: m[3].replace(/\s+/g,' ').trim(),
-      operation: m[4].trim()
-    });
-  }
-
-  const approaching = [];
-  const approachRe = /Vessel name\s+(.+?)\s+Date and time of vessel approach\s+([0-9.]+\s*\/\s*[0-9:]+)/gi;
-  for (const m of approachText.matchAll(approachRe)) {
-    approaching.push({
-      vessel_name: splitVesselNames(m[1])[0] || m[1].trim(),
-      eta: m[2].replace(/\s+/g,' ').trim()
-    });
-  }
-
-  if (!berthed.length && !approaching.length) {
-    throw new Error('Port Kuryk page loaded but vessel rows were not parsed');
-  }
+  const {traffic_date,berthed,anchored,approaching}=parseKurykText(text,splitVesselNames);
 
   const berthedVesselCount = berthed.reduce((n,row)=>n+row.vessel_names.length,0);
   const crossing_estimates = approaching.map(v=>estimatedFerryPosition(v,traffic_date));
@@ -1955,10 +1935,12 @@ async function fetchKurykActivity() {
     summary: {
       berthed_vessels: berthedVesselCount,
       active_berth_entries: berthed.length,
+      anchored_vessels: anchored.length,
       approaching_vessels: approaching.length,
       estimated_underway: crossing_estimates.filter(v=>v.estimate_status==='underway_estimated').length
     },
     berthed,
+    anchored,
     approaching,
     crossing_estimates
   };
@@ -2115,6 +2097,7 @@ async function refreshPortActivity() {
     ' occupancy=' + (aktau?.summary?.berth_occupancy_pct ?? 'n/a') + '%' +
     ' roadstead=' + (aktau?.summary?.roadstead_vessels ?? 'n/a') +
     ' · Kuryk berthed=' + (kuryk?.summary?.berthed_vessels ?? 'n/a') +
+    ' anchored=' + (kuryk?.summary?.anchored_vessels ?? 'n/a') +
     ' approaching=' + (kuryk?.summary?.approaching_vessels ?? 'n/a') +
     ' underway-est=' + (kuryk?.summary?.estimated_underway ?? 'n/a'));
 }
