@@ -1,0 +1,10 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const ctx={module:{exports:{}}};vm.createContext(ctx);vm.runInContext(fs.readFileSync(require('node:path').join(__dirname,'../market-dates.js'),'utf8'),ctx);
+const {isRecentPrice}=ctx.module.exports,now=Date.parse('2026-10-17T09:50:00Z');
+assert.equal(isRecentPrice({period:'2026-09',published_at:'2026-09-30T11:30:09Z'},now),true);
+assert.equal(isRecentPrice({period:'2026-09'},now),false);
+assert.equal(isRecentPrice({period:'2026-08',published_at:'2026-08-10T00:00:00Z'},now),false);
+assert.equal(isRecentPrice({period:'2026-10',published_at:'2026-10-18T00:00:00Z'},now),false);
+assert.equal(isRecentPrice({period:'2026-13'},now),false);
+assert.equal(isRecentPrice({period:'2026-09',published_at:'bad'},now),false);
+console.log('PASS: verified publication date controls recency; old, future and invalid prices excluded.');

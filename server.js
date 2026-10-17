@@ -1,10 +1,14 @@
-import {parseKurykText, wideSafeCard} from './source-parsers.js';
+import {parseKurykText, wideSafeCard, articleSnapshot, parseMarketRanges} from './source-parsers.js';
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import WebSocket from 'ws';
 import fs from 'node:fs';
 import path from 'node:path';
+
+function sourceFetch(url, options={}) {
+  return fetch(url,{...options,signal:AbortSignal.timeout(20000)});
+}
 
 const PORT = Number(process.env.PORT || 8787);
 const OPENWATERS_API_KEY = process.env.OPENWATERS_API_KEY || '';
@@ -899,7 +903,7 @@ async function refreshFachaSnapshot() {
       area.lat + '/' + area.lon + '/' + area.radiusKm;
 
     try {
-      const res = await fetch(url, {
+      const res = await sourceFetch(url, {
         headers: { 'accept':'application/json', 'user-agent':'MCFI-Caspian-Monitor/1.0' }
       });
 
@@ -1038,7 +1042,7 @@ async function refreshOpenWatersSnapshot() {
   try {
     const headers = { 'accept': 'application/geo+json, application/json' };
     if (OPENWATERS_API_KEY) headers.authorization = 'Bearer ' + OPENWATERS_API_KEY;
-    const res = await fetch(url, { headers });
+    const res = await sourceFetch(url, { headers });
 
     if (!res.ok) {
       throw new Error('Snapshot HTTP ' + res.status);
@@ -1514,7 +1518,7 @@ function inferPeriodFromText(text='') {
 
 async function discoverLatestAnewsPricingUrl() {
   try {
-    const res = await fetch(ANEWS_BUSINESS_URL, {
+    const res = await sourceFetch(ANEWS_BUSINESS_URL, {
       headers: {'user-agent':'MCFI-Middle-Corridor-Monitor/1.0'}
     });
     if (!res.ok) throw new Error('Anews listing HTTP ' + res.status);
@@ -1551,45 +1555,19 @@ async function refreshPricing() {
 
   try {
     const sourceUrl = await discoverLatestAnewsPricingUrl();
-    const res = await fetch(sourceUrl, {
+    const res = await sourceFetch(sourceUrl, {
       headers: {'user-agent':'MCFI-Middle-Corridor-Monitor/1.0'}
     });
     if (!res.ok) throw new Error('Anews pricing HTTP ' + res.status);
     const html = await res.text();
-    const text = decodeHtmlText(html);
-    const period = inferPeriodFromText(text) || assessment.period;
-
-    const baku = text.match(/Alat\s+or\s+Absheron[\s\S]{0,350}?\$\s*([0-9,]+)\s*[–—-]\s*\$\s*([0-9,]+)/i);
-    const turkey = text.match(/Ambarli\s+and\s+Mersin[\s\S]{0,350}?\$\s*([0-9,]+)\s*[–—-]\s*\$\s*([0-9,]+)/i);
-
-    if (!baku) throw new Error('Baku/Alat rate range not parsed');
-
-    const low = moneyInt(baku[1]);
-    const high = moneyInt(baku[2]);
-    assessment = {
-      route: "Xi'an (China) → Baku/Alat (Azerbaijan)",
-      period,
-      low_usd: low,
-      high_usd: high,
-      midpoint_usd: Math.round((low + high) / 2),
-      container: '40HC',
-      source_name: 'Argus, reported by Anews',
-      source_url: sourceUrl
-    };
-
-    if (turkey) {
-      const tLow = moneyInt(turkey[1]);
-      const tHigh = moneyInt(turkey[2]);
-      turkeyAssessment = {
-        route: "Xi'an (China) → Ambarli/Mersin (Türkiye)",
-        period,
-        low_usd: tLow,
-        high_usd: tHigh,
-        midpoint_usd: Math.round((tLow + tHigh) / 2),
-        container: '40HC',
-        source_name: 'Argus, reported by Anews',
-        source_url: sourceUrl
-      };
+    const article=articleSnapshot(html,decodeHtmlText);
+    const ranges=parseMarketRanges(article.text,inferPeriodFromText);
+    const common={container:'40HC',source_name:'Argus, reported by Anews',source_url:sourceUrl,published_at:article.published_at};
+    if(ranges.baku && ranges.baku.period>=assessment.period) {
+      assessment={...ranges.baku,...common,route:"Xi'an (China) → Baku/Alat (Azerbaijan)"};
+    }
+    if(ranges.turkey && ranges.turkey.period>=turkeyAssessment.period) {
+      turkeyAssessment={...ranges.turkey,...common,route:"Xi'an (China) → Ambarli/Mersin (Türkiye)"};
     }
 
     marketOk = true;
@@ -1598,7 +1576,7 @@ async function refreshPricing() {
   }
 
   try {
-    const res = await fetch(WIDESAFE_NEWS_URL, {
+    const res = await sourceFetch(WIDESAFE_NEWS_URL, {
       headers: {'user-agent':'MCFI-Middle-Corridor-Monitor/1.0'}
     });
     if (!res.ok) throw new Error('WideSafe HTTP ' + res.status);
@@ -1725,7 +1703,7 @@ async function refreshNews() {
   const url='https://news.google.com/rss/search?q='+q+'&hl=en&gl=GB&ceid=GB:en';
 
   try {
-    const res=await fetch(url,{headers:{'user-agent':'MCFI-Middle-Corridor-Monitor/1.0'}});
+    const res=await sourceFetch(url,{headers:{'user-agent':'MCFI-Middle-Corridor-Monitor/1.0'}});
     if(!res.ok) throw new Error('RSS HTTP '+res.status);
     const xml=await res.text();
     const blocks=[...xml.matchAll(/<item>([\s\S]*?)<\/item>/gi)].map(m=>m[1]);
@@ -1737,10 +1715,11 @@ async function refreshNews() {
         source:sourceMatch?decodeXml(sourceMatch[1].trim()):'Google News',
         published_at:tagValue(block,'pubDate')
       };
-    }).filter(x=>x.title&&x.url)
+    }).filter(x=>x.title&&x.url&&Number.isFinite(new Date(x.published_at).getTime())&&new Date(x.published_at).getTime()<=Date.now())
       .sort((a,b)=>new Date(b.published_at)-new Date(a.published_at))
       .slice(0,12);
 
+    if(!items.length) throw new Error('No dated news items parsed');
     newsCache={
       status:'live',
       updated_at:new Date().toISOString(),
@@ -1750,8 +1729,9 @@ async function refreshNews() {
   } catch(err) {
     console.error('[NEWS] Refresh error:',err.message);
     newsCache={
-      status:newsCache.items.length?'live':'offline',
-      updated_at:newsCache.updated_at||new Date().toISOString(),
+      status:newsCache.items.length?'stale':'offline',
+      updated_at:newsCache.updated_at,
+      checked_at:new Date().toISOString(),
       items:newsCache.items.length?newsCache.items:FALLBACK_NEWS
     };
   }
@@ -1792,6 +1772,8 @@ function decodeHtmlText(value='') {
     .replace(/<style[\s\S]*?<\/style>/gi,' ')
     .replace(/<[^>]+>/g,' ')
     .replace(/&nbsp;/gi,' ')
+    .replace(/&ndash;|&#8211;/gi,'–')
+    .replace(/&mdash;|&#8212;/gi,'—')
     .replace(/&amp;/gi,'&')
     .replace(/&quot;/gi,'"')
     .replace(/&#39;|&apos;/gi,"'")
@@ -1915,7 +1897,7 @@ function estimatedFerryPosition(approach, trafficDate) {
 }
 
 async function fetchKurykActivity() {
-  const res = await fetch(KURYK_TRAFFIC_URL, {
+  const res = await sourceFetch(KURYK_TRAFFIC_URL, {
     headers: {
       'accept': 'text/html,application/xhtml+xml',
       'user-agent': 'Mozilla/5.0 (compatible; MCFI-Middle-Corridor-Monitor/1.0)'
@@ -1947,7 +1929,7 @@ async function fetchKurykActivity() {
 }
 
 async function fetchAktauActivity() {
-  const res = await fetch(AKTAU_DISPOSITION_CSV, {
+  const res = await sourceFetch(AKTAU_DISPOSITION_CSV, {
     headers: {
       'accept': 'text/csv,text/plain,*/*',
       'user-agent': 'MCFI-Middle-Corridor-Monitor/1.0'

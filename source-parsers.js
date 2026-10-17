@@ -22,3 +22,37 @@ export function wideSafeCard(text, periodFromText) {
   if (!period) throw new Error('WideSafe price card has no explicit assessment month');
   return {block,period};
 }
+
+// Prefer the publisher's own article body and publication timestamp over
+// unrelated headlines, navigation dates or the time our monitor checks it.
+export function articleSnapshot(html, decode) {
+  for (const match of html.matchAll(/<script\b[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
+    try {
+      const value=JSON.parse(match[1]);
+      const nodes=Array.isArray(value)?value:value['@graph']||[value];
+      const article=nodes.find(x=>[].concat(x['@type']||[]).some(t=>/^(NewsArticle|Article)$/.test(t))&&x.articleBody);
+      if (article) return {text:decode(article.articleBody),published_at:validPublication(article.datePublished)};
+    } catch { /* Try the next metadata block; invalid metadata is not evidence. */ }
+  }
+  const body=html.slice(Math.max(0,html.search(/<h1\b/i))).split(/Similar news/i)[0];
+  return {text:decode(body),published_at:null};
+}
+function validPublication(value) {
+  if (!/T.*(?:Z|[+-]\d\d:\d\d)$/.test(value||'')) return null;
+  const date=new Date(value);
+  return Number.isFinite(date.getTime())&&date.getTime()<=Date.now()?date.toISOString():null;
+}
+export function parseMarketRanges(text, periodFromText) {
+  const period=periodFromText(text);
+  if (!/^20\d{2}-(0[1-9]|1[0-2])$/.test(period||'') || period>new Date().toISOString().slice(0,7)) throw new Error('Valid assessment month not found');
+  const extract=re=>{
+    const m=text.match(re); if(!m) return null;
+    const low=Number(m[1].replace(/,/g,'')),high=Number(m[2].replace(/,/g,''));
+    if (!(low>0&&high>=low)) throw new Error('Invalid market assessment range');
+    return {period,low_usd:low,high_usd:high,midpoint_usd:(low+high)/2};
+  };
+  const baku=extract(/Alat\s+or\s+Absheron[\s\S]{0,350}?\$\s*([0-9,]+)\s*[–—-]\s*\$\s*([0-9,]+)/i);
+  const turkey=extract(/Ambarli\s+and\s+Mersin[\s\S]{0,350}?\$\s*([0-9,]+)\s*[–—-]\s*\$\s*([0-9,]+)/i);
+  if(!baku&&!turkey) throw new Error('No comparable route market range found');
+  return {baku,turkey};
+}

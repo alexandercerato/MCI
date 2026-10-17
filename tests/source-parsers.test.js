@@ -23,3 +23,21 @@ test('unrelated listing price is never a WideSafe card',()=>{
 test('undated WideSafe card is rejected',()=>{
  assert.throws(()=>wideSafeCard("FCL SOC 40HQ Rates to Baku Xi'an $5000",()=>null),/month/);
 });
+
+import {articleSnapshot,parseMarketRanges} from '../source-parsers.js';
+const decode=s=>s.replace(/<[^>]*>/g,' ').replace(/&ndash;/g,'–');
+const month=s=>s.match(/October 2026/)?'2026-10':s.match(/September 2026/)?'2026-09':null;
+test('article metadata isolates the assessment from navigation and related news',()=>{
+ const html='<h1>October 2026 unrelated headline</h1><script type="application/ld+json">'+JSON.stringify({'@type':'NewsArticle',datePublished:'2026-09-30T15:30:09+04:00',articleBody:'<p>September 2026. Ambarli and Mersin $7,200&ndash;$8,000.</p>'})+'</script>';
+ const article=articleSnapshot(html,decode),r=parseMarketRanges(article.text,month);
+ assert.equal(article.published_at,'2026-09-30T11:30:09.000Z');
+ assert.equal(r.turkey.period,'2026-09');assert.equal(r.turkey.midpoint_usd,7600);assert.equal(r.baku,null);
+});
+test('partial route range cannot turn into a full-route assessment',()=>{
+ const r=parseMarketRanges('October 2026. Alat or Absheron $6,750–$7,200.',month);
+ assert.equal(r.turkey,null);assert.equal(r.baku.midpoint_usd,6975);
+});
+test('invalid and undated market ranges are rejected',()=>{
+ assert.throws(()=>parseMarketRanges('Ambarli and Mersin $7,200–$8,000.',month),/month/);
+ assert.throws(()=>parseMarketRanges('October 2026 Ambarli and Mersin $8,000–$7,200.',month),/range/);
+});

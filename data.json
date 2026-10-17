@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "Middle Corridor Freight Monitor",
-    "version": "0.17.0",
+    "version": "0.17.1",
     "as_of": "2026-10-15",
     "refresh_minutes": 5,
     "methodology_note": "Latest published Xi’an–Ambarli/Mersin full-route freight assessment, in USD per loaded 40HC container. The median of comparable assessment midpoints is used; partial-route prices and modelled costs do not enter the index.",
@@ -12,7 +12,8 @@
       "new_basis": "Full-route freight price in USD per 40HC",
       "previous_basis": "50/50 Baku–Türkiye market basket divided by the Baku structural cost reference × 100",
       "comparability": "The new price series is recalculated retrospectively; it must not be compared numerically with the previous index points."
-    }
+    },
+    "last_reviewed_at": "2026-10-17T09:52:46Z"
   },
   "model": {
     "name": "MCFI-40 Full-Corridor Freight Rate",
@@ -178,7 +179,8 @@
       "unit": "USD per 40HC",
       "coverage": "Xi’an (China) → Mersin/Ambarli (Türkiye)",
       "confidence": "Published market assessments; not executable quotes",
-      "source_url": "https://anews.az/en/ekonomika/527577/caspian-container-shipping-rates-rise-in-september/"
+      "source_url": "https://anews.az/en/ekonomika/527577/caspian-container-shipping-rates-rise-in-september/",
+      "published_at": "2026-09-30T11:30:09Z"
     },
     "latest_baku_market": {
       "period": "2026-09",
@@ -186,7 +188,8 @@
       "range": "$6,750–$7,200",
       "confidence": "medium-high; reported as Argus market assessment",
       "source_name": "Argus, reported by Anews",
-      "source_url": "https://anews.az/en/ekonomika/527577/caspian-container-shipping-rates-rise-in-september/"
+      "source_url": "https://anews.az/en/ekonomika/527577/caspian-container-shipping-rates-rise-in-september/",
+      "published_at": "2026-09-30T11:30:09Z"
     },
     "latest_provider_snapshot": {
       "period": "2026-08",
@@ -204,7 +207,8 @@
       "range": "$7,200–$8,000",
       "confidence": "medium-high; reported as Argus market assessment",
       "source_name": "Argus, reported by Anews",
-      "source_url": "https://anews.az/en/ekonomika/527577/caspian-container-shipping-rates-rise-in-september/"
+      "source_url": "https://anews.az/en/ekonomika/527577/caspian-container-shipping-rates-rise-in-september/",
+      "published_at": "2026-09-30T11:30:09Z"
     }
   },
   "year_summary": [
@@ -589,7 +593,8 @@
       "source_url": "https://anews.az/en/ekonomika/527577/caspian-container-shipping-rates-rise-in-september/",
       "source_urls": [
         "https://anews.az/en/ekonomika/527577/caspian-container-shipping-rates-rise-in-september/"
-      ]
+      ],
+      "published_at": "2026-09-30T11:30:09Z"
     }
   ],
   "coverage_gaps": [
@@ -1658,7 +1663,8 @@
       "source_name": "Argus / market participants",
       "source_url": "https://anews.az/en/ekonomika/527577/caspian-container-shipping-rates-rise-in-september/",
       "notes": "Partial-route comparison only.",
-      "evidence_type": "market assessment"
+      "evidence_type": "market assessment",
+      "published_at": "2026-09-30T11:30:09Z"
     },
     {
       "date": "2026-09",
@@ -1678,7 +1684,8 @@
       "source_name": "Argus / market participants",
       "source_url": "https://anews.az/en/ekonomika/527577/caspian-container-shipping-rates-rise-in-september/",
       "notes": "Full Xi’an–Türkiye assessment; not added to Baku freight.",
-      "evidence_type": "market assessment"
+      "evidence_type": "market assessment",
+      "published_at": "2026-09-30T11:30:09Z"
     }
   ],
   "external_benchmarks": {
@@ -2099,5 +2106,17 @@
       "anchor_label": "Last published KTZ Express anchor carried forward",
       "mcfi_index": 166.3
     }
-  ]
+  ],
+  "baku": {
+    "throughput_period": "2026-01 to 2026-09",
+    "throughput_teu": 100000,
+    "throughput_yoy_pct": 30,
+    "throughput_status": "approximately; reported 14 Oct 2026",
+    "throughput_source_url": "https://anews.az/en/read/528931/",
+    "annual_container_capacity_teu": 150000,
+    "planned_capacity_teu": 260000,
+    "phase_two_target_teu": 500000,
+    "capacity_source_url": "https://anews.az/en/read/528208/",
+    "note": "Reported cumulative throughput is not live berth occupancy; future capacity is not operational capacity."
+  }
 }

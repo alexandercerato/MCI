@@ -32,4 +32,15 @@ class RefreshTests(unittest.TestCase):
         self.assertEqual(self.data['aktau']['container_hub_planned_teu'],240000)
         self.assertEqual(self.data['mcfi_monthly'],before)
 
+    def test_article_metadata_separates_publication_from_assessment_month(self):
+        html = '<h1>October 2026 latest news</h1><script type="application/ld+json">'+json.dumps({"@type":"NewsArticle", "datePublished":"2026-09-30T15:30:09+04:00", "articleBody":"September 2026. Ambarli and Mersin $7,200–$8,000."})+'</script>'
+        text, published = updater.article_snapshot(html)
+        self.assertEqual(updater.period_from_text(text), '2026-09')
+        self.assertEqual(published,'2026-09-30T11:30:09Z')
+    def test_baku_refresh_preserves_rounded_reporting_status(self):
+        updater.refresh_baku(self.data)
+        self.assertEqual(self.data['baku']['throughput_teu'],100000)
+        self.assertIn('approximately',self.data['baku']['throughput_status'])
+        self.assertIn('not live berth occupancy',self.data['baku']['note'])
+
 if __name__=='__main__':unittest.main()

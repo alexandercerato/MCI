@@ -7,7 +7,8 @@ async function loadData(){
   const res=await fetch(`data.json?t=${Date.now()}`,{cache:'no-store'});
   DATA=await res.json();
   render();
-  refreshStatus.textContent=`Market dataset checked ${new Date().toLocaleString('en-GB',{timeZone:'Europe/Rome'})} Rome`;
+  const reviewed=DATA.meta.last_reviewed_at?new Date(DATA.meta.last_reviewed_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric',timeZone:'Europe/Rome'}):null;
+  refreshStatus.textContent=reviewed?`Sources reviewed ${reviewed} · live feeds checked separately`:'Shared market dataset loaded';
 }
 
 
@@ -83,6 +84,8 @@ function render(){
     <div class="inline-kpi"><span>Port capacity</span><strong>${DATA.aktau.capacity_mtpa} Mt/y</strong><small>Aktau (Kazakhstan)</small></div>
     <div class="inline-kpi"><span>Container hub · operational</span><strong>${DATA.aktau.container_hub_teu.toLocaleString()} TEU/y</strong><small>Annual capacity · planned expansion ${DATA.aktau.container_hub_planned_teu.toLocaleString()} TEU/y</small></div>
     <div class="inline-kpi"><span>Container throughput · ${fmtMonth(DATA.aktau.throughput_period)}</span><strong>${DATA.aktau.throughput_teu.toLocaleString()} TEU</strong><small>+${DATA.aktau.throughput_yoy_pct}% year on year · <a href="${safeTickerURL(DATA.aktau.throughput_source_url)}" target="_blank" rel="noopener">KTZ source ↗</a></small></div>
+    <div class="inline-kpi"><span>Baku / Alat · Jan–Sep 2026</span><strong>~${DATA.baku.throughput_teu.toLocaleString()} TEU</strong><small>+${DATA.baku.throughput_yoy_pct}% year on year · <a href="${safeTickerURL(DATA.baku.throughput_source_url)}" target="_blank" rel="noopener">Reported throughput ↗</a></small></div>
+    <div class="inline-kpi"><span>Baku container capacity · operational</span><strong>${DATA.baku.annual_container_capacity_teu.toLocaleString()} TEU/y</strong><small>Annual capacity · not live berth occupancy</small></div>
     <div class="inline-kpi"><span>Verified KZ rail benchmark</span><strong>${fmtUSD(east?.value_usd)}</strong><small>Dostyk → Aktau · 40' loaded</small></div>`;
 
   renderYearSummary();
@@ -474,7 +477,7 @@ function renderNews(data){
   window.MCI_OVERVIEW?.updateNews(data);
   if(!window.newsGrid) return;
   const items=data?.items||[];
-  newsStatus.textContent=data?.status==='live'?'LIVE':'OFFLINE';
+  newsStatus.textContent=data?.status==='live'?'LIVE':data?.status==='stale'?'CACHED':'OFFLINE';
   newsStatus.className=data?.status==='live'?'live':'offline';
   newsUpdated.textContent=data?.updated_at?`Updated ${formatAge(data.updated_at)}`:'—';
 
@@ -675,16 +678,10 @@ function renderPriceTicker(live){
   const h=DATA.headline;
   const fallback=(quote,route)=>({...quote,route,midpoint_usd:quote.value_usd,container:'40HC',display_range:quote.range});
   const rows=[live?.market?.assessment||fallback(h.latest_baku_market,"Xi’an → Baku/Alat"),live?.market?.turkey_assessment||fallback(h.latest_turkey_market,"Xi’an → Ambarli/Mersin"),...(live?.market?.provider_quotes||[h.latest_provider_snapshot])];
-  const recent=rows.filter(q=>{
-    // Use the earliest possible date for month-only assessments to avoid promoting old quotes.
-    // display only the actual known month, never invent a publication time.
-    let date;
-    if(/^\d{4}-\d{2}$/.test(q.period||'')){const [y,m]=q.period.split('-').map(Number);date=Date.UTC(y,m-1,1);}else{date=new Date(q.published_at||q.date||q.period).getTime();}
-    return Number.isFinite(date)&&date<=now&&now-date<=45*86400000;
-  });
+  const recent=rows.filter(q=>window.MCI_MARKET_DATES.isRecentPrice(q,now));
   setTicker('priceTicker',recent.map(q=>{
     const price=q.low_usd&&q.high_usd?`${fmtUSD(q.low_usd)}–${fmtUSD(q.high_usd)}`:q.display_range||fmtUSD(q.value_usd||q.midpoint_usd);
-    return `<a class="ticker-item" href="${safeTickerURL(q.source_url)}" target="_blank" rel="noopener"><small>${escapeHTML(fmtMonth(q.period))}</small><strong>${escapeHTML(q.route)} · ${escapeHTML(price)}</strong> <small> / ${escapeHTML(q.container||q.container_basis||'40HC')} · ${escapeHTML(q.source_name||'Market assessment')}</small></a>`;
+    return `<a class="ticker-item" href="${safeTickerURL(q.source_url)}" target="_blank" rel="noopener"><small>${escapeHTML(fmtMonth(q.period))}${q.published_at?' · published '+escapeHTML(new Date(q.published_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',timeZone:'Europe/Rome'})):''}</small><strong>${escapeHTML(q.route)} · ${escapeHTML(price)}</strong> <small> / ${escapeHTML(q.container||q.container_basis||'40HC')} · ${escapeHTML(q.source_name||'Market assessment')}</small></a>`;
   }), 'No dated price assessments in the last 45 days.');
 }
 
@@ -705,11 +702,12 @@ function renderPortTicker(data){
   const item=(label,value,url)=>`<a class="ticker-item" href="${safeTickerURL(url)}" target="_blank" rel="noopener"><strong>${escapeHTML(label)} · ${value}</strong></a>`;
   const aktau=available('aktau')?`${occupancy(a)} · ${count(a.occupied_main_berths)}/${count(a.berth_capacity)} main-port berths · ${count(a.roadstead_vessels)} in roadstead${date('aktau')}${checked}`:'Official activity temporarily unavailable';
   const kuryk=available('kuryk')?`${count(k.berthed_vessels)} berthed · ${count(k.anchored_vessels)} at anchorage · ${count(k.approaching_vessels)} approaching${date('kuryk')}${checked}`:'Official activity temporarily unavailable';
-  const baku=available('baku')?`${occupancy(b)}${date('baku')}${checked}`:'Live berth occupancy unavailable';
+  const context=DATA?.baku;
+  const baku=available('baku')?`${occupancy(b)}${date('baku')}${checked}`:context?`~${Number(context.throughput_teu).toLocaleString('en-US')} TEU · Jan–Sep 2026 · +${Number(context.throughput_yoy_pct)}% YoY · reported throughput; live berth occupancy unavailable`:'Live berth occupancy unavailable';
   setTicker('portTicker',[
     item('Aktau (Kazakhstan)',aktau,data?.aktau?.source_url||'https://www.portaktau.kz/'),
     item('Kuryk (Kazakhstan)',kuryk,data?.kuryk?.source_url||'https://portkuryk.kz/en/dispoziciya-sudov'),
-    item('Baku / Alat (Azerbaijan)',baku,data?.baku?.source_url||'https://portofbaku.com/en')
+    item('Baku / Alat (Azerbaijan)',baku,data?.baku?.source_url||context?.throughput_source_url||'https://portofbaku.com/en')
   ],'Official port activity temporarily unavailable');
 }
 

@@ -7,6 +7,7 @@ It writes only when values actually change, so the scheduled workflow does not
 create empty commits every five minutes.
 """
 from pathlib import Path
+from datetime import datetime, timezone
 import copy
 import csv
 import json
@@ -41,6 +42,32 @@ def get(url: str) -> requests.Response:
 
 def text_of(html: str) -> str:
     return BeautifulSoup(html, "html.parser").get_text(" ", strip=True)
+
+
+def article_snapshot(html):
+    soup = BeautifulSoup(html, "html.parser")
+    for script in soup.find_all("script", type="application/ld+json"):
+        try:
+            value = json.loads(script.string or script.get_text())
+            nodes = value if isinstance(value, list) else value.get("@graph", [value])
+            for node in nodes:
+                types = node.get("@type", [])
+                if isinstance(types, str): types = [types]
+                if not set(types).intersection(("NewsArticle", "Article")) or not node.get("articleBody"):
+                    continue
+                stamp = node.get("datePublished")
+                published = None
+                if stamp:
+                    date = datetime.fromisoformat(stamp.replace("Z", "+00:00"))
+                    if date.tzinfo and date <= datetime.now(timezone.utc):
+                        published = date.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+                return text_of(node["articleBody"]), published
+        except (ValueError, TypeError, AttributeError):
+            continue
+    text = soup.get_text(" ", strip=True)
+    heading = soup.find("h1")
+    if heading: text = text[text.find(heading.get_text(" ", strip=True)):]
+    return text.split("Similar news")[0], None
 
 
 def money(value: str) -> int:
@@ -94,10 +121,10 @@ def upsert_observation(data, row):
 
 def refresh_market(data):
     source_url = discover_anews_pricing_url()
-    article = text_of(get(source_url).text)
+    article, published_at = article_snapshot(get(source_url).text)
     period = period_from_text(article)
-    if not period:
-        raise ValueError("market period not found")
+    if not period or period > datetime.now(timezone.utc).strftime("%Y-%m"):
+        raise ValueError("valid market period not found")
 
     baku = re.search(
         r"Alat\s+or\s+Absheron.{0,350}?\$\s*([0-9,]+)\s*[–—-]\s*\$\s*([0-9,]+)",
@@ -121,7 +148,7 @@ def refresh_market(data):
             data["headline"]["latest_baku_market"].update({
                 "period": period, "value_usd": b_mid,
                 "range": f"${b_low:,}–${b_high:,}",
-                "source_name": "Argus, reported by Anews", "source_url": source_url,
+                "source_name": "Argus, reported by Anews", "source_url": source_url, "published_at": published_at,
             })
             data["structural_benchmarks"]["market_defaults"]["latest_comparable_assessment"] = {
                 "route": "Xi’an (China) → Baku/Alat (Azerbaijan)", "period": period,
@@ -136,7 +163,7 @@ def refresh_market(data):
             "high_usd": b_high, "midpoint_usd": b_mid, "scope": "Partial-route market assessment",
             "primary_eligible": False, "grade": "A-", "source_name": "Argus / market participants",
             "source_url": source_url, "notes": "Partial-route comparison only.",
-            "evidence_type": "market assessment",
+            "evidence_type": "market assessment", "published_at": published_at,
         })
 
     if turkey:
@@ -148,7 +175,7 @@ def refresh_market(data):
             data["headline"]["latest_turkey_market"].update({
                 "period": period, "value_usd": t_mid,
                 "range": f"${t_low:,}–${t_high:,}",
-                "source_name": "Argus, reported by Anews", "source_url": source_url,
+                "source_name": "Argus, reported by Anews", "source_url": source_url, "published_at": published_at,
             })
         upsert_observation(data, {
             "date": period, "period": period, "route": "Xi’an → Mersin/Ambarli",
@@ -157,7 +184,7 @@ def refresh_market(data):
             "high_usd": t_high, "midpoint_usd": t_mid, "scope": "Full-corridor market assessment",
             "primary_eligible": True, "grade": "A-", "source_name": "Argus / market participants",
             "source_url": source_url, "notes": "Full Xi’an–Türkiye assessment; not added to Baku freight.",
-            "evidence_type": "market assessment",
+            "evidence_type": "market assessment", "published_at": published_at,
         })
 
 
@@ -200,7 +227,10 @@ def rebuild_freight_series(data):
             "basis": "Median of full-route assessment midpoints; no partial-route averaging or cost-model division.",
             "source_url": obs[-1]["source_url"],
             "source_urls": list(dict.fromkeys(r["source_url"] for r in obs)),
+            "published_at": max((r["published_at"] for r in obs if r.get("published_at")), default=None),
         })
+    for row in rows:
+        if not row.get("published_at"): row.pop("published_at", None)
     data["mcfi_monthly"] = rows
     if rows:
         latest = rows[-1]
@@ -208,7 +238,7 @@ def rebuild_freight_series(data):
             "period": latest["period"], "value_usd": latest["mcfi_usd"],
             "low_usd": latest["low_usd"], "high_usd": latest["high_usd"],
             "unit": "USD per 40HC", "coverage": latest["route"],
-            "confidence": latest["confidence"], "source_url": latest["source_url"],
+            "confidence": latest["confidence"], "source_url": latest["source_url"], "published_at": latest.get("published_at"),
         }
     else:
         data["headline"]["latest_mcfi_core"] = {"period": None, "value_usd": None}
@@ -231,6 +261,20 @@ def refresh_aktau(data):
         "throughput_teu": snapshot["throughput_teu"],
         "throughput_yoy_pct": snapshot["year_on_year_growth_percent"],
         "throughput_source_url": "https://t.me/PR_KTZh/5754",
+    })
+
+
+def refresh_baku(data):
+    snapshot = json.loads((ROOT / "baku-throughput-2026.json").read_text(encoding="utf-8"))
+    data.setdefault("baku", {}).update({
+        "throughput_period": snapshot["period"], "throughput_teu": snapshot["throughput_teu"],
+        "throughput_yoy_pct": snapshot["year_on_year_growth_percent"],
+        "throughput_status": snapshot["status"], "throughput_source_url": snapshot["source"],
+        "annual_container_capacity_teu": snapshot["current_annual_container_capacity_teu"],
+        "planned_capacity_teu": snapshot["planned_capacity_teu"],
+        "phase_two_target_teu": snapshot["phase_two_capacity_target_teu"],
+        "capacity_source_url": snapshot["capacity_source"],
+        "note": "Reported cumulative throughput is not live berth occupancy; future capacity is not operational capacity."
     })
 
 
@@ -288,6 +332,7 @@ def main():
         errors.append(f"provider refresh skipped: {exc}")
 
     refresh_aktau(data)
+    refresh_baku(data)
     rebuild_freight_series(data)
 
     if data != original:
