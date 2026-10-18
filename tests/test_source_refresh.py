@@ -52,4 +52,25 @@ class RefreshTests(unittest.TestCase):
         self.assertEqual(sb['integrated_official_reference']['maritime_component_valid_until'],'2026-03-31')
         self.assertEqual(before,self.data['headline']['latest_mcfi_core'])
 
+    def test_kuryk_throughput_is_dated_tonnage_not_teu_or_live_traffic(self):
+        before=copy.deepcopy(self.data['mcfi_monthly'])
+        updater.refresh_kuryk(self.data)
+        once=copy.deepcopy(self.data)
+        updater.refresh_kuryk(self.data)
+        self.assertEqual(once,self.data)
+        self.assertEqual(self.data['kuryk']['throughput_tonnes'],884800)
+        self.assertEqual(self.data['kuryk']['throughput_period'],'2026-01 to 2026-06')
+        self.assertIn('not container TEU',self.data['kuryk']['note'])
+        self.assertEqual(before,self.data['mcfi_monthly'])
+
+    def test_coverage_gaps_do_not_include_observed_full_route_months(self):
+        updater.rebuild_freight_series(self.data)
+        updater.reconcile_coverage_gaps(self.data)
+        periods={gap['period'] for gap in self.data['coverage_gaps']}
+        self.assertNotIn('2026-08',periods)
+        self.assertNotIn('2026-09',periods)
+        self.assertIn('2025-07',periods)
+        self.assertIn('2025-02',periods)
+        self.assertIn('2024-01 to 2024-11',periods)
+
 if __name__=='__main__':unittest.main()

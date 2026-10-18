@@ -278,6 +278,29 @@ def refresh_baku(data):
     })
 
 
+
+def refresh_kuryk(data):
+    """Use the dated official first-half throughput report, not live berth data."""
+    snapshot = json.loads((ROOT / "kuryk-throughput-2026.json").read_text(encoding="utf-8"))
+    data["kuryk"] = {
+        "throughput_period": snapshot["period"],
+        "throughput_tonnes": snapshot["throughput_tonnes"],
+        "throughput_status": snapshot["status"],
+        "throughput_source_url": snapshot["source_url"],
+        "published_at": snapshot["published_at"],
+        "note": "First-half cargo tonnage, not container TEU or a real-time vessel count."
+    }
+
+
+def reconcile_coverage_gaps(data):
+    """An observed full-route month cannot also be marked as a missing month."""
+    observed = {row["period"] for row in data.get("mcfi_monthly", [])}
+    data["coverage_gaps"] = [
+        gap for gap in data.get("coverage_gaps", [])
+        if gap.get("period") not in observed
+    ]
+
+
 def refresh_tariff_references(data):
     snapshot = json.loads((ROOT / "tariff-reference-2026.json").read_text(encoding="utf-8"))
     sb = data["structural_benchmarks"]
@@ -347,8 +370,10 @@ def main():
 
     refresh_aktau(data)
     refresh_baku(data)
+    refresh_kuryk(data)
     refresh_tariff_references(data)
     rebuild_freight_series(data)
+    reconcile_coverage_gaps(data)
 
     if data != original:
         DATA.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

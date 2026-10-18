@@ -1,8 +1,8 @@
 {
   "meta": {
     "title": "Middle Corridor Freight Monitor",
-    "version": "0.17.1",
-    "as_of": "2026-10-15",
+    "version": "0.17.2",
+    "as_of": "2026-10-18",
     "refresh_minutes": 5,
     "methodology_note": "Latest published Xi’an–Ambarli/Mersin full-route freight assessment, in USD per loaded 40HC container. The median of comparable assessment midpoints is used; partial-route prices and modelled costs do not enter the index.",
     "data_warning": "Historical coverage reflects the availability of published market assessments.",
@@ -13,7 +13,7 @@
       "previous_basis": "50/50 Baku–Türkiye market basket divided by the Baku structural cost reference × 100",
       "comparability": "The new price series is recalculated retrospectively; it must not be compared numerically with the previous index points."
     },
-    "last_reviewed_at": "2026-10-17T09:52:46Z"
+    "last_reviewed_at": "2026-10-18T04:59:07.014Z"
   },
   "model": {
     "name": "MCFI-40 Full-Corridor Freight Rate",
@@ -173,7 +173,7 @@
   "headline": {
     "latest_mcfi_core": {
       "period": "2026-09",
-      "value_usd": 7600.0,
+      "value_usd": 7600,
       "low_usd": 7200,
       "high_usd": 8000,
       "unit": "USD per 40HC",
@@ -184,7 +184,7 @@
     },
     "latest_baku_market": {
       "period": "2026-09",
-      "value_usd": 6975.0,
+      "value_usd": 6975,
       "range": "$6,750–$7,200",
       "confidence": "medium-high; reported as Argus market assessment",
       "source_name": "Argus, reported by Anews",
@@ -203,7 +203,7 @@
     },
     "latest_turkey_market": {
       "period": "2026-09",
-      "value_usd": 7600.0,
+      "value_usd": 7600,
       "range": "$7,200–$8,000",
       "confidence": "medium-high; reported as Argus market assessment",
       "source_name": "Argus, reported by Anews",
@@ -216,28 +216,28 @@
       "year": 2024,
       "complete_months": 1,
       "average_usd": 8750,
-      "low_usd": 8750.0,
-      "high_usd": 8750.0
+      "low_usd": 8750,
+      "high_usd": 8750
     },
     {
       "year": 2025,
       "complete_months": 10,
       "average_usd": 7472,
-      "low_usd": 6525.0,
-      "high_usd": 8750.0
+      "low_usd": 6525,
+      "high_usd": 8750
     },
     {
       "year": 2026,
       "complete_months": 9,
       "average_usd": 7394,
-      "low_usd": 7200.0,
-      "high_usd": 7600.0
+      "low_usd": 7200,
+      "high_usd": 7600
     }
   ],
   "mcfi_monthly": [
     {
       "period": "2024-12",
-      "mcfi_usd": 8750.0,
+      "mcfi_usd": 8750,
       "low_usd": 8500,
       "high_usd": 9000,
       "route": "Xi’an (China) → Mersin/Ambarli (Türkiye)",
@@ -255,7 +255,7 @@
     },
     {
       "period": "2025-01",
-      "mcfi_usd": 8750.0,
+      "mcfi_usd": 8750,
       "low_usd": 8500,
       "high_usd": 9000,
       "route": "Xi’an (China) → Mersin/Ambarli (Türkiye)",
@@ -273,7 +273,7 @@
     },
     {
       "period": "2025-03",
-      "mcfi_usd": 8250.0,
+      "mcfi_usd": 8250,
       "low_usd": 8000,
       "high_usd": 8500,
       "route": "Xi’an (China) → Mersin/Ambarli (Türkiye)",
@@ -291,7 +291,7 @@
     },
     {
       "period": "2025-04",
-      "mcfi_usd": 8250.0,
+      "mcfi_usd": 8250,
       "low_usd": 8000,
       "high_usd": 8500,
       "route": "Xi’an (China) → Mersin/Ambarli (Türkiye)",
@@ -309,7 +309,7 @@
     },
     {
       "period": "2025-05",
-      "mcfi_usd": 8050.0,
+      "mcfi_usd": 8050,
       "low_usd": 7800,
       "high_usd": 8300,
       "route": "Xi’an (China) → Mersin/Ambarli (Türkiye)",
@@ -327,7 +327,7 @@
     },
     {
       "period": "2025-06",
-      "mcfi_usd": 7950.0,
+      "mcfi_usd": 7950,
       "low_usd": 7700,
       "high_usd": 8200,
       "route": "Xi’an (China) → Mersin/Ambarli (Türkiye)",
@@ -345,7 +345,7 @@
     },
     {
       "period": "2025-08",
-      "mcfi_usd": 6800.0,
+      "mcfi_usd": 6800,
       "low_usd": 6050,
       "high_usd": 7550,
       "route": "Xi’an (China) → Mersin/Ambarli (Türkiye)",
@@ -363,7 +363,7 @@
     },
     {
       "period": "2025-09",
-      "mcfi_usd": 6625.0,
+      "mcfi_usd": 6625,
       "low_usd": 5800,
       "high_usd": 7450,
       "route": "Xi’an (China) → Mersin/Ambarli (Türkiye)",
@@ -381,7 +381,7 @@
     },
     {
       "period": "2025-10",
-      "mcfi_usd": 6525.0,
+      "mcfi_usd": 6525,
       "low_usd": 5800,
       "high_usd": 7250,
       "route": "Xi’an (China) → Mersin/Ambarli (Türkiye)",
@@ -399,7 +399,7 @@
     },
     {
       "period": "2025-11",
-      "mcfi_usd": 6525.0,
+      "mcfi_usd": 6525,
       "low_usd": 5800,
       "high_usd": 7250,
       "route": "Xi’an (China) → Mersin/Ambarli (Türkiye)",
@@ -417,7 +417,7 @@
     },
     {
       "period": "2025-12",
-      "mcfi_usd": 7000.0,
+      "mcfi_usd": 7000,
       "low_usd": 6500,
       "high_usd": 7500,
       "route": "Xi’an (China) → Mersin/Ambarli (Türkiye)",
@@ -435,7 +435,7 @@
     },
     {
       "period": "2026-01",
-      "mcfi_usd": 7200.0,
+      "mcfi_usd": 7200,
       "low_usd": 6700,
       "high_usd": 7700,
       "route": "Xi’an (China) → Mersin/Ambarli (Türkiye)",
@@ -453,7 +453,7 @@
     },
     {
       "period": "2026-02",
-      "mcfi_usd": 7200.0,
+      "mcfi_usd": 7200,
       "low_usd": 6700,
       "high_usd": 7700,
       "route": "Xi’an (China) → Mersin/Ambarli (Türkiye)",
@@ -471,7 +471,7 @@
     },
     {
       "period": "2026-03",
-      "mcfi_usd": 7200.0,
+      "mcfi_usd": 7200,
       "low_usd": 6700,
       "high_usd": 7700,
       "route": "Xi’an (China) → Mersin/Ambarli (Türkiye)",
@@ -489,7 +489,7 @@
     },
     {
       "period": "2026-04",
-      "mcfi_usd": 7350.0,
+      "mcfi_usd": 7350,
       "low_usd": 7000,
       "high_usd": 7700,
       "route": "Xi’an (China) → Mersin/Ambarli (Türkiye)",
@@ -507,7 +507,7 @@
     },
     {
       "period": "2026-05",
-      "mcfi_usd": 7400.0,
+      "mcfi_usd": 7400,
       "low_usd": 7000,
       "high_usd": 7800,
       "route": "Xi’an (China) → Mersin/Ambarli (Türkiye)",
@@ -525,7 +525,7 @@
     },
     {
       "period": "2026-06",
-      "mcfi_usd": 7500.0,
+      "mcfi_usd": 7500,
       "low_usd": 7100,
       "high_usd": 7900,
       "route": "Xi’an (China) → Mersin/Ambarli (Türkiye)",
@@ -543,7 +543,7 @@
     },
     {
       "period": "2026-07",
-      "mcfi_usd": 7550.0,
+      "mcfi_usd": 7550,
       "low_usd": 7200,
       "high_usd": 7900,
       "route": "Xi’an (China) → Mersin/Ambarli (Türkiye)",
@@ -561,7 +561,7 @@
     },
     {
       "period": "2026-08",
-      "mcfi_usd": 7550.0,
+      "mcfi_usd": 7550,
       "low_usd": 7200,
       "high_usd": 7900,
       "route": "Xi’an (China) → Mersin/Ambarli (Türkiye)",
@@ -579,7 +579,7 @@
     },
     {
       "period": "2026-09",
-      "mcfi_usd": 7600.0,
+      "mcfi_usd": 7600,
       "low_usd": 7200,
       "high_usd": 8000,
       "route": "Xi’an (China) → Mersin/Ambarli (Türkiye)",
@@ -606,22 +606,12 @@
     {
       "period": "2025-02",
       "status": "Partial historical coverage",
-      "detail": "A complete two-route market assessment was not located for this month."
+      "detail": "No comparable full-route 40HC market assessment located for this month."
     },
     {
       "period": "2025-07",
       "status": "Baku assessment available",
       "detail": "A Baku market assessment and a Turkey carrier tariff are available."
-    },
-    {
-      "period": "2026-08",
-      "status": "Provider rates available",
-      "detail": "Published provider rates are available for selected routes."
-    },
-    {
-      "period": "2026-09",
-      "status": "Awaiting monthly assessment",
-      "detail": "September market assessment pending as of 28 Sep 2026."
     }
   ],
   "historical_observations": [
@@ -1656,7 +1646,7 @@
       "ownership": "unspecified",
       "low_usd": 6750,
       "high_usd": 7200,
-      "midpoint_usd": 6975.0,
+      "midpoint_usd": 6975,
       "scope": "Partial-route market assessment",
       "primary_eligible": false,
       "grade": "A-",
@@ -1677,7 +1667,7 @@
       "ownership": "unspecified",
       "low_usd": 7200,
       "high_usd": 8000,
-      "midpoint_usd": 7600.0,
+      "midpoint_usd": 7600,
       "scope": "Full-corridor market assessment",
       "primary_eligible": true,
       "grade": "A-",
@@ -1794,6 +1784,10 @@
     {
       "name": "YDX — 2026 TITR market analysis",
       "url": "https://ydxtrans.com/newsDetail/57.html"
+    },
+    {
+      "name": "Port Kuryk — official H1 2026 cargo throughput (tonnes)",
+      "url": "https://portkuryk.kz/ru/media/947/port-kuryk-summarizes-results-first-half-2026"
     }
   ],
   "structural_benchmarks": {
@@ -1886,7 +1880,7 @@
         "period": "2026-09",
         "low_usd": 6750,
         "high_usd": 7200,
-        "midpoint_usd": 6975.0,
+        "midpoint_usd": 6975,
         "container": "40HC",
         "source_name": "Argus, reported by Anews",
         "source_url": "https://anews.az/en/ekonomika/527577/caspian-container-shipping-rates-rise-in-september/",
@@ -2119,5 +2113,13 @@
     "phase_two_target_teu": 500000,
     "capacity_source_url": "https://anews.az/en/read/528208/",
     "note": "Reported cumulative throughput is not live berth occupancy; future capacity is not operational capacity."
+  },
+  "kuryk": {
+    "throughput_period": "2026-01 to 2026-06",
+    "throughput_tonnes": 884800,
+    "throughput_status": "official first-half report; not a live observation",
+    "throughput_source_url": "https://portkuryk.kz/ru/media/947/port-kuryk-summarizes-results-first-half-2026",
+    "published_at": "2026-08-04",
+    "note": "First-half cargo tonnage, not container TEU or a real-time vessel count."
   }
 }
