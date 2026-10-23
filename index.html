@@ -28,7 +28,7 @@
   <meta name="twitter:image" content="https://alexandercerato.github.io/MCI/assets/mci-social-logo-square.png?v=20261016-refined-logo" />
   <meta name="twitter:image:alt" content="MCI — Middle Corridor Freight Monitor" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
-  <link rel="stylesheet" href="styles.css?v=20261017-general-update" />
+  <link rel="stylesheet" href="styles.css?v=20261023-caspian-map" />
 </head>
 <body>
   <nav class="topbar" aria-label="Main navigation">
@@ -172,9 +172,40 @@
 
     <section class="panel live-panel site-view" id="caspian-live" tabindex="-1" hidden>
       <div class="section-head">
+        <div><div class="section-kicker">Caspian intelligence</div><h2>Caspian vessel map</h2></div>
+        <span class="caspian-status" id="caspianMapStatus">Awaiting recent AIS</span>
+      </div>
+      <div class="caspian-observations" aria-label="Recent AIS observations">
+        <div><span>Caspian reports · 30 min</span><strong id="caspianReportCount">—</strong><small id="caspianRecentMeta">Coverage not yet verified</small></div>
+        <div><span>Aktau · recent AIS</span><strong id="caspianAktauCount">—</strong><small>within 15 nautical miles</small></div>
+        <div><span>Kuryk · recent AIS</span><strong id="caspianKurykCount">—</strong><small>within 15 nautical miles</small></div>
+        <div><span>Baku / Alat · recent AIS</span><strong id="caspianBakuCount">—</strong><small>two distinct port areas</small></div>
+      </div>
+      <div class="caspian-toolbar">
+        <div class="caspian-focus" role="group" aria-label="Map area">
+          <button type="button" data-caspian-focus="all" aria-pressed="true">Entire Caspian</button>
+          <button type="button" data-caspian-focus="Aktau" aria-pressed="false">Aktau</button>
+          <button type="button" data-caspian-focus="Kuryk" aria-pressed="false">Kuryk</button>
+          <button type="button" data-caspian-focus="west" aria-pressed="false">Baku / Alat</button>
+        </div>
+        <label>Positions <select id="caspianPositionAge"><option value="recent">Recent · 30 min</option><option value="day">Last known · 24 h</option><option value="all">All reports · includes historical / undated</option></select></label>
+      </div>
+      <div class="caspian-workspace">
+        <div class="caspian-map-shell">
+          <div id="caspianInteractiveMap" class="caspian-interactive-map" role="region" aria-label="Interactive vessel map of the Caspian Sea"></div>
+          <p id="caspianMapNotice" class="caspian-map-notice">Awaiting vessel reports. Port locations are shown for reference.</p>
+        </div>
+        <aside class="caspian-vessels" aria-label="Vessels shown on map">
+          <div class="caspian-list-head"><strong>Vessel reports</strong><small id="caspianVisibleCount">—</small></div>
+          <input id="caspianVesselSearch" type="search" placeholder="Search name or MMSI" aria-label="Search vessel name or MMSI" />
+          <div id="caspianVesselList" class="caspian-vessel-list" aria-live="polite"></div>
+        </aside>
+      </div>
+      <div class="caspian-map-foot"><span id="caspianMapSource">AIS source not connected</span><span>Position time is shown for each vessel · AIS reports do not measure berth occupancy</span></div>
+      <div class="section-head">
         <div>
           <div class="section-kicker">Aktau operations</div>
-          <h2>Port of Aktau · vessel statistics</h2>
+          <h3>Port of Aktau · official bulletin</h3>
         </div>
         <div class="aktau-map-badge"><span>OFFICIAL PORT DATA</span><small id="aktauOfficialUpdated">Awaiting official update</small></div>
       </div>
@@ -356,7 +387,9 @@
   <script src="estimator-ui.js?v=20261015-auto-pulse"></script>
   <script src="overview.js?v=20261015-auto-pulse"></script>
   <script src="market-dates.js?v=20261017-general-update"></script>
-  <script src="port-freshness.js?v=20261023-port-dates"></script>
-  <script src="app.js?v=20261023-port-dates"></script>
+<script src="port-freshness.js?v=20261023-port-dates-2"></script>
+  <script src="caspian-data.js?v=20261023-caspian-map"></script>
+  <script src="caspian-map.js?v=20261023-caspian-map"></script>
+  <script src="app.js?v=20261023-caspian-map"></script>
 </body>
 </html>

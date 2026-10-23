@@ -11,6 +11,9 @@ for(const date of ['31.02.2026','00.10.2026','2026-10-23','23.13.2026',''])asser
 assert.equal(evaluatePortReport(r(undefined,{fetched_at:'2026-10-23T05:00:00Z'}),now).is_current,false);
 assert.equal(evaluatePortReport(r(undefined,{fetch_error:'Source timeout',checked_at:'2026-10-23T06:00:00Z'}),now).is_current,false);
 assert.equal(evaluatePortReport(r(undefined,{fetched_at:null}),now).is_current,false);
+assert.match(evaluatePortReport(r(undefined,{fetched_at:null}),now).label,/retrieval time unverified/);
+assert.match(evaluatePortReport(r(undefined,{fetch_error:'Source timeout'}),now).label,/source unavailable/);
+assert.match(evaluatePortReport(r(undefined,{fetched_at:'2026-10-23T05:00:00Z'}),now).label,/cached/);
 assert.equal(evaluatePortReport(r(undefined,{fetched_at:'2026-10-23T06:01:00Z'}),now).is_current,false);
 // The day changes at 19:00 UTC in Kazakhstan, not at midnight in Rome or UTC.
 assert.equal(evaluatePortReport({traffic_date:'23.10.2026',fetched_at:'2026-10-23T19:00:00Z'},Date.parse('2026-10-23T19:01:00Z')).date_status,'previous_day');

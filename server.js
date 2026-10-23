@@ -1,4 +1,6 @@
 import './port-freshness.js';
+import './caspian-data.js';
+import {createDataDockedProvider,createFileBudget} from './datadocked.js';
 import {parseKurykText, wideSafeCard, articleSnapshot, parseMarketRanges} from './source-parsers.js';
 import 'dotenv/config';
 import express from 'express';
@@ -19,9 +21,17 @@ const OPENWATERS_API_KEY = process.env.OPENWATERS_API_KEY || '';
 const AISSTREAM_API_KEY = process.env.AISSTREAM_API_KEY || '';
 const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || '*';
 const DATA_DIR = path.resolve(process.env.DATA_DIR || './data');
+const dataDocked=createDataDockedProvider({
+  apiKey:process.env.DATADOCKED_API_KEY||'',
+  enabled:process.env.DATADOCKED_ENABLED==='true',
+  publicDisplayAllowed:process.env.DATADOCKED_PUBLIC_DISPLAY_ALLOWED==='true',
+  budget:createFileBudget(process.env.DATADOCKED_BUDGET_FILE,Number(process.env.DATADOCKED_DAILY_CREDIT_LIMIT||0)),
+  refreshMs:Number(process.env.DATADOCKED_REFRESH_MINUTES||60)*60000,
+  maxLocationLookups:Number(process.env.DATADOCKED_MAX_LOCATION_LOOKUPS||5)
+});
 
 const boundsParts = String(
-  process.env.CASPIAN_BOUNDS || '39.0,48.0,45.2,53.0'
+  process.env.CASPIAN_BOUNDS || '36.0,46.0,47.5,55.0'
 )
   .split(',')
   .map(Number);
@@ -36,10 +46,10 @@ const BOUNDS =
         east: boundsParts[3]
       }
     : {
-        south: 39.0,
-        west: 48.0,
-        north: 45.2,
-        east: 53.0
+        south: 36.0,
+        west: 46.0,
+        north: 47.5,
+        east: 55.0
       };
 
 const PORTS = {
@@ -1331,6 +1341,21 @@ function connectOpenWaters() {
    PUBLIC SNAPSHOT
 ============================================================ */
 
+async function refreshDataDocked(){
+  const snapshot=await dataDocked.refresh();
+  for(const row of snapshot.vessels){
+    if(!row.last_seen)continue; // Undated area discoveries never become live AIS.
+    const previous=vessels.get(row.mmsi);
+    if(globalThis.MCI_CASPIAN_DATA.mergePosition(previous,row)===previous)continue;
+    const next={...row,direction:courseDirection(row.cog,row.sog)};
+    next.corridor_candidate=corridorCandidate(next);
+    vessels.set(row.mmsi,next);
+    const seen=Date.parse(row.last_seen);
+    if(!lastPositionAt||seen>Date.parse(lastPositionAt))lastPositionAt=row.last_seen;
+    inferCrossing(row.mmsi,previous?.zone||null,next.zone,seen);
+  }
+}
+
 function publicSnapshot() {
   cleanup();
 
@@ -1338,11 +1363,12 @@ function publicSnapshot() {
   const liveCutoff = now - STALE_MS;
   const fallbackCutoff = now - FALLBACK_MS;
   const archiveCutoff = now - ARCHIVE_MS;
+  const docked=dataDocked.snapshot();
 
   const all = [...vessels.values()].filter(v => {
     if (!v.last_seen) return false;
     const t = new Date(v.last_seen).getTime();
-    return Number.isFinite(t) && t >= archiveCutoff;
+    return Number.isFinite(t) && t >= archiveCutoff && t <= now;
   });
 
   const recent = all.filter(v => new Date(v.last_seen).getTime() >= liveCutoff);
@@ -1350,7 +1376,7 @@ function publicSnapshot() {
   const displayMode = recent.length ? 'live' : (day.length ? 'last_known' : (all.length ? 'archive' : 'empty'));
   const displayRows = recent.length ? recent : (day.length ? day : all);
   // A working provider connection is not evidence of current AIS coverage.
-  const connectionStatus = (wsState === 'live' || aisStreamState === 'live' || fachaState === 'live') ? 'live' :
+  const connectionStatus = (wsState === 'live' || aisStreamState === 'live' || fachaState === 'live' || docked.status==='connected') ? 'live' :
     ((wsState === 'connecting' || wsState === 'subscribing' || aisStreamState === 'connecting') ? 'connecting' : 'offline');
   const dataStatus = recent.length ? 'live' : (connectionStatus === 'live' ? 'degraded' : connectionStatus);
   const display = displayRows
@@ -1386,13 +1412,26 @@ function publicSnapshot() {
 
   const cutoff7 = now - 7 * 86400000;
   const crossings7d = crossings.filter(c => new Date(c.arrived_at).getTime() >= cutoff7);
+  const serialize=v=>({mmsi:v.mmsi,name:v.name,lat:v.lat,lon:v.lon,sog:validSog(v.sog),cog:validCog(v.cog),heading:validHeading(v.heading),
+    zone:v.zone,direction:courseDirection(v.cog,v.sog),corridor_candidate:corridorCandidate(v),destination:v.destination||null,
+    ship_type:v.ship_type??null,source:v.source||null,data_source:v.data_source||null,nav_status:v.nav_status||null,
+    last_seen:v.last_seen||null,observed_at:v.observed_at||null,
+    age_seconds:v.last_seen?Math.floor((now-Date.parse(v.last_seen))/1000):null,
+    stale:!v.last_seen||now-Date.parse(v.last_seen)>STALE_MS});
+  const knownIds=new Set(all.map(v=>v.mmsi));
+  const allReports=[...all,...docked.vessels.filter(v=>!v.last_seen&&!knownIds.has(v.mmsi))]
+    .sort((a,b)=>(Date.parse(b.last_seen)||0)-(Date.parse(a.last_seen)||0));
 
   return {
     status: dataStatus,
     connection_status: connectionStatus,
     coverage_verified: recent.length > 0,
     data_warning: recent.length ? null : 'No recent AIS positions available. Zero counts do not establish absence of vessel traffic; consult official port activity.',
-    provider: AISSTREAM_API_KEY ? 'Open Waters + AISStream + facha.dev' : 'Open Waters + facha.dev',
+    provider: (AISSTREAM_API_KEY ? 'Open Waters + AISStream + facha.dev' : 'Open Waters + facha.dev')+(docked.last_success_at?' + Data Docked':''),
+    datadocked:{status:docked.status,last_checked_at:docked.last_checked_at,last_success_at:docked.last_success_at,areas:docked.areas,scope:docked.scope},
+    map_bounds:globalThis.MCI_CASPIAN_DATA.bounds,
+    all_vessels:allReports.slice(0,500).map(serialize),
+    reports_truncated:allReports.length>500,
     display_mode: displayMode,
     display_window: displayMode === 'live' ? '30m' : (displayMode === 'last_known' ? '24h' : (displayMode === 'archive' ? 'archive' : null)),
     updated_at: lastMessageAt,
@@ -2154,8 +2193,8 @@ app.get(
       coverage_verified: ais.coverage_verified,
       data_warning: ais.data_warning,
 
-      provider:
-        AISSTREAM_API_KEY ? 'Open Waters + AISStream + facha.dev' : 'Open Waters + facha.dev',
+      provider:ais.provider,
+      datadocked_status:ais.datadocked.status,
 
       open_waters_status:
         wsState,
@@ -2251,6 +2290,7 @@ app.listen(
     connectOpenWaters();
     connectAisStream();
     refreshFachaSnapshot();
+    refreshDataDocked().catch(()=>console.warn('[DATADOCKED] Refresh failed'));
   }
 );
 
@@ -2273,3 +2313,4 @@ setInterval(refreshNews, NEWS_REFRESH_MS).unref();
 setInterval(refreshPricing, PRICING_REFRESH_MS).unref();
 setInterval(refreshPortActivity, PORT_ACTIVITY_REFRESH_MS).unref();
 setInterval(refreshFachaSnapshot, FACHA_REFRESH_MS).unref();
+setInterval(()=>refreshDataDocked().catch(()=>console.warn('[DATADOCKED] Refresh failed')),60000).unref();

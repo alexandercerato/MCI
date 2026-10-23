@@ -20,7 +20,8 @@
     const fetch_recent=Number.isFinite(fetched)&&fetch_age_ms>=0&&fetch_age_ms<=15*60000&&!report?.fetch_error;
     const is_current=date_status==='current'&&fetch_recent;
     const can_display=day!==null&&age>=0;
-    const label=is_current?'Today’s official bulletin':date_status==='current'?'Today’s bulletin · cached / source unavailable':date_status==='previous_day'?'Previous-day bulletin':date_status==='stale'?'Historical bulletin':date_status==='future'?'Future-dated bulletin · unverified':'Bulletin date unverified';
+    const retrieval=report?.fetch_error?'source unavailable':!Number.isFinite(fetched)||fetch_age_ms<0?'retrieval time unverified':'cached';
+    const label=is_current?'Today’s official bulletin':date_status==='current'?`Today’s bulletin · ${retrieval}`:date_status==='previous_day'?'Previous-day bulletin':date_status==='stale'?'Historical bulletin':date_status==='future'?'Future-dated bulletin · unverified':'Bulletin date unverified';
     return {date_status,age_days:age,fetch_recent,is_current,can_display,label};
   }
   return {bulletinDay,evaluatePortReport};

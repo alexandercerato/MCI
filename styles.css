@@ -1193,3 +1193,63 @@ a:focus-visible,button:focus-visible,summary:focus-visible{
 }
 
 #corridorBenchmarks > .estimate-note{grid-column:1/-1;margin:0 0 6px;line-height:1.5}
+
+/* Caspian AIS workspace · observation age remains visible at every zoom. */
+.site-view{scroll-margin-top:80px}
+.caspian-status{border:1px solid var(--border-strong);padding:7px 10px;font-size:10px;font-weight:700;color:var(--muted);border-radius:4px}
+.caspian-status.has-data{color:var(--cyan);border-color:var(--cyan)}
+.caspian-observations{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:18px 0}
+.caspian-observations>div{display:flex;flex-direction:column;gap:7px;padding:17px 19px;background:var(--bg2);border-right:1px solid var(--line)}
+.caspian-observations>div:last-child{border:0}
+.caspian-observations span{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.caspian-observations strong{font:600 28px/1.15 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-.05em}
+.caspian-observations small{font-size:10px;line-height:1.5;color:var(--muted2)}
+.caspian-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.caspian-focus{display:flex;gap:5px;flex-wrap:wrap}
+.caspian-focus button{font-family:inherit;font-weight:600;font-size:11px;line-height:1.2;border:1px solid var(--border-strong);background:var(--panel);color:var(--muted);padding:9px 13px;border-radius:4px;cursor:pointer}
+.caspian-focus button[aria-pressed="true"]{background:var(--text);color:var(--panel);border-color:var(--text)}
+.caspian-toolbar label{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:8px}
+.caspian-toolbar select{font:inherit;max-width:100%;border:1px solid var(--border-strong);background:var(--panel);color:var(--text);padding:8px;border-radius:4px}
+.caspian-workspace{display:grid;grid-template-columns:minmax(0,1fr) 310px;border:1px solid var(--border-strong);border-radius:6px;overflow:hidden}
+.caspian-map-shell{position:relative;min-width:0}
+.caspian-interactive-map{height:560px;width:100%;background:#dce7e2;z-index:1}
+.caspian-country-label{color:#7f8b84;font-size:10px;letter-spacing:.13em;text-transform:uppercase;text-align:center;white-space:nowrap;pointer-events:none}
+.caspian-sea-label{color:#6f8b7e;font-size:10px;letter-spacing:.2em;text-align:center;white-space:nowrap;pointer-events:none}
+.caspian-interactive-map .leaflet-tile-pane{filter:saturate(.48)}
+.caspian-port-label{background:var(--panel);border:1px solid var(--line);box-shadow:0 2px 5px #00000008;color:var(--text);font-family:inherit;font-size:11px;font-weight:600;line-height:1.3;padding:4px 7px}
+.caspian-map-notice{position:absolute;z-index:500;bottom:25px;left:13px;right:13px;max-width:460px;margin:0;padding:11px 14px;background:rgba(255,255,255,.96);border:1px solid var(--border-strong);border-radius:5px;font-size:11px;line-height:1.55;color:var(--muted);pointer-events:none}
+.caspian-vessels{min-width:0;border-left:1px solid var(--line);background:var(--panel)}
+.caspian-list-head{display:flex;justify-content:space-between;gap:8px;padding:17px 15px 12px;font-size:12px}
+.caspian-list-head small{color:var(--muted2);font-size:10px}
+.caspian-vessels>input{display:block;box-sizing:border-box;width:calc(100% - 28px);margin:0 14px 12px;padding:10px 12px;font-family:inherit;font-size:12px;background:var(--bg2);border:1px solid var(--line);border-radius:4px;color:var(--text)}
+.caspian-vessel-list{height:451px;overflow-y:auto}
+.caspian-ship{display:block;width:100%;text-align:left;padding:14px 15px;background:transparent;border:0;border-top:1px solid var(--line);font:inherit;color:var(--text);cursor:pointer}
+.caspian-ship:hover{background:var(--bg2)}
+.caspian-ship strong{display:block;font-size:12px;margin-bottom:5px}
+.caspian-ship small{display:block;font-size:10px;line-height:1.6;color:var(--muted2)}
+.caspian-ship-state{display:block;margin-top:8px;font-size:10px;color:var(--muted)}
+.caspian-ship-state.recent{color:var(--cyan)}
+.caspian-ship-state.last_known{color:#947235}
+.caspian-no-ships{padding:25px 18px;font-size:12px;line-height:1.7;color:var(--muted)}
+.caspian-no-ships strong,.caspian-no-ships span{display:block;margin-bottom:9px}
+.caspian-popup{display:grid;gap:6px;min-width:170px}
+.caspian-popup strong{font-size:14px}.caspian-popup span,.caspian-popup small{font-size:11px;color:var(--muted)}
+.caspian-popup b{font-size:11px;font-weight:600}
+.caspian-map-foot{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;font-size:10px;line-height:1.6;color:var(--muted2);padding:11px 0 24px;margin-bottom:22px;border-bottom:1px solid var(--line)}
+@media(min-width:1500px){.caspian-interactive-map{height:610px}.caspian-vessel-list{height:501px}}
+@media(max-width:1000px){.caspian-workspace{grid-template-columns:minmax(0,1fr) 255px}.caspian-interactive-map{height:480px}.caspian-vessel-list{height:371px}}
+@media(max-width:700px){
+  .caspian-observations{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .caspian-observations>div{padding:13px;border-bottom:1px solid var(--line)}
+  .caspian-observations>div:nth-child(2){border-right:0}
+  .caspian-observations>div:nth-child(3){border-bottom:0}
+  .caspian-workspace{grid-template-columns:1fr}
+  .caspian-interactive-map{height:460px}
+  .caspian-vessels{border-left:0;border-top:1px solid var(--line)}
+  .caspian-vessel-list{height:auto;max-height:320px;min-height:100px}
+  .caspian-toolbar label{width:100%;align-items:flex-start;flex-direction:column}
+  .caspian-toolbar select{width:100%}
+  .caspian-focus button{padding:10px 12px}
+  .caspian-focus{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%}
+  .caspian-port-label{font-size:10px}
+}

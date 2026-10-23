@@ -1,4 +1,4 @@
-# Middle Corridor Freight Monitor v0.17.0
+# Middle Corridor Freight Monitor
 
 ## MCFI-40 · full-corridor freight rate
 
@@ -30,14 +30,20 @@ Run `node tests/test-estimator.cjs` to check all 600 ordered city pairs, allocat
 
 The browser reloads `data.json` every five minutes. The included GitHub Action runs `update_data.py` on the same cadence and refreshes supported public provider snapshots. Provider snapshots do not overwrite the MCFI-40 series.
 
-## Caspian Live setup
+## Caspian map and Data Docked
+
+The Port activity view includes an interactive full-basin map, gateway focus controls, vessel search, source timestamps and separate recent / last-known / historical filters. Baku bay and the Port of Baku at Alat are distinct locations. Port AIS counts are observed reports within 15 nautical miles, not berth occupancy or a census of port traffic. Official Aktau berth occupancy remains a separate, dated bulletin.
+
+Data Docked integration is **prepared but disabled**. No live Data Docked request has been made. The owner selected “licence to be verified”; do not enable requests or public display until the plan, credit allowance and public-display rights are confirmed. See [the setup guide](docs/datadocked.md).
+
+## Caspian backend setup
 
 AISStream requires a private API key. Do not put it in `app.js`, `runtime-config.js`, GitHub Pages, or any other public frontend file.
 
-The `backend/` folder contains a small Node service that:
+The root `server.js` contains a Node service that:
 
 - opens the AISStream WebSocket;
-- subscribes only to a central-Caspian bounding box;
+- subscribes to the configured Caspian bounding box;
 - normalizes vessel positions;
 - identifies vessels near Aktau, Kuryk, Alat and Baku;
 - classifies underway / eastbound / westbound traffic;
@@ -48,20 +54,19 @@ Because the AIS connection is persistent, deploy this backend on a service that 
 
 ### Environment variables
 
-Copy `backend/.env.example` and set:
+Copy `.env.example` to a private `.env` and set:
 
 ```text
 AISSTREAM_API_KEY=your_private_key
 PORT=8787
 ALLOWED_ORIGIN=https://YOUR_GITHUB_PAGES_DOMAIN
 DATA_DIR=./data
-CASPIAN_BOUNDS=39.0,48.0,45.2,53.0
+CASPIAN_BOUNDS=36,46,47.5,55
 ```
 
 Then run:
 
 ```bash
-cd backend
 npm install
 npm start
 ```
@@ -93,5 +98,8 @@ After the backend is live, set only its public URL in `runtime-config.js`; that 
 - `mcfi_history.csv` — MCFI monthly series
 - `raw_observations.csv` — wider historical evidence database
 - `runtime-config.js` — public runtime endpoint configuration only; never place secrets here
-- `backend/` — private AISStream collector/API
+- `server.js` — private AIS collector/API
+- `caspian-data.js` — shared geography and position-age rules
+- `caspian-map.js` — interactive Caspian map
+- `datadocked.js` — gated Data Docked integration and durable credit guard
 - `update_data.py` — public-provider market refresh

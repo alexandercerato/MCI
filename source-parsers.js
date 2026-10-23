@@ -2,15 +2,18 @@
 export function parseKurykText(text, splitNames) {
   const traffic_date = text.match(/Vessel traffic as of\s+([0-9.]+)/i)?.[1]?.replace(/\.$/, '') || null;
   const sections = text.split(/Vessels at anchorage|Approaching vessels|Port Kuryk:/i);
-  const berthText = sections[0];
+  // The official responsive table repeats its column headings before the first
+  // labelled row. Start with the last label before a row's dated values so the
+  // heading text cannot become part of a berth or vessel name.
+  const berthText = sections[0].replace(/Berth No\.\s+Vessel name\s+Berthing time\s+Operation type\s*\([^)]*\)\s*/gi,'');
   const anchorStart = text.search(/Vessels at anchorage/i);
   const approachStart = text.search(/Approaching vessels/i);
   const end = text.search(/Port Kuryk:/i);
   const anchorageText = anchorStart < 0 ? '' : text.slice(anchorStart, approachStart > anchorStart ? approachStart : (end > anchorStart ? end : undefined));
   const approachText = approachStart < 0 ? '' : text.slice(approachStart, end > approachStart ? end : undefined);
   const berthed = [...berthText.matchAll(/Berth No\.\s+(.+?)\s+Vessel name\s+(.+?)\s+Berthing time\s+([0-9.]+\s*\/\s*[0-9:]+)\s+Operation type\s+(.+?)(?=Berth No\.|$)/gi)].map(m=>({berth:m[1].trim(),vessel_names:splitNames(m[2]),berthing_time:m[3].trim(),operation:m[4].trim()}));
-  const anchored = [...anchorageText.matchAll(/Vessel name\s+(.+?)\s+Date and time\s+([0-9.]+\s*\/\s*[0-9:]+)/gi)].map(m=>({vessel_name:splitNames(m[1])[0]||m[1].trim(),reported_time:m[2].trim()}));
-  const approaching = [...approachText.matchAll(/Vessel name\s+(.+?)\s+Date and time of vessel approach\s+([0-9.]+\s*\/\s*[0-9:]+)/gi)].map(m=>({vessel_name:splitNames(m[1])[0]||m[1].trim(),eta:m[2].trim()}));
+  const anchored = [...anchorageText.matchAll(/Vessel name\s+((?:(?!Vessel name).)+?)\s+Date and time\s+([0-9.]+\s*\/\s*[0-9:]+)/gi)].map(m=>({vessel_name:splitNames(m[1])[0]||m[1].trim(),reported_time:m[2].trim()}));
+  const approaching = [...approachText.matchAll(/Vessel name\s+((?:(?!Vessel name).)+?)\s+Date and time of vessel approach\s+([0-9.]+\s*\/\s*[0-9:]+)/gi)].map(m=>({vessel_name:splitNames(m[1])[0]||m[1].trim(),eta:m[2].trim()}));
   if (!traffic_date || (!berthed.length && !anchored.length && !approaching.length)) throw new Error('Port Kuryk dated vessel sections were not parsed');
   return {traffic_date,berthed,anchored,approaching};
 }

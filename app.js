@@ -755,6 +755,7 @@ function showSiteView(moveFocus=false){
     initRouteMap();
     requestAnimationFrame(()=>ROUTE_REFRESH?.());
   }
+  if(selected.id==='caspian-live')requestAnimationFrame(()=>window.MCI_CASPIAN_MAP?.init());
   if(moveFocus){selected.focus({preventScroll:true});window.scrollTo({top:0,behavior:'instant'});}
 }
 navToggle.addEventListener('click',()=>{

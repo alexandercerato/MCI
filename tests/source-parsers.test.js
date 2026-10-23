@@ -50,4 +50,9 @@ test('23 October bulletin reconciles berth, anchorage and approach lists',()=>{
  assert.equal(r.berthed.length,3);
  assert.equal(r.anchored.length,2);
  assert.equal(r.approaching.length,3);
+ assert.equal(r.berthed[0].berth,'Пр.№6');
+ assert.equal(r.anchored[0].vessel_name,'т/х Somia');
+ assert.equal(r.approaching[0].vessel_name,'п.Азербайджан');
+ for(const row of r.berthed) assert.ok(!/Vessel name|Berthing time|Operation type/.test(row.berth));
+ for(const row of [...r.anchored,...r.approaching]) assert.ok(!/Vessel name|Date and time|№ 1/.test(row.vessel_name));
 });
