@@ -61,10 +61,11 @@
   }
   function focus(id){
     selected=id;
+    map.stop();
     document.querySelectorAll('[data-caspian-focus]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.caspianFocus===id)));
-    if(id==='all')map.fitBounds([[model.bounds.south,model.bounds.west],[model.bounds.north,model.bounds.east]],{padding:[22,22]});
-    else if(id==='west')map.fitBounds([[39.65,49.05],[40.65,50.25]],{padding:[28,28]});
-    else {const port=model.ports.find(p=>p.id===id);map.setView([port.lat,port.lon],10);}
+    if(id==='all')map.fitBounds([[model.bounds.south,model.bounds.west],[model.bounds.north,model.bounds.east]],{padding:[22,22],animate:false});
+    else if(id==='west')map.fitBounds([[39.65,49.05],[40.65,50.25]],{padding:[28,28],animate:false});
+    else {const port=model.ports.find(p=>p.id===id);map.setView([port.lat,port.lon],10,{animate:false});}
     draw();
   }
   async function load(){
@@ -82,7 +83,7 @@
   function init(){
     if(map){map.invalidateSize();draw();return;}
     if(!window.L||!model||!$('caspianInteractiveMap'))return;
-    map=L.map('caspianInteractiveMap',{scrollWheelZoom:false,minZoom:5,maxZoom:12,zoomSnap:.25,
+    map=L.map('caspianInteractiveMap',{scrollWheelZoom:false,zoomAnimation:false,minZoom:5,maxZoom:12,zoomSnap:.25,
       maxBounds:[[30,30],[56,72]],maxBoundsViscosity:1});
     map.createPane('caspianLand');map.getPane('caspianLand').style.zIndex=200;
     map.attributionControl.addAttribution('<a href="https://www.naturalearthdata.com/">Natural Earth</a> · regional basemap');
@@ -104,7 +105,7 @@
     }
     document.querySelectorAll('[data-caspian-focus]').forEach(button=>button.addEventListener('click',()=>focus(button.dataset.caspianFocus)));
     $('caspianPositionAge').addEventListener('change',draw);$('caspianVesselSearch').addEventListener('input',draw);
-    $('caspianVesselList').addEventListener('click',event=>{const id=event.target.closest('[data-mmsi]')?.dataset.mmsi,marker=markers.get(id);if(marker){map.setView(marker.getLatLng(),11);marker.openPopup();}});
+    $('caspianVesselList').addEventListener('click',event=>{const id=event.target.closest('[data-mmsi]')?.dataset.mmsi,marker=markers.get(id);if(marker){map.stop();map.setView(marker.getLatLng(),11,{animate:false});marker.openPopup();}});
     focus('all');load();
     setInterval(()=>{if(!$('caspian-live').hidden)load();},30000);
     setInterval(()=>{if(!$('caspian-live').hidden)draw();},15000);
