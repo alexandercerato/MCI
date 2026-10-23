@@ -41,3 +41,13 @@ test('invalid and undated market ranges are rejected',()=>{
  assert.throws(()=>parseMarketRanges('Ambarli and Mersin $7,200–$8,000.',month),/month/);
  assert.throws(()=>parseMarketRanges('October 2026 Ambarli and Mersin $8,000–$7,200.',month),/range/);
 });
+
+test('23 October bulletin reconciles berth, anchorage and approach lists',()=>{
+ const text=fs.readFileSync(new URL('./fixtures/kuryk-2026-10-23.txt',import.meta.url),'utf8');
+ const r=parseKurykText(text,split);
+ assert.equal(r.traffic_date,'23.10.2026');
+ assert.equal(r.berthed.reduce((sum,row)=>sum+row.vessel_names.length,0),5);
+ assert.equal(r.berthed.length,3);
+ assert.equal(r.anchored.length,2);
+ assert.equal(r.approaching.length,3);
+});

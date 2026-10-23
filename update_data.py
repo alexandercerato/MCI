@@ -253,7 +253,9 @@ def refresh_aktau(data):
     """Apply the checked structural snapshot on every scheduled refresh."""
     snapshot = json.loads((ROOT / "aktau-operations-2026.json").read_text(encoding="utf-8"))
     data["aktau"].update({
-        "container_hub_teu": snapshot["capacity_operational_teu_per_year"],
+        "container_hub_teu": snapshot["capacity_first_phase_hub_teu_per_year"],
+        "container_capacity_operational_teu": snapshot["capacity_operational_teu_per_year"],
+        "capacity_reported_at": snapshot["capacity_reported_at"],
         "container_hub_planned_teu": snapshot["capacity_planned_teu_per_year"],
         "capacity_note": snapshot["capacity_note"],
         "capacity_source_url": snapshot["sources"]["capacity"],

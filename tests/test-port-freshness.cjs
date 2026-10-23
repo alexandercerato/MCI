@@ -1,0 +1,19 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict'),path=require('node:path');
+const ctx={module:{exports:{}}};vm.createContext(ctx);vm.runInContext(fs.readFileSync(path.join(__dirname,'../port-freshness.js'),'utf8'),ctx);
+const {bulletinDay,evaluatePortReport}=ctx.module.exports,now=Date.parse('2026-10-23T06:00:00Z');
+const r=(date='23.10.2026',extra={})=>({traffic_date:date,fetched_at:'2026-10-23T05:59:00Z',...extra});
+assert.equal(evaluatePortReport(r(),now).is_current,true);
+assert.equal(evaluatePortReport(r('22.10.2026'),now).date_status,'previous_day');
+assert.equal(evaluatePortReport(r('22.10.2026'),now).is_current,false);
+assert.equal(evaluatePortReport(r('20.10.2026'),now).date_status,'stale');
+assert.equal(evaluatePortReport(r('24.10.2026'),now).can_display,false);
+for(const date of ['31.02.2026','00.10.2026','2026-10-23','23.13.2026',''])assert.equal(bulletinDay(date),null);
+assert.equal(evaluatePortReport(r(undefined,{fetched_at:'2026-10-23T05:00:00Z'}),now).is_current,false);
+assert.equal(evaluatePortReport(r(undefined,{fetch_error:'Source timeout',checked_at:'2026-10-23T06:00:00Z'}),now).is_current,false);
+assert.equal(evaluatePortReport(r(undefined,{fetched_at:null}),now).is_current,false);
+assert.equal(evaluatePortReport(r(undefined,{fetched_at:'2026-10-23T06:01:00Z'}),now).is_current,false);
+// The day changes at 19:00 UTC in Kazakhstan, not at midnight in Rome or UTC.
+assert.equal(evaluatePortReport({traffic_date:'23.10.2026',fetched_at:'2026-10-23T19:00:00Z'},Date.parse('2026-10-23T19:01:00Z')).date_status,'previous_day');
+assert.equal(evaluatePortReport({traffic_date:'01.01.2027',fetched_at:'2026-12-31T19:00:00Z'},Date.parse('2026-12-31T19:01:00Z')).is_current,true);
+assert.equal(evaluatePortReport(r('23.10.2026.'),now).is_current,true);
+console.log('PASS: source date, failed/stale/future retrievals, impossible dates, Kazakhstan midnight and year boundaries.');

@@ -29,6 +29,7 @@ class RefreshTests(unittest.TestCase):
         updater.refresh_aktau(self.data)
         self.assertEqual(once,self.data)
         self.assertEqual(self.data['aktau']['container_hub_teu'],140000)
+        self.assertEqual(self.data['aktau']['container_capacity_operational_teu'],180000)
         self.assertEqual(self.data['aktau']['container_hub_planned_teu'],240000)
         self.assertEqual(self.data['mcfi_monthly'],before)
 

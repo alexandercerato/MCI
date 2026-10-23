@@ -13,7 +13,7 @@
       "previous_basis": "50/50 Baku–Türkiye market basket divided by the Baku structural cost reference × 100",
       "comparability": "The new price series is recalculated retrospectively; it must not be compared numerically with the previous index points."
     },
-    "last_reviewed_at": "2026-10-18T04:59:07.014Z"
+    "last_reviewed_at": "2026-10-23T06:19:19Z"
   },
   "model": {
     "name": "MCFI-40 Full-Corridor Freight Rate",
@@ -1729,12 +1729,14 @@
     "historical_2024_proposed_handling_40ft_usd": 80,
     "note": "Port capacity and new container hub values are contextual operating statistics, not direct components of the monthly MCFI unless they appear in a comparable all-in quote.",
     "container_hub_planned_teu": 240000,
-    "capacity_note": "140,000 TEU/year is reported first-phase operational capacity; 240,000 is a future target, not installed capacity.",
-    "capacity_source_url": "https://portnews.ru/news/398081/",
+    "capacity_note": "180,000 TEU/year is the reported current capacity of Aktau port (Vice Minister of Transport, 14 October 2026). The container hub first-phase figure is 140,000 TEU/year; 240,000 TEU/year is the planned expansion target. These are different scopes, not additive capacities.",
+    "capacity_source_url": "https://kaz.inform.kz/news/aktau-portinda-zhuk-tasimaldaytin-8-keme-salinadi-c040f4aa/",
     "throughput_period": "2026-09",
     "throughput_teu": 10186,
     "throughput_yoy_pct": 80,
-    "throughput_source_url": "https://t.me/PR_KTZh/5754"
+    "throughput_source_url": "https://t.me/PR_KTZh/5754",
+    "container_capacity_operational_teu": 180000,
+    "capacity_reported_at": "2026-10-14"
   },
   "sources": [
     {

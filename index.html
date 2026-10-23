@@ -181,7 +181,7 @@
 
       <div class="aktau-occupancy-card">
         <div class="aktau-occupancy-copy">
-          <span>Live berth occupancy</span>
+          <span id="aktauActivityLabel">Reported berth occupancy</span>
           <strong id="aktauOccupancyPct">—%</strong>
           <small id="aktauOccupancyMeta">Calculating occupied berths…</small>
         </div>
@@ -197,7 +197,7 @@
       <div class="aktau-stats-grid">
         <div class="inline-kpi"><span>Berthed vessels</span><strong id="aktauOfficialBerthed">—</strong><small>alongside</small></div>
         <div class="inline-kpi"><span>Roadstead vessels</span><strong id="aktauOfficialRoadstead">—</strong><small>waiting / anchored</small></div>
-        <div class="inline-kpi"><span>Total operational</span><strong id="aktauOfficialTotal">—</strong><small>berthed + roadstead</small></div>
+        <div class="inline-kpi"><span>Total reported vessels</span><strong id="aktauOfficialTotal">—</strong><small>berthed + roadstead</small></div>
         <div class="inline-kpi"><span>Disposition date</span><strong id="aktauOfficialDate">—</strong><small>official source</small></div>
       </div>
 
@@ -356,6 +356,7 @@
   <script src="estimator-ui.js?v=20261015-auto-pulse"></script>
   <script src="overview.js?v=20261015-auto-pulse"></script>
   <script src="market-dates.js?v=20261017-general-update"></script>
-  <script src="app.js?v=20261017-tariff-references"></script>
+  <script src="port-freshness.js?v=20261023-port-dates"></script>
+  <script src="app.js?v=20261023-port-dates"></script>
 </body>
 </html>

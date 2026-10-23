@@ -1,3 +1,4 @@
+import './port-freshness.js';
 import {parseKurykText, wideSafeCard, articleSnapshot, parseMarketRanges} from './source-parsers.js';
 import 'dotenv/config';
 import express from 'express';
@@ -5,6 +6,9 @@ import cors from 'cors';
 import WebSocket from 'ws';
 import fs from 'node:fs';
 import path from 'node:path';
+import {createHash} from 'node:crypto';
+const {evaluatePortReport}=globalThis.MCI_PORT_FRESHNESS;
+const APP_VERSION=JSON.parse(fs.readFileSync(new URL('./package.json',import.meta.url),'utf8')).version;
 
 function sourceFetch(url, options={}) {
   return fetch(url,{...options,signal:AbortSignal.timeout(20000)});
@@ -1900,12 +1904,14 @@ async function fetchKurykActivity() {
   const res = await sourceFetch(KURYK_TRAFFIC_URL, {
     headers: {
       'accept': 'text/html,application/xhtml+xml',
-      'user-agent': 'Mozilla/5.0 (compatible; MCFI-Middle-Corridor-Monitor/1.0)'
+      'user-agent': 'Mozilla/5.0 (compatible; MCFI-Middle-Corridor-Monitor/1.0)',
+      'cache-control':'no-cache'
     }
   });
   if (!res.ok) throw new Error('Port Kuryk HTTP ' + res.status);
 
-  const text = decodeHtmlText(await res.text());
+  const html=await res.text();
+  const text=decodeHtmlText(html);
   const {traffic_date,berthed,anchored,approaching}=parseKurykText(text,splitVesselNames);
 
   const berthedVesselCount = berthed.reduce((n,row)=>n+row.vessel_names.length,0);
@@ -1913,6 +1919,8 @@ async function fetchKurykActivity() {
 
   return {
     traffic_date,
+    fetched_at:new Date().toISOString(),
+    source_hash:createHash('sha256').update(html).digest('hex'),
     source_url: KURYK_TRAFFIC_URL,
     summary: {
       berthed_vessels: berthedVesselCount,
@@ -1932,7 +1940,8 @@ async function fetchAktauActivity() {
   const res = await sourceFetch(AKTAU_DISPOSITION_CSV, {
     headers: {
       'accept': 'text/csv,text/plain,*/*',
-      'user-agent': 'MCFI-Middle-Corridor-Monitor/1.0'
+      'user-agent': 'MCFI-Middle-Corridor-Monitor/1.0',
+      'cache-control':'no-cache'
     },
     redirect: 'follow'
   });
@@ -2022,6 +2031,8 @@ async function fetchAktauActivity() {
 
   return {
     traffic_date,
+    fetched_at:new Date().toISOString(),
+    source_hash:createHash('sha256').update(csv).digest('hex'),
     source_url: AKTAU_DISPOSITION_CSV,
     summary: {
       berthed_vessels: berthed.length,
@@ -2052,6 +2063,7 @@ async function refreshPortActivity() {
     aktauLive = true;
   } catch (err) {
     errors.push('Aktau: ' + err.message);
+    if(aktau)aktau={...aktau,fetch_error:err.message};
   }
 
   try {
@@ -2059,10 +2071,15 @@ async function refreshPortActivity() {
     kurykLive = true;
   } catch (err) {
     errors.push('Kuryk: ' + err.message);
+    if(kuryk)kuryk={...kuryk,fetch_error:err.message};
   }
 
+  const checked_at=new Date().toISOString();
+  if(aktau)aktau={...aktau,checked_at,freshness:evaluatePortReport(aktau)};
+  if(kuryk)kuryk={...kuryk,checked_at,freshness:evaluatePortReport(kuryk)};
   portActivityCache = {
-    status: aktauLive && kurykLive ? 'live' : ((aktau || kuryk) ? 'partial' : 'offline'),
+    status: aktau?.freshness.is_current && kuryk?.freshness.is_current ? 'live' : ((aktau || kuryk) ? 'partial' : 'offline'),
+    checked_at,
     updated_at: new Date().toISOString(),
     sources: {
       aktau: 'Aktau Port official vessel disposition',
@@ -2082,6 +2099,15 @@ async function refreshPortActivity() {
     ' anchored=' + (kuryk?.summary?.anchored_vessels ?? 'n/a') +
     ' approaching=' + (kuryk?.summary?.approaching_vessels ?? 'n/a') +
     ' underway-est=' + (kuryk?.summary?.estimated_underway ?? 'n/a'));
+}
+
+function publicPortActivity(now=Date.now()) {
+  const snapshot={...portActivityCache};
+  for(const key of ['aktau','kuryk']) {
+    if(snapshot[key])snapshot[key]={...snapshot[key],freshness:evaluatePortReport(snapshot[key],now)};
+  }
+  snapshot.status=snapshot.aktau?.freshness.is_current&&snapshot.kuryk?.freshness.is_current?'live':snapshot.aktau||snapshot.kuryk?'partial':'offline';
+  return snapshot;
 }
 
 /* ============================================================
@@ -2120,6 +2146,8 @@ app.get(
     const ais = publicSnapshot();
     res.json({
       ok: true,
+      app_version: APP_VERSION,
+      source_revision: process.env.RAILWAY_GIT_COMMIT_SHA || null,
 
       status: ais.status,
       connection_status: ais.connection_status,
@@ -2166,7 +2194,7 @@ app.get(
   '/api/port-activity',
   (_req, res) => {
     res.set('Cache-Control','no-store');
-    res.json(portActivityCache);
+    res.json(publicPortActivity());
   }
 );
 

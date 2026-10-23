@@ -82,7 +82,7 @@ function render(){
 
   aktauKpis.innerHTML=`
     <div class="inline-kpi"><span>Port capacity</span><strong>${DATA.aktau.capacity_mtpa} Mt/y</strong><small>Aktau (Kazakhstan)</small></div>
-    <div class="inline-kpi"><span>Container hub · operational</span><strong>${DATA.aktau.container_hub_teu.toLocaleString()} TEU/y</strong><small>Annual capacity · planned expansion ${DATA.aktau.container_hub_planned_teu.toLocaleString()} TEU/y</small></div>
+    <div class="inline-kpi"><span>Aktau container capacity · reported current</span><strong>${DATA.aktau.container_capacity_operational_teu.toLocaleString()} TEU/y</strong><small>Hub first phase ${DATA.aktau.container_hub_teu.toLocaleString()} · planned port capacity ${DATA.aktau.container_hub_planned_teu.toLocaleString()} TEU/y · <a href="${safeTickerURL(DATA.aktau.capacity_source_url)}" target="_blank" rel="noopener">14 Oct source ↗</a></small></div>
     <div class="inline-kpi"><span>Container throughput · ${fmtMonth(DATA.aktau.throughput_period)}</span><strong>${DATA.aktau.throughput_teu.toLocaleString()} TEU</strong><small>+${DATA.aktau.throughput_yoy_pct}% year on year · <a href="${safeTickerURL(DATA.aktau.throughput_source_url)}" target="_blank" rel="noopener">KTZ source ↗</a></small></div>
     <div class="inline-kpi"><span>Baku / Alat · Jan–Sep 2026</span><strong>~${DATA.baku.throughput_teu.toLocaleString()} TEU</strong><small>+${DATA.baku.throughput_yoy_pct}% year on year · <a href="${safeTickerURL(DATA.baku.throughput_source_url)}" target="_blank" rel="noopener">Reported throughput ↗</a></small></div>
     <div class="inline-kpi"><span>Kuryk cargo throughput · Jan–Jun 2026</span><strong>${DATA.kuryk.throughput_tonnes.toLocaleString()} t</strong><small>Official H1 cargo tonnage, not TEU · <a href="${safeTickerURL(DATA.kuryk.throughput_source_url)}" target="_blank" rel="noopener">Port Kuryk ↗</a></small></div>
@@ -569,6 +569,17 @@ async function loadAktauOfficialActivity(){
     const data=await res.json();
     renderPortTicker(data);
     const aktau=data?.aktau||{};
+    const freshness=window.MCI_PORT_FRESHNESS.evaluatePortReport(aktau);
+    if(!freshness.can_display){
+      occupancyPctEl.textContent='—%';occupancyFillEl.style.width='0%';
+      occupancyMetaEl.textContent=freshness.label;
+      document.getElementById('aktauActivityLabel').textContent='Reported berth occupancy';
+      for(const el of [berthedEl,roadsteadEl,totalEl])el.textContent='—';
+      dateEl.textContent=aktau.traffic_date||'—';
+      if(updatedEl)updatedEl.textContent=freshness.label;
+      board.innerHTML='<div class="vessel-empty">Aktau bulletin date cannot be verified. Counts are withheld.</div>';
+      return;
+    }
     const s=aktau.summary||{};
     const allBerthed=Array.isArray(aktau.berthed)?aktau.berthed:[];
     const berthed=allBerthed.filter(v=>!v.facility || v.facility==='Aktau Port');
@@ -582,6 +593,7 @@ async function loadAktauOfficialActivity(){
       ?Math.max(0,Math.min(100,Number(s.berth_occupancy_pct)))
       :Math.round((occupiedBerths/berthCapacity)*1000)/10;
 
+    document.getElementById('aktauActivityLabel').textContent=freshness.is_current?'Reported berth occupancy · today':'Last reported berth occupancy';
     occupancyPctEl.textContent=`${occupancyPct.toFixed(occupancyPct%1?1:0)}%`;
     occupancyMetaEl.textContent=`${occupiedBerths} / ${berthCapacity} berths occupied`;
     occupancyFillEl.style.width=`${occupancyPct}%`;
@@ -590,7 +602,7 @@ async function loadAktauOfficialActivity(){
     roadsteadEl.textContent=String(roadsteadCount);
     totalEl.textContent=String(berthedCount+roadsteadCount);
     dateEl.textContent=aktau.traffic_date||'—';
-    if(updatedEl) updatedEl.textContent=data?.updated_at?`Updated ${formatAge(data.updated_at)}`:'Awaiting official update';
+    if(updatedEl)updatedEl.textContent=`${freshness.label} · ${aktau.traffic_date} · ${aktau.fetched_at?'retrieved '+formatAge(aktau.fetched_at):'retrieval time unavailable'}`;
 
     const rows=[
       ...berthed.map(v=>({
@@ -625,7 +637,8 @@ async function loadAktauOfficialActivity(){
     berthedEl.textContent='—';
     roadsteadEl.textContent='—';
     totalEl.textContent='—';
-    if(updatedEl) updatedEl.textContent='data temporarily unavailable';
+    document.getElementById('aktauActivityLabel').textContent='Reported berth occupancy';
+    if(updatedEl) updatedEl.textContent='Current bulletin unavailable or date unverified';
     board.innerHTML='<div class="vessel-empty">Aktau official vessel data temporarily unavailable.</div>';
     console.warn(err);
   }
@@ -689,23 +702,24 @@ function renderPriceTicker(live){
 
 
 function renderPortTicker(data){
-  const updated=new Date(data?.updated_at).getTime();
-  const fresh=Number.isFinite(updated)&&Date.now()-updated<=15*60000;
-  const errors=data?.errors||[];
-  const count=value=>value!==null&&value!==undefined&&Number.isFinite(Number(value))?String(Number(value)):'—';
-  const available=key=>fresh&&data?.[key]&&!errors.some(e=>String(e).toLowerCase().startsWith(key+':'));
   const a=data?.aktau?.summary||{};
   const k=data?.kuryk?.summary||{};
   const b=data?.baku?.summary||{};
-  const occupancy=s=>s.berth_occupancy_pct!==null&&s.berth_occupancy_pct!==undefined&&Number.isFinite(Number(s.berth_occupancy_pct))?`${Number(s.berth_occupancy_pct).toFixed(1)}% berth occupancy`:'Berth occupancy unavailable';
-  const stamp=Number.isFinite(updated)?new Date(updated).toLocaleTimeString('en-GB',{timeZone:'Europe/Rome',hour:'2-digit',minute:'2-digit',hour12:false}):null;
-  const date=key=>data?.[key]?.traffic_date?` · disposition ${escapeHTML(data[key].traffic_date)}`:'';
-  const checked=stamp?` · checked ${escapeHTML(stamp)} Rome`:'';
+  const count=value=>value!==null&&value!==undefined&&Number.isFinite(Number(value))?String(Number(value)):'—';
+  const state=key=>window.MCI_PORT_FRESHNESS.evaluatePortReport(data?.[key]);
+  const available=key=>Boolean(data?.[key])&&state(key).can_display;
+  const occupancy=s=>s.berth_occupancy_pct!==null&&s.berth_occupancy_pct!==undefined&&Number.isFinite(Number(s.berth_occupancy_pct))?`${Number(s.berth_occupancy_pct).toFixed(1)}% reported berth occupancy`:'Berth occupancy unavailable';
+  const date=key=>data?.[key]?.traffic_date?` · bulletin ${escapeHTML(data[key].traffic_date)}`:'';
+  const checked=key=>{
+    const port=data?.[key],stamp=Date.parse(port?.fetched_at||'');
+    return Number.isFinite(stamp)?` · retrieved ${escapeHTML(new Date(stamp).toLocaleString('en-GB',{timeZone:'Europe/Rome',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:false}))} Rome`:'';
+  };
+  const qualifier=key=>state(key).is_current?'Today · ':`${escapeHTML(state(key).label)} · `;
   const item=(label,value,url)=>`<a class="ticker-item" href="${safeTickerURL(url)}" target="_blank" rel="noopener"><strong>${escapeHTML(label)} · ${value}</strong></a>`;
-  const aktau=available('aktau')?`${occupancy(a)} · ${count(a.occupied_main_berths)}/${count(a.berth_capacity)} main-port berths · ${count(a.roadstead_vessels)} in roadstead${date('aktau')}${checked}`:'Official activity temporarily unavailable';
-  const kuryk=available('kuryk')?`${count(k.berthed_vessels)} berthed · ${count(k.anchored_vessels)} at anchorage · ${count(k.approaching_vessels)} approaching${date('kuryk')}${checked}`:'Official activity temporarily unavailable';
+  const aktau=available('aktau')?`${qualifier('aktau')}${occupancy(a)} · ${count(a.occupied_main_berths)}/${count(a.berth_capacity)} main-port berths · ${count(a.roadstead_vessels)} in roadstead${date('aktau')}${checked('aktau')}`:'Official bulletin unavailable or date unverified';
+  const kuryk=available('kuryk')?`${qualifier('kuryk')}${count(k.berthed_vessels)} berthed · ${count(k.anchored_vessels)} at anchorage · ${count(k.approaching_vessels)} approaching${date('kuryk')}${checked('kuryk')}`:'Official bulletin unavailable or date unverified';
   const context=DATA?.baku;
-  const baku=available('baku')?`${occupancy(b)}${date('baku')}${checked}`:context?`~${Number(context.throughput_teu).toLocaleString('en-US')} TEU · Jan–Sep 2026 · +${Number(context.throughput_yoy_pct)}% YoY · reported throughput; live berth occupancy unavailable`:'Live berth occupancy unavailable';
+  const baku=available('baku')?`${qualifier('baku')}${occupancy(b)}${date('baku')}${checked('baku')}`:context?`~${Number(context.throughput_teu).toLocaleString('en-US')} TEU · Jan–Sep 2026 · +${Number(context.throughput_yoy_pct)}% YoY · reported throughput; live berth occupancy unavailable`:'Live berth occupancy unavailable';
   setTicker('portTicker',[
     item('Aktau (Kazakhstan)',aktau,data?.aktau?.source_url||'https://www.portaktau.kz/'),
     item('Kuryk (Kazakhstan)',kuryk,data?.kuryk?.source_url||'https://portkuryk.kz/en/dispoziciya-sudov'),
